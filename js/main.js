@@ -1,4 +1,3 @@
-
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -29,7 +28,7 @@ function resizeCanvas() {
     player.x = canvas.width / 2;
     player.y = canvas.height / 2;
 
-    joystick.baseY = canvas.height - 85;
+    joystick.baseY = canvas.height - 90;
 
     resetJoystick();
 }
@@ -53,59 +52,63 @@ function getPosition(event) {
 }
 
 function pointerDown(event) {
+    event.preventDefault();
+
+    if (joystick.active) return;
+
     const pos = getPosition(event);
 
     const dx = pos.x - joystick.baseX;
     const dy = pos.y - joystick.baseY;
 
-    const distance = Math.hypot(dx, dy);
-
-    // Ignora qualquer toque fora do joystick.
-    if (distance > joystick.radius) return;
-
-    if (joystick.active) return;
-
-    event.preventDefault();
+    if (Math.hypot(dx, dy) > 90) return;
 
     joystick.active = true;
     joystick.pointerId = event.pointerId;
 
     canvas.setPointerCapture(event.pointerId);
 
-    moveJoystick(event);
+    updateJoystick(event);
 }
 
-function moveJoystick(event) {
+function pointerMove(event) {
     if (!joystick.active) return;
     if (event.pointerId !== joystick.pointerId) return;
 
     event.preventDefault();
+    updateJoystick(event);
+}
 
+function updateJoystick(event) {
     const pos = getPosition(event);
 
     const dx = pos.x - joystick.baseX;
     const dy = pos.y - joystick.baseY;
 
     const distance = Math.hypot(dx, dy);
-    const angle = Math.atan2(dy, dx);
+    const limitedDistance = Math.min(distance, joystick.radius);
 
-    const limitedDistance = Math.min(
-        distance,
-        joystick.radius
-    );
+    if (distance > 0) {
+        const angle = Math.atan2(dy, dx);
 
-    joystick.knobX =
-        joystick.baseX + Math.cos(angle) * limitedDistance;
+        joystick.knobX =
+            joystick.baseX + Math.cos(angle) * limitedDistance;
 
-    joystick.knobY =
-        joystick.baseY + Math.sin(angle) * limitedDistance;
+        joystick.knobY =
+            joystick.baseY + Math.sin(angle) * limitedDistance;
 
-    if (distance > 5) {
-        joystick.x = dx / distance;
-        joystick.y = dy / distance;
+        const strength = Math.min(
+            distance / joystick.radius,
+            1
+        );
+
+        joystick.x = (dx / distance) * strength;
+        joystick.y = (dy / distance) * strength;
     } else {
         joystick.x = 0;
         joystick.y = 0;
+        joystick.knobX = joystick.baseX;
+        joystick.knobY = joystick.baseY;
     }
 }
 
@@ -116,15 +119,8 @@ function pointerUp(event) {
 }
 
 function update() {
-    if (!joystick.active) return;
-
     player.x += joystick.x * player.speed;
     player.y += joystick.y * player.speed;
-}
-
-function drawArena() {
-    ctx.fillStyle = "#151515";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 }
 
 function drawPlayer() {
@@ -136,13 +132,12 @@ function drawPlayer() {
         0,
         Math.PI * 2
     );
+
     ctx.fillStyle = "#ff2525";
     ctx.fill();
 }
 
 function drawJoystick() {
-    ctx.globalAlpha = 0.35;
-
     ctx.beginPath();
     ctx.arc(
         joystick.baseX,
@@ -151,10 +146,9 @@ function drawJoystick() {
         0,
         Math.PI * 2
     );
-    ctx.fillStyle = "#aaaaaa";
-    ctx.fill();
 
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = "rgba(180,180,180,0.3)";
+    ctx.fill();
 
     ctx.beginPath();
     ctx.arc(
@@ -164,12 +158,14 @@ function drawJoystick() {
         0,
         Math.PI * 2
     );
+
     ctx.fillStyle = "#ffffff";
     ctx.fill();
 }
 
 function draw() {
-    drawArena();
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     drawPlayer();
     drawJoystick();
 }
@@ -177,22 +173,21 @@ function draw() {
 function gameLoop() {
     update();
     draw();
+
     requestAnimationFrame(gameLoop);
 }
 
-canvas.addEventListener("pointerdown", pointerDown, {
-    passive: false
-});
-
-canvas.addEventListener("pointermove", moveJoystick, {
-    passive: false
-});
-
+canvas.addEventListener("pointerdown", pointerDown);
+canvas.addEventListener("pointermove", pointerMove);
 canvas.addEventListener("pointerup", pointerUp);
 canvas.addEventListener("pointercancel", pointerUp);
 canvas.addEventListener("lostpointercapture", pointerUp);
 
 window.addEventListener("resize", resizeCanvas);
+
+document.addEventListener("touchmove", event => {
+    event.preventDefault();
+}, { passive: false });
 
 resizeCanvas();
 gameLoop();
