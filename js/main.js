@@ -53,10 +53,6 @@ function getPosition(event) {
 }
 
 function pointerDown(event) {
-    event.preventDefault();
-
-    if (joystick.active) return;
-
     const pos = getPosition(event);
 
     const dx = pos.x - joystick.baseX;
@@ -64,8 +60,12 @@ function pointerDown(event) {
 
     const distance = Math.hypot(dx, dy);
 
-    // Aceita toque na região do joystick
-    if (distance > 100) return;
+    // Ignora qualquer toque fora do joystick.
+    if (distance > joystick.radius) return;
+
+    if (joystick.active) return;
+
+    event.preventDefault();
 
     joystick.active = true;
     joystick.pointerId = event.pointerId;
@@ -116,6 +116,8 @@ function pointerUp(event) {
 }
 
 function update() {
+    if (!joystick.active) return;
+
     player.x += joystick.x * player.speed;
     player.y += joystick.y * player.speed;
 }
@@ -127,7 +129,6 @@ function drawArena() {
 
 function drawPlayer() {
     ctx.beginPath();
-
     ctx.arc(
         player.x,
         player.y,
@@ -135,7 +136,6 @@ function drawPlayer() {
         0,
         Math.PI * 2
     );
-
     ctx.fillStyle = "#ff2525";
     ctx.fill();
 }
@@ -151,7 +151,6 @@ function drawJoystick() {
         0,
         Math.PI * 2
     );
-
     ctx.fillStyle = "#aaaaaa";
     ctx.fill();
 
@@ -165,7 +164,6 @@ function drawJoystick() {
         0,
         Math.PI * 2
     );
-
     ctx.fillStyle = "#ffffff";
     ctx.fill();
 }
@@ -179,7 +177,6 @@ function draw() {
 function gameLoop() {
     update();
     draw();
-
     requestAnimationFrame(gameLoop);
 }
 
