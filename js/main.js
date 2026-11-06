@@ -235,6 +235,7 @@ function spawnPerfectObstacle() {
 });
 }
 
+
 function updatePerfectObstacles(deltaTime) {
     spawnTimer += deltaTime;
 
@@ -243,20 +244,40 @@ function updatePerfectObstacles(deltaTime) {
         spawnPerfectObstacle();
     }
 
-    perfectObstacles.forEach(obstacle => {
+    const repulsions = ObstaclePhysics.calculateRepulsion(
+        perfectObstacles,
+        obstacleConfig.size
+    );
+
+    perfectObstacles.forEach((obstacle, index) => {
+
         const dx = player.x - obstacle.x;
         const dy = player.y - obstacle.y;
 
         const distance = Math.hypot(dx, dy);
 
-        if (distance > 0) {
-            obstacle.x +=
-                (dx / distance) * obstacleConfig.speed * deltaTime;
+        let chaseX = 0;
+        let chaseY = 0;
 
-            obstacle.y +=
-                (dy / distance) * obstacleConfig.speed * deltaTime;
+        if (distance > 0) {
+            chaseX = (dx / distance) * obstacleConfig.speed;
+            chaseY = (dy / distance) * obstacleConfig.speed;
         }
+
+        const repulsion = repulsions[index];
+
+        const desiredX = chaseX + repulsion.x;
+        const desiredY = chaseY + repulsion.y;
+
+        const response = Math.min(1, deltaTime * 8);
+
+        obstacle.vx += (desiredX - obstacle.vx) * response;
+        obstacle.vy += (desiredY - obstacle.vy) * response;
+
+        obstacle.x += obstacle.vx * deltaTime;
+        obstacle.y += obstacle.vy * deltaTime;
     });
+}
 
     // FÍSICA DE SEPARAÇÃO DOS OBSTÁCULOS
 
