@@ -252,8 +252,15 @@ function updatePerfectObstacles(deltaTime) {
                 (dy / distance) * obstacleConfig.speed * deltaTime;
         }
     });
-}
 
+    // FÍSICA DE SEPARAÇÃO DOS OBSTÁCULOS
+
+    ObstaclePhysics.separate(
+        perfectObstacles,
+        obstacleConfig.size,
+        deltaTime
+    );
+}
 // ATUALIZAÇÃO DO JOGO
 
 function update(deltaTime) {
