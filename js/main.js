@@ -323,21 +323,15 @@ function updatePerfectObstacles(deltaTime) {
 
     perfectObstacles.forEach((obstacle, index) => {
 
-        const dx = player.x - obstacle.x;
-        const dy = player.y - obstacle.y;
+        const desired = ObstacleAI.getDesiredVelocity(
+    obstacle,
+    index,
+    player,
+    obstacleConfig.speed
+);
 
-        const distance = Math.hypot(dx, dy);
-
-        let chaseX = 0;
-        let chaseY = 0;
-
-        if (distance > 0) {
-            chaseX =
-                (dx / distance) * obstacleConfig.speed;
-
-            chaseY =
-                (dy / distance) * obstacleConfig.speed;
-        }
+const chaseX = desired.x;
+const chaseY = desired.y;
 
         // COMBINAR PERSEGUIÇÃO E REPULSÃO
 
