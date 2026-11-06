@@ -1,68 +1,71 @@
+
 /*
  * ON RED
  * OBSTACLE PHYSICS
- * Version: 1.0
+ * Version: 1.1
  *
- * Responsabilidade:
- * Detectar e resolver sobreposição
- * entre obstáculos quadrados.
+ * Sistema AABB de separação entre quadrados.
  */
 
 const ObstaclePhysics = {
 
-    // DISTÂNCIA ENTRE OS QUADRADOS
-
     separate(obstacles, size, deltaTime) {
 
-        const minimumDistance = size;
-        const separationStrength = 0.5;
+        const gap = 12;
+        const minimumDistance = size + gap;
+        const iterations = 4;
 
-        for (let i = 0; i < obstacles.length; i++) {
+        // REPETIR A RESOLUÇÃO PARA ESTABILIZAR OS PARES
 
-            for (let j = i + 1; j < obstacles.length; j++) {
+        for (let iteration = 0; iteration < iterations; iteration++) {
 
-                const a = obstacles[i];
-                const b = obstacles[j];
+            for (let i = 0; i < obstacles.length; i++) {
 
-                const dx = b.x - a.x;
-                const dy = b.y - a.y;
+                for (let j = i + 1; j < obstacles.length; j++) {
 
-                const distance = Math.hypot(dx, dy);
+                    const a = obstacles[i];
+                    const b = obstacles[j];
 
-                if (distance >= minimumDistance) {
-                    continue;
+                    const dx = b.x - a.x;
+                    const dy = b.y - a.y;
+
+                    const overlapX =
+                        minimumDistance - Math.abs(dx);
+
+                    const overlapY =
+                        minimumDistance - Math.abs(dy);
+
+                    // NÃO EXISTE SOBREPOSIÇÃO OU PROXIMIDADE EXCESSIVA
+
+                    if (overlapX <= 0 || overlapY <= 0) {
+                        continue;
+                    }
+
+                    // ESCOLHER O EIXO DE MENOR PENETRAÇÃO
+
+                    if (overlapX < overlapY) {
+
+                        const direction = dx === 0
+                            ? (i % 2 === 0 ? 1 : -1)
+                            : Math.sign(dx);
+
+                        const correction = overlapX / 2;
+
+                        a.x -= direction * correction;
+                        b.x += direction * correction;
+
+                    } else {
+
+                        const direction = dy === 0
+                            ? (i % 2 === 0 ? 1 : -1)
+                            : Math.sign(dy);
+
+                        const correction = overlapY / 2;
+
+                        a.y -= direction * correction;
+                        b.y += direction * correction;
+                    }
                 }
-
-                let normalX;
-                let normalY;
-
-                // EVITAR DIVISÃO POR ZERO
-
-                if (distance === 0) {
-                    normalX = 1;
-                    normalY = 0;
-                } else {
-                    normalX = dx / distance;
-                    normalY = dy / distance;
-                }
-
-                // CALCULAR SOBREPOSIÇÃO
-
-                const overlap = minimumDistance - distance;
-
-                const correction =
-                    overlap * separationStrength;
-
-                // SEPARAR OS QUADRADOS
-
-                const movementX = normalX * correction;
-                const movementY = normalY * correction;
-
-                a.x -= movementX;
-                a.y -= movementY;
-
-                b.x += movementX;
-                b.y += movementY;
             }
         }
     }
