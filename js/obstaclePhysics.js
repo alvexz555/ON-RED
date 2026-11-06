@@ -2,23 +2,22 @@
 /*
  * ON RED
  * OBSTACLE PHYSICS
- * Version: 1.4
+ * Version: 1.3
  *
- * Sistema de repulsão radial por velocidade.
- * Objetivo:
- * - Evitar aglomeração.
- * - Criar movimento independente.
- * - Preservar a perseguição individual.
+ * Sistema de repulsão por velocidade.
+ * Objetivo: manter espaçamento com movimento individual.
  */
 
 const ObstaclePhysics = {
 
-    // REPULSÃO RADIAL ENTRE OBSTÁCULOS
+    // CALCULAR REPULSÃO ENTRE OBSTÁCULOS
 
     calculateRepulsion(obstacles, size) {
 
-        const influenceRadius = 70;
-        const repulsionStrength = 260;
+        const gap = 20;
+        const minimumDistance = size + gap;
+        const repulsionGain = 25;
+        const maxRepulsion = 300;
 
         const forces = obstacles.map(() => ({
             x: 0,
@@ -32,60 +31,54 @@ const ObstaclePhysics = {
                 const a = obstacles[i];
                 const b = obstacles[j];
 
-                const dx = a.x - b.x;
-                const dy = a.y - b.y;
+                const dx = b.x - a.x;
+                const dy = b.y - a.y;
 
-                const distance = Math.hypot(dx, dy);
+                const overlapX =
+                    minimumDistance - Math.abs(dx);
 
-                if (distance >= influenceRadius) {
+                const overlapY =
+                    minimumDistance - Math.abs(dy);
+
+                if (overlapX <= 0 || overlapY <= 0) {
                     continue;
                 }
 
-                // EVITAR DIVISÃO POR ZERO
+                if (overlapX < overlapY) {
 
-                if (distance < 0.001) {
+                    const direction = dx === 0
+                        ? (i % 2 === 0 ? 1 : -1)
+                        : Math.sign(dx);
 
-                    const angle = Math.random() * Math.PI * 2;
+                    const force = Math.min(
+                        maxRepulsion,
+                        overlapX * repulsionGain
+                    );
 
-                    const directionX = Math.cos(angle);
-                    const directionY = Math.sin(angle);
+                    forces[i].x -= direction * force;
+                    forces[j].x += direction * force;
 
-                    forces[i].x += directionX * repulsionStrength;
-                    forces[i].y += directionY * repulsionStrength;
+                } else {
 
-                    forces[j].x -= directionX * repulsionStrength;
-                    forces[j].y -= directionY * repulsionStrength;
+                    const direction = dy === 0
+                        ? (i % 2 === 0 ? 1 : -1)
+                        : Math.sign(dy);
 
-                    continue;
+                    const force = Math.min(
+                        maxRepulsion,
+                        overlapY * repulsionGain
+                    );
+
+                    forces[i].y -= direction * force;
+                    forces[j].y += direction * force;
                 }
-
-                // DIREÇÃO DE AFASTAMENTO
-
-                const directionX = dx / distance;
-                const directionY = dy / distance;
-
-                // INTENSIDADE GRADUAL
-
-                const intensity =
-                    (1 - distance / influenceRadius) *
-                    repulsionStrength;
-
-                const forceX = directionX * intensity;
-                const forceY = directionY * intensity;
-
-                forces[i].x += forceX;
-                forces[i].y += forceY;
-
-                forces[j].x -= forceX;
-                forces[j].y -= forceY;
             }
         }
 
         return forces;
     },
 
-
-    // SEPARAÇÃO DIRETA (MÉTODO ANTIGO)
+    // SISTEMA ANTIGO MANTIDO POR COMPATIBILIDADE
 
     separate(obstacles, size, deltaTime) {
 
@@ -98,10 +91,7 @@ const ObstaclePhysics = {
             Math.min(deltaTime, 0.05)
         );
 
-        const strength = Math.min(
-            1,
-            safeDelta * 24
-        );
+        const strength = Math.min(1, safeDelta * 24);
 
         for (let iteration = 0; iteration < iterations; iteration++) {
 
@@ -131,8 +121,7 @@ const ObstaclePhysics = {
                             ? (i % 2 === 0 ? 1 : -1)
                             : Math.sign(dx);
 
-                        const correction =
-                            (overlapX * strength) / 2;
+                        const correction = (overlapX * strength) / 2;
 
                         a.x -= direction * correction;
                         b.x += direction * correction;
@@ -143,8 +132,7 @@ const ObstaclePhysics = {
                             ? (i % 2 === 0 ? 1 : -1)
                             : Math.sign(dy);
 
-                        const correction =
-                            (overlapY * strength) / 2;
+                        const correction = (overlapY * strength) / 2;
 
                         a.y -= direction * correction;
                         b.y += direction * correction;
