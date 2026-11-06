@@ -2,22 +2,23 @@
 /*
  * ON RED
  * OBSTACLE PHYSICS
- * Version: 1.3
+ * Version: 1.4
  *
- * Sistema de repulsão por velocidade.
- * Objetivo: manter espaçamento com movimento individual.
+ * Sistema de repulsão radial por velocidade.
+ * Objetivo:
+ * - Evitar aglomeração.
+ * - Criar movimento independente.
+ * - Preservar a perseguição individual.
  */
 
 const ObstaclePhysics = {
 
-    // CALCULAR REPULSÃO ENTRE OBSTÁCULOS
+    // REPULSÃO RADIAL ENTRE OBSTÁCULOS
 
     calculateRepulsion(obstacles, size) {
 
-        const gap = 20;
-        const minimumDistance = size + gap;
-        const repulsionGain = 25;
-        const maxRepulsion = 300;
+        const influenceRadius = 70;
+        const repulsionStrength = 260;
 
         const forces = obstacles.map(() => ({
             x: 0,
@@ -31,63 +32,76 @@ const ObstaclePhysics = {
                 const a = obstacles[i];
                 const b = obstacles[j];
 
-                const dx = b.x - a.x;
-                const dy = b.y - a.y;
+                const dx = a.x - b.x;
+                const dy = a.y - b.y;
 
-                const overlapX =
-                    minimumDistance - Math.abs(dx);
+                const distance = Math.hypot(dx, dy);
 
-                const overlapY =
-                    minimumDistance - Math.abs(dy);
-
-                if (overlapX <= 0 || overlapY <= 0) {
+                if (distance >= influenceRadius) {
                     continue;
                 }
 
-                if (overlapX < overlapY) {
+                // EVITAR DIVISÃO POR ZERO
 
-                    const direction = dx === 0
-                        ? (i % 2 === 0 ? 1 : -1)
-                        : Math.sign(dx);
+                if (distance < 0.001) {
 
-                    const force = Math.min(
-                        maxRepulsion,
-                        overlapX * repulsionGain
-                    );
+                    const angle = Math.random() * Math.PI * 2;
 
-                    forces[i].x -= direction * force;
-                    forces[j].x += direction * force;
+                    const directionX = Math.cos(angle);
+                    const directionY = Math.sin(angle);
 
-                } else {
+                    forces[i].x += directionX * repulsionStrength;
+                    forces[i].y += directionY * repulsionStrength;
 
-                    const direction = dy === 0
-                        ? (i % 2 === 0 ? 1 : -1)
-                        : Math.sign(dy);
+                    forces[j].x -= directionX * repulsionStrength;
+                    forces[j].y -= directionY * repulsionStrength;
 
-                    const force = Math.min(
-                        maxRepulsion,
-                        overlapY * repulsionGain
-                    );
-
-                    forces[i].y -= direction * force;
-                    forces[j].y += direction * force;
+                    continue;
                 }
+
+                // DIREÇÃO DE AFASTAMENTO
+
+                const directionX = dx / distance;
+                const directionY = dy / distance;
+
+                // INTENSIDADE GRADUAL
+
+                const intensity =
+                    (1 - distance / influenceRadius) *
+                    repulsionStrength;
+
+                const forceX = directionX * intensity;
+                const forceY = directionY * intensity;
+
+                forces[i].x += forceX;
+                forces[i].y += forceY;
+
+                forces[j].x -= forceX;
+                forces[j].y -= forceY;
             }
         }
 
         return forces;
     },
 
-    // SISTEMA ANTIGO MANTIDO POR COMPATIBILIDADE
+
+    // SEPARAÇÃO DIRETA (MÉTODO ANTIGO)
 
     separate(obstacles, size, deltaTime) {
 
         const gap = 20;
         const minimumDistance = size + gap;
-
         const iterations = 2;
-        const safeDelta = Math.max(0, Math.min(deltaTime, 0.05));
-        const strength = Math.min(1, safeDelta * 24);
+
+        const safeDelta = Math.max(
+            0,
+            Math.min(deltaTime, 0.05)
+        );
+
+        const strength = Math.min(
+            1,
+            safeDelta * 24
+        );
 
         for (let iteration = 0; iteration < iterations; iteration++) {
 
