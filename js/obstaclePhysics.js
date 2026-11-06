@@ -2,20 +2,28 @@
 /*
  * ON RED
  * OBSTACLE PHYSICS
- * Version: 1.1
+ * Version: 1.2
  *
- * Sistema AABB de separação entre quadrados.
+ * Sistema de repulsão gradual entre quadrados.
+ * Objetivo: manter espaçamento sem separação brusca.
  */
 
 const ObstaclePhysics = {
 
     separate(obstacles, size, deltaTime) {
 
-        const gap = 12;
-        const minimumDistance = size + gap;
-        const iterations = 4;
+        // CONFIGURAÇÃO DE ESPAÇAMENTO
 
-        // REPETIR A RESOLUÇÃO PARA ESTABILIZAR OS PARES
+        const gap = 20;
+        const minimumDistance = size + gap;
+
+        // INTENSIDADE DA REPULSÃO
+
+        const iterations = 2;
+        const safeDelta = Math.max(0, Math.min(deltaTime, 0.05));
+        const strength = Math.min(1, safeDelta * 24);
+
+        // RESOLUÇÃO GRADUAL ENTRE OS PARES
 
         for (let iteration = 0; iteration < iterations; iteration++) {
 
@@ -35,13 +43,13 @@ const ObstaclePhysics = {
                     const overlapY =
                         minimumDistance - Math.abs(dy);
 
-                    // NÃO EXISTE SOBREPOSIÇÃO OU PROXIMIDADE EXCESSIVA
+                    // DISTÂNCIA SUFICIENTE
 
                     if (overlapX <= 0 || overlapY <= 0) {
                         continue;
                     }
 
-                    // ESCOLHER O EIXO DE MENOR PENETRAÇÃO
+                    // REPULSÃO NO EIXO DE MENOR PENETRAÇÃO
 
                     if (overlapX < overlapY) {
 
@@ -49,7 +57,8 @@ const ObstaclePhysics = {
                             ? (i % 2 === 0 ? 1 : -1)
                             : Math.sign(dx);
 
-                        const correction = overlapX / 2;
+                        const correction =
+                            (overlapX * strength) / 2;
 
                         a.x -= direction * correction;
                         b.x += direction * correction;
@@ -60,7 +69,8 @@ const ObstaclePhysics = {
                             ? (i % 2 === 0 ? 1 : -1)
                             : Math.sign(dy);
 
-                        const correction = overlapY / 2;
+                        const correction =
+                            (overlapY * strength) / 2;
 
                         a.y -= direction * correction;
                         b.y += direction * correction;
