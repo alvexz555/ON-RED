@@ -57,7 +57,7 @@ const ObstacleAI = {
                     ? "attacker"
                     : "pressure";
         });
-    }
+    },
     
     // CALCULAR MOVIMENTO DE CADA OBSTÁCULO
 
