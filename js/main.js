@@ -1,3 +1,4 @@
+
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -21,55 +22,57 @@ const joystick = {
     pointerId: null
 };
 
-// SISTEMA DE OBSTÁCULOS PERFECT TIMING
+// BOTÃO PERFECT TIMING
 
-const perfectObstacles = [];
-
-const obstacleConfig = {
-    size: 34,
-    speed: 85,
-    spawnInterval: 1.8,
-    maxObstacles: 5
+const perfectButton = {
+    size: 64,
+    margin: 28,
+    charge: 1,
+    cooldown: 5,
+    activationFlash: 0,
+    x: 0,
+    y: 0
 };
 
-let spawnTimer = 0;
+function updatePerfectButtonPosition() {
+    perfectButton.x =
+        canvas.width - perfectButton.margin - perfectButton.size;
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    player.x = canvas.width / 2;
-    player.y = canvas.height / 2;
-
-    joystick.baseY = canvas.height - 90;
-
-    resetJoystick();
+    perfectButton.y =
+        canvas.height - perfectButton.margin - perfectButton.size;
 }
 
-function resetJoystick() {
-    joystick.x = 0;
-    joystick.y = 0;
-    joystick.knobX = joystick.baseX;
-    joystick.knobY = joystick.baseY;
-    joystick.active = false;
-    joystick.pointerId = null;
-}
+function activatePerfectTiming() {
+    if (perfectButton.charge < 1) return;
 
-function getPosition(event) {
-    const rect = canvas.getBoundingClientRect();
+    perfectButton.charge = 0;
+    perfectButton.activationFlash = 0.2;
 
-    return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
-    };
+    // A conexão com a mecânica de colisão será feita
+    // na próxima etapa de implementação do Perfect Timing.
 }
 
 function pointerDown(event) {
     event.preventDefault();
 
-    if (joystick.active) return;
-
     const pos = getPosition(event);
+
+    // VERIFICAR TOQUE NO BOTÃO
+
+    const insideButton =
+        pos.x >= perfectButton.x &&
+        pos.x <= perfectButton.x + perfectButton.size &&
+        pos.y >= perfectButton.y &&
+        pos.y <= perfectButton.y + perfectButton.size;
+
+    if (insideButton) {
+        activatePerfectTiming();
+        return;
+    }
+
+    // JOYSTICK
+
+    if (joystick.active) return;
 
     const dx = pos.x - joystick.baseX;
     const dy = pos.y - joystick.baseY;
@@ -90,6 +93,61 @@ function pointerMove(event) {
 
     event.preventDefault();
     updateJoystick(event);
+}
+
+function pointerUp(event) {
+    if (event.pointerId !== joystick.pointerId) return;
+
+    resetJoystick();
+}
+
+function updatePerfectButton(deltaTime) {
+    if (perfectButton.charge < 1) {
+        perfectButton.charge +=
+            deltaTime / perfectButton.cooldown;
+
+        perfectButton.charge =
+            Math.min(perfectButton.charge, 1);
+    }
+
+    if (perfectButton.activationFlash > 0) {
+        perfectButton.activationFlash -= deltaTime;
+        perfectButton.activationFlash =
+            Math.max(0, perfectButton.activationFlash);
+    }
+}
+
+// JOGADOR
+
+function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+
+    joystick.baseY = canvas.height - 90;
+
+    updatePerfectButtonPosition();
+    resetJoystick();
+}
+
+function resetJoystick() {
+    joystick.x = 0;
+    joystick.y = 0;
+    joystick.knobX = joystick.baseX;
+    joystick.knobY = joystick.baseY;
+    joystick.active = false;
+    joystick.pointerId = null;
+}
+
+function getPosition(event) {
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    };
 }
 
 function updateJoystick(event) {
@@ -125,13 +183,18 @@ function updateJoystick(event) {
     }
 }
 
-function pointerUp(event) {
-    if (event.pointerId !== joystick.pointerId) return;
+// OBSTÁCULOS
 
-    resetJoystick();
-}
+const perfectObstacles = [];
 
-// GERAR OBSTÁCULOS
+const obstacleConfig = {
+    size: 34,
+    speed: 85,
+    spawnInterval: 1.8,
+    maxObstacles: 5
+};
+
+let spawnTimer = 0;
 
 function spawnPerfectObstacle() {
     if (perfectObstacles.length >= obstacleConfig.maxObstacles) {
@@ -168,9 +231,6 @@ function spawnPerfectObstacle() {
     perfectObstacles.push({ x, y });
 }
 
-
-// ATUALIZAR OBSTÁCULOS
-
 function updatePerfectObstacles(deltaTime) {
     spawnTimer += deltaTime;
 
@@ -195,15 +255,17 @@ function updatePerfectObstacles(deltaTime) {
     });
 }
 
-
-// ATUALIZAR JOGADOR E MUNDO
+// ATUALIZAÇÃO DO JOGO
 
 function update(deltaTime) {
     player.x += joystick.x * player.speed * deltaTime * 60;
     player.y += joystick.y * player.speed * deltaTime * 60;
 
     updatePerfectObstacles(deltaTime);
+    updatePerfectButton(deltaTime);
 }
+
+// DESENHO
 
 function drawPlayer() {
     ctx.beginPath();
@@ -218,14 +280,12 @@ function drawPlayer() {
     ctx.fillStyle = "#ff2525";
     ctx.fill();
 }
-// DESENHAR OBSTÁCULOS PERFECT TIMING
 
 function drawPerfectObstacles() {
     perfectObstacles.forEach(obstacle => {
         const half = obstacleConfig.size / 2;
 
         ctx.beginPath();
-
         ctx.rect(
             obstacle.x - half,
             obstacle.y - half,
@@ -235,10 +295,10 @@ function drawPerfectObstacles() {
 
         ctx.strokeStyle = "#168BFF";
         ctx.lineWidth = 3;
-
         ctx.stroke();
     });
 }
+
 function drawJoystick() {
     ctx.beginPath();
     ctx.arc(
@@ -265,13 +325,70 @@ function drawJoystick() {
     ctx.fill();
 }
 
+// BOTÃO PERFECT TIMING
+
+function drawPerfectButton() {
+    const x = perfectButton.x;
+    const y = perfectButton.y;
+    const size = perfectButton.size;
+    const padding = 5;
+
+    const innerSize = size - padding * 2;
+    const fillHeight = innerSize * perfectButton.charge;
+
+    // FUNDO
+
+    ctx.fillStyle = "#101820";
+    ctx.fillRect(x, y, size, size);
+
+    // PREENCHIMENTO DE CARGA
+
+    ctx.fillStyle = perfectButton.charge >= 1
+        ? "#168BFF"
+        : "#07539C";
+
+    ctx.fillRect(
+        x + padding,
+        y + size - padding - fillHeight,
+        innerSize,
+        fillHeight
+    );
+
+    // CONTORNO
+
+    ctx.strokeStyle = perfectButton.activationFlash > 0
+        ? "#FFFFFF"
+        : "#168BFF";
+
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, size, size);
+
+    // TEXTO
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 12px Arial";
+
+    ctx.fillText(
+        perfectButton.charge >= 1
+            ? "READY"
+            : `${Math.floor(perfectButton.charge * 100)}%`,
+        x + size / 2,
+        y + size / 2
+    );
+}
+
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawPerfectObstacles();
     drawPlayer();
     drawJoystick();
+    drawPerfectButton();
 }
+
+// LOOP PRINCIPAL
 
 let lastFrameTime = 0;
 
@@ -288,6 +405,8 @@ function gameLoop(timestamp) {
     requestAnimationFrame(gameLoop);
 }
 
+// EVENTOS
+
 canvas.addEventListener("pointerdown", pointerDown);
 canvas.addEventListener("pointermove", pointerMove);
 canvas.addEventListener("pointerup", pointerUp);
@@ -299,6 +418,8 @@ window.addEventListener("resize", resizeCanvas);
 document.addEventListener("touchmove", event => {
     event.preventDefault();
 }, { passive: false });
+
+// INICIALIZAÇÃO
 
 resizeCanvas();
 gameLoop();
