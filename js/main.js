@@ -227,7 +227,12 @@ function spawnPerfectObstacle() {
             break;
     }
 
-    perfectObstacles.push({ x, y });
+    perfectObstacles.push({
+    x,
+    y,
+    vx: 0,
+    vy: 0
+});
 }
 
 function updatePerfectObstacles(deltaTime) {
