@@ -78,10 +78,12 @@ const ObstacleAI = {
         // ATACANTE: PERSEGUIÇÃO DIRETA
 
         if (obstacle.role === "attacker") {
-            return {
-                x: nx * speed,
-                y: ny * speed
-            };
+           const aggression = 1.4;
+
+           return {
+             x: nx * speed * aggression,
+             y: ny * speed * aggression
+           };
         }
 
         // PRESSURIZADORES: APROXIMAÇÃO E REPOSICIONAMENTO
