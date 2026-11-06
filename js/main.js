@@ -21,6 +21,19 @@ const joystick = {
     pointerId: null
 };
 
+// SISTEMA DE OBSTÁCULOS PERFECT TIMING
+
+const perfectObstacles = [];
+
+const obstacleConfig = {
+    size: 34,
+    speed: 85,
+    spawnInterval: 1.8,
+    maxObstacles: 5
+};
+
+let spawnTimer = 0;
+
 function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -118,9 +131,78 @@ function pointerUp(event) {
     resetJoystick();
 }
 
-function update() {
-    player.x += joystick.x * player.speed;
-    player.y += joystick.y * player.speed;
+// GERAR OBSTÁCULOS
+
+function spawnPerfectObstacle() {
+    if (perfectObstacles.length >= obstacleConfig.maxObstacles) {
+        return;
+    }
+
+    const side = Math.floor(Math.random() * 4);
+
+    let x;
+    let y;
+
+    switch (side) {
+        case 0:
+            x = Math.random() * canvas.width;
+            y = -40;
+            break;
+
+        case 1:
+            x = canvas.width + 40;
+            y = Math.random() * canvas.height;
+            break;
+
+        case 2:
+            x = Math.random() * canvas.width;
+            y = canvas.height + 40;
+            break;
+
+        case 3:
+            x = -40;
+            y = Math.random() * canvas.height;
+            break;
+    }
+
+    perfectObstacles.push({ x, y });
+}
+
+
+// ATUALIZAR OBSTÁCULOS
+
+function updatePerfectObstacles(deltaTime) {
+    spawnTimer += deltaTime;
+
+    if (spawnTimer >= obstacleConfig.spawnInterval) {
+        spawnTimer = 0;
+        spawnPerfectObstacle();
+    }
+
+    perfectObstacles.forEach(obstacle => {
+        const dx = player.x - obstacle.x;
+        const dy = player.y - obstacle.y;
+
+        const distance = Math.hypot(dx, dy);
+
+        if (distance > 0) {
+            obstacle.x +=
+                (dx / distance) * obstacleConfig.speed * deltaTime;
+
+            obstacle.y +=
+                (dy / distance) * obstacleConfig.speed * deltaTime;
+        }
+    });
+}
+
+
+// ATUALIZAR JOGADOR E MUNDO
+
+function update(deltaTime) {
+    player.x += joystick.x * player.speed * deltaTime * 60;
+    player.y += joystick.y * player.speed * deltaTime * 60;
+
+    updatePerfectObstacles(deltaTime);
 }
 
 function drawPlayer() {
@@ -136,7 +218,27 @@ function drawPlayer() {
     ctx.fillStyle = "#ff2525";
     ctx.fill();
 }
+// DESENHAR OBSTÁCULOS PERFECT TIMING
 
+function drawPerfectObstacles() {
+    perfectObstacles.forEach(obstacle => {
+        const half = obstacleConfig.size / 2;
+
+        ctx.beginPath();
+
+        ctx.rect(
+            obstacle.x - half,
+            obstacle.y - half,
+            obstacleConfig.size,
+            obstacleConfig.size
+        );
+
+        ctx.strokeStyle = "#168BFF";
+        ctx.lineWidth = 3;
+
+        ctx.stroke();
+    });
+}
 function drawJoystick() {
     ctx.beginPath();
     ctx.arc(
@@ -166,12 +268,21 @@ function drawJoystick() {
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+    drawPerfectObstacles();
     drawPlayer();
     drawJoystick();
 }
 
-function gameLoop() {
-    update();
+let lastFrameTime = 0;
+
+function gameLoop(timestamp) {
+    const deltaTime = lastFrameTime
+        ? Math.min((timestamp - lastFrameTime) / 1000, 0.05)
+        : 0;
+
+    lastFrameTime = timestamp;
+
+    update(deltaTime);
     draw();
 
     requestAnimationFrame(gameLoop);
