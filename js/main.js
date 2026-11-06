@@ -282,12 +282,19 @@ function spawnPerfectObstacle() {
             break;
     }
 
-    perfectObstacles.push({
+        perfectObstacles.push({
         x,
         y,
         vx: 0,
-        vy: 0
+        vy: 0,
+        role: "pressure"
     });
+
+    ObstacleAI.updateRoles(perfectObstacles);
+
+    if (!ObstacleAI.attacker) {
+        ObstacleAI.selectAttacker(perfectObstacles);
+    }
 }
 
 // ==========================================
@@ -354,7 +361,8 @@ function updatePerfectObstacles(deltaTime) {
 
         obstacle.x += obstacle.vx * deltaTime;
         obstacle.y += obstacle.vy * deltaTime;
-    });
+    }); 
+
 
     // FÍSICA DE SEPARAÇÃO DOS OBSTÁCULOS
 
