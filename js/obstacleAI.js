@@ -58,5 +58,54 @@ const ObstacleAI = {
                     : "pressure";
         });
     }
+    
+    // CALCULAR MOVIMENTO DE CADA OBSTÁCULO
+
+    getDesiredVelocity(obstacle, index, player, speed) {
+
+        const dx = player.x - obstacle.x;
+        const dy = player.y - obstacle.y;
+
+        const distance = Math.hypot(dx, dy);
+
+        if (distance === 0) {
+            return { x: 0, y: 0 };
+        }
+
+        const nx = dx / distance;
+        const ny = dy / distance;
+
+        // ATACANTE: PERSEGUIÇÃO DIRETA
+
+        if (obstacle.role === "attacker") {
+            return {
+                x: nx * speed,
+                y: ny * speed
+            };
+        }
+
+        // PRESSURIZADORES: APROXIMAÇÃO E REPOSICIONAMENTO
+
+        const pressureRadius = 130;
+        const orbitSpeed = 35;
+
+        const radialError = distance - pressureRadius;
+
+        const radialSpeed = Math.max(
+            -speed * 0.55,
+            Math.min(speed * 0.55, radialError * 1.2)
+        );
+
+        const direction = obstacle.orbitDirection ??
+            (index % 2 === 0 ? 1 : -1);
+
+        const tangentX = -ny * direction;
+        const tangentY = nx * direction;
+
+        return {
+            x: nx * radialSpeed + tangentX * orbitSpeed,
+            y: ny * radialSpeed + tangentY * orbitSpeed
+        };
+}
 };
 
