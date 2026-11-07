@@ -387,6 +387,58 @@ function update(deltaTime) {
     updatePerfectButton(deltaTime);
 }
 
+///==========================================
+/// DESENHO DA ARENA
+///==========================================
+
+function drawArena() {
+    const hexSize = 28;
+    const hexWidth = Math.sqrt(3) * hexSize;
+    const hexHeight = hexSize * 1.5;
+
+    for (
+        let row = -1;
+        row < canvas.height / hexHeight + 2;
+        row++
+    ) {
+        for (
+            let col = -1;
+            col < canvas.width / hexWidth + 2;
+            col++
+        ) {
+            const x = col * hexWidth +
+                (row % 2) * hexWidth / 2;
+
+            const y = row * hexHeight;
+
+            ctx.beginPath();
+
+            for (let i = 0; i < 6; i++) {
+                const angle =
+                    (Math.PI / 180) * (60 * i - 30);
+
+                const px = x + hexSize * Math.cos(angle);
+                const py = y + hexSize * Math.sin(angle);
+
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+
+            ctx.closePath();
+
+            ctx.fillStyle = "#080D16";
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(22, 139, 255, 0.22)";
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+}
+
 // ==========================================
 // DESENHO DO JOGADOR
 // ==========================================
@@ -575,7 +627,8 @@ function draw() {
         canvas.width,
         canvas.height
     );
-
+    
+    drawArena(); 
     drawPerfectObstacles();
     drawPlayer();
     drawJoystick();
