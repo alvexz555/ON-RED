@@ -391,7 +391,13 @@ function update(deltaTime) {
 // DESENHO DO JOGADOR
 // ==========================================
 
+
 function drawPlayer() {
+    ctx.save();
+
+    ctx.shadowColor = "#ff2525";
+    ctx.shadowBlur = 22;
+
     ctx.beginPath();
 
     ctx.arc(
@@ -404,6 +410,22 @@ function drawPlayer() {
 
     ctx.fillStyle = "#ff2525";
     ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+    ctx.arc(
+        player.x - 4,
+        player.y - 4,
+        player.radius * 0.3,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fill();
+
+    ctx.restore();
 }
 
 // ==========================================
