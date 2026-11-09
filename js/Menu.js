@@ -75,6 +75,10 @@ const ONREDMenu = (() => {
             console.error("[ON RED] Falha na inicialização do menu.");
             return;
         }
+        elements.container.style.position = "fixed";
+        elements.container.style.inset = "0";
+        elements.container.style.zIndex = "10";
+        elements.container.style.pointerEvents = "auto";
 
         elements.play.addEventListener("click", startGame);
         elements.settings.addEventListener("click", openSettings);
