@@ -247,6 +247,8 @@ function resizeCanvas() {
     canvas.style.position = "fixed";
     canvas.style.left = "0";
     canvas.style.top = "0";
+    canvas.style.zIndex = "0";
+    canvas.style.pointerEvents = "auto";
     canvas.style.display = "block";
     canvas.style.margin = "0";
     canvas.style.padding = "0";
@@ -835,6 +837,10 @@ let gameStarted = false;
 function initializeMenu() {
 
     const menu = document.getElementById("mainMenu");
+    menu.style.position = "fixed";
+    menu.style.inset = "0";
+    menu.style.zIndex = "10";
+    menu.style.pointerEvents = "auto";
     const playButton = document.getElementById("playButton");
     const settingsButton = document.getElementById("settingsButton");
     const settingsPanel = document.getElementById("settingsPanel");
