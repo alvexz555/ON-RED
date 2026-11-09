@@ -775,7 +775,86 @@ document.addEventListener(
 );
 
 // ==========================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO DO ON RED
+// ==========================================
+
+let gameStarted = false;
+
+function initializeMenu() {
+
+    const menu = document.getElementById("mainMenu");
+    const playButton = document.getElementById("playButton");
+    const settingsButton = document.getElementById("settingsButton");
+    const settingsPanel = document.getElementById("settingsPanel");
+    const backButton = document.getElementById("backButton");
+    const bestScoreElement = document.getElementById("bestScore");
+
+    if (!menu || !playButton || !settingsButton ||
+        !settingsPanel || !backButton) {
+
+        console.error(
+            "[ON RED] Erro: elementos do menu não encontrados."
+        );
+
+        return;
+    }
+
+    // CARREGAR MELHOR PONTUAÇÃO
+
+    try {
+
+        const bestScore = Number(
+            localStorage.getItem("onRedBestScore") || 0
+        );
+
+        if (bestScoreElement) {
+            bestScoreElement.textContent =
+                String(bestScore).padStart(6, "0");
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "[ON RED] Não foi possível carregar a pontuação.",
+            error
+        );
+
+    }
+
+    // ABRIR CONFIGURAÇÕES
+
+    settingsButton.addEventListener("click", () => {
+        settingsPanel.classList.remove("hidden");
+    });
+
+    // FECHAR CONFIGURAÇÕES
+
+    backButton.addEventListener("click", () => {
+        settingsPanel.classList.add("hidden");
+    });
+
+    // INICIAR JOGO
+
+    playButton.addEventListener("click", () => {
+
+        if (gameStarted) return;
+
+        gameStarted = true;
+
+        settingsPanel.classList.add("hidden");
+        menu.classList.add("hidden");
+
+        lastFrameTime = 0;
+
+        requestAnimationFrame(gameLoop);
+
+    });
+
+    console.log("[ON RED] Menu inicializado.");
+}
+
+// ==========================================
+// PREPARAÇÃO DO JOGO
 // ==========================================
 
 resizeCanvas();
