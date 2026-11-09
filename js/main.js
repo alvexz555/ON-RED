@@ -110,16 +110,16 @@ function clamp(value, min, max) {
 
 function constrainPlayerToArena() {
 
-    const minX = Math.min(player.radius, canvas.width / 2);
-    const maxX = Math.max(canvas.width - player.radius, canvas.width / 2);
+    const minX = player.radius;
+    const maxX = canvas.width - player.radius;
 
-    const minY = Math.min(player.radius, canvas.height / 2);
-    const maxY = Math.max(canvas.height - player.radius, canvas.height / 2);
+    const minY = player.radius;
+    const maxY = canvas.height - player.radius;
 
     player.x = clamp(player.x, minX, maxX);
     player.y = clamp(player.y, minY, maxY);
 }
-
+                          
 function constrainObstaclesToArena() {
 
     const half = obstacleConfig.size / 2;
