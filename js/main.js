@@ -774,7 +774,7 @@ document.addEventListener(
 );
 
 // ==========================================
-// INICIALIZAÇÃO DO ON RED
+// INTEGRAÇÃO DO MENU COM O JOGO
 // ==========================================
 
 let gameStarted = false;
@@ -788,20 +788,20 @@ function initializeMenu() {
     const backButton = document.getElementById("backButton");
     const bestScoreElement = document.getElementById("bestScore");
 
-    if (!menu || !playButton || !settingsButton ||
-        !settingsPanel || !backButton) {
-
-        console.error(
-            "[ON RED] Erro: elementos do menu não encontrados."
-        );
-
+    if (
+        !menu ||
+        !playButton ||
+        !settingsButton ||
+        !settingsPanel ||
+        !backButton
+    ) {
+        console.error("[ON RED] Elementos do menu não encontrados.");
         return;
     }
 
     // CARREGAR MELHOR PONTUAÇÃO
 
     try {
-
         const bestScore = Number(
             localStorage.getItem("onRedBestScore") || 0
         );
@@ -810,14 +810,8 @@ function initializeMenu() {
             bestScoreElement.textContent =
                 String(bestScore).padStart(6, "0");
         }
-
     } catch (error) {
-
-        console.warn(
-            "[ON RED] Não foi possível carregar a pontuação.",
-            error
-        );
-
+        console.warn("[ON RED] Erro ao carregar pontuação:", error);
     }
 
     // ABRIR CONFIGURAÇÕES
@@ -832,7 +826,7 @@ function initializeMenu() {
         settingsPanel.classList.add("hidden");
     });
 
-    // INICIAR JOGO
+    // INICIAR ARENA
 
     playButton.addEventListener("click", () => {
 
@@ -843,17 +837,20 @@ function initializeMenu() {
         settingsPanel.classList.add("hidden");
         menu.classList.add("hidden");
 
+        resizeCanvas();
+
         lastFrameTime = 0;
 
-        requestAnimationFrame(gameLoop);
+        console.log("[ON RED] Arena iniciada.");
 
+        requestAnimationFrame(gameLoop);
     });
 
-    console.log("[ON RED] Menu inicializado.");
+    console.log("[ON RED] Menu integrado com sucesso.");
 }
 
 // ==========================================
-// PREPARAÇÃO DO JOGO
+// INICIALIZAÇÃO
 // ==========================================
 
 resizeCanvas();
