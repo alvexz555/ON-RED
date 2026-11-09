@@ -832,67 +832,11 @@ document.addEventListener(
 
 let gameStarted = false;
 
-function initializeMenu() {
-
-    const menu = document.getElementById("mainMenu");
-    menu.style.position = "fixed";
-    menu.style.inset = "0";
-    menu.style.zIndex = "10";
-    menu.style.pointerEvents = "auto";
-    const playButton = document.getElementById("playButton");
-    const settingsButton = document.getElementById("settingsButton");
-    const settingsPanel = document.getElementById("settingsPanel");
-    const backButton = document.getElementById("backButton");
-    const bestScoreElement = document.getElementById("bestScore");
-
-    if (
-        !menu ||
-        !playButton ||
-        !settingsButton ||
-        !settingsPanel ||
-        !backButton
-    ) {
-        console.error("[ON RED] Elementos do menu não encontrados.");
-        return;
-    }
-
-    // CARREGAR MELHOR PONTUAÇÃO
-
-    try {
-        const bestScore = Number(
-            localStorage.getItem("onRedBestScore") || 0
-        );
-
-        if (bestScoreElement) {
-            bestScoreElement.textContent =
-                String(bestScore).padStart(6, "0");
-        }
-    } catch (error) {
-        console.warn("[ON RED] Erro ao carregar pontuação:", error);
-    }
-
-    // ABRIR CONFIGURAÇÕES
-
-    settingsButton.addEventListener("click", () => {
-        settingsPanel.classList.remove("hidden");
-    });
-
-    // FECHAR CONFIGURAÇÕES
-
-    backButton.addEventListener("click", () => {
-        settingsPanel.classList.add("hidden");
-    });
-
-    // INICIAR ARENA
-
-playButton.addEventListener("click", () => {
+document.addEventListener("onred:start", () => {
 
     if (gameStarted) return;
 
     gameStarted = true;
-
-    settingsPanel.classList.add("hidden");
-    menu.classList.add("hidden");
 
     resizeCanvas();
 
@@ -900,17 +844,13 @@ playButton.addEventListener("click", () => {
 
     lastFrameTime = 0;
 
-        console.log("[ON RED] Arena iniciada.");
+    console.log("[ON RED] Arena iniciada.");
 
-        requestAnimationFrame(gameLoop);
-    });
-
-    console.log("[ON RED] Menu integrado com sucesso.");
-}
+    requestAnimationFrame(gameLoop);
+});
 
 // ==========================================
 // INICIALIZAÇÃO
 // ==========================================
 
 resizeCanvas();
-initializeMenu();
