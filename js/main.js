@@ -67,14 +67,23 @@ function updatePerfectButtonPosition() {
         canvas.height - perfectButton.margin - perfectButton.size;
 }
 
+
 function activatePerfectTiming() {
-    if (perfectButton.charge < 1) return;
+
+    if (perfectButton.charge < 1) {
+        return false;
+    }
 
     perfectButton.charge = 0;
     perfectButton.activationFlash = 0.2;
 
+    console.log("[ON RED] PERFECT TIMING ativado!");
+
     // Integração com colisões preservada.
+
+    return true;
 }
+
 
 // ==========================================
 // LIMITES DA ARENA
@@ -118,22 +127,36 @@ function constrainObstaclesToArena() {
 // CONTROLES DE TOQUE
 // ==========================================
 
+
 function pointerDown(event) {
     event.preventDefault();
 
+    // Ignorar entradas que não sejam toque ou mouse.
+    if (
+        event.pointerType !== "touch" &&
+        event.pointerType !== "mouse" &&
+        event.pointerType !== "pen"
+    ) {
+        return;
+    }
+
     const pos = getPosition(event);
 
+    // ÁREA DE TOQUE AMPLIADA
+    const hitboxPadding = 20;
+
     const insideButton =
-        pos.x >= perfectButton.x &&
-        pos.x <= perfectButton.x + perfectButton.size &&
-        pos.y >= perfectButton.y &&
-        pos.y <= perfectButton.y + perfectButton.size;
+        pos.x >= perfectButton.x - hitboxPadding &&
+        pos.x <= perfectButton.x + perfectButton.size + hitboxPadding &&
+        pos.y >= perfectButton.y - hitboxPadding &&
+        pos.y <= perfectButton.y + perfectButton.size + hitboxPadding;
 
     if (insideButton) {
         activatePerfectTiming();
         return;
     }
 
+    // JOYSTICK
     if (joystick.active) return;
 
     const dx = pos.x - joystick.baseX;
