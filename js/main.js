@@ -230,32 +230,47 @@ function updatePerfectButton(deltaTime) {
 // ==========================================
 
 function resizeCanvas() {
+function resizeCanvas() {
 
-    const oldWidth = canvas.width;
-    const oldHeight = canvas.height;
+    // REMOVER MARGENS E ROLAGEM DO NAVEGADOR
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    document.documentElement.style.margin = "0";
+    document.documentElement.style.padding = "0";
+    document.documentElement.style.overflow = "hidden";
 
-    if (oldWidth > 0 && oldHeight > 0) {
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.overflow = "hidden";
 
-        player.x =
-            (player.x / oldWidth) * canvas.width;
+    // FIXAR CANVAS NA ÁREA VISÍVEL
 
-        player.y =
-            (player.y / oldHeight) * canvas.height;
+    canvas.style.position = "fixed";
+    canvas.style.left = "0";
+    canvas.style.top = "0";
+    canvas.style.display = "block";
+    canvas.style.margin = "0";
+    canvas.style.padding = "0";
 
-    } else {
+    // DIMENSÕES REAIS DA TELA
 
-        player.x = canvas.width / 2;
-        player.y = canvas.height / 2;
-    }
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    canvas.style.width = `${screenWidth}px`;
+    canvas.style.height = `${screenHeight}px`;
+
+    canvas.width = screenWidth;
+    canvas.height = screenHeight;
+
+    // POSICIONAR CONTROLES
 
     joystick.baseY = canvas.height - 90;
 
     updatePerfectButtonPosition();
 
     resetJoystick();
+
+    // REAPLICAR LIMITES FÍSICOS
 
     constrainPlayerToArena();
     constrainObstaclesToArena();
