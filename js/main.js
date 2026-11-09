@@ -779,4 +779,4 @@ document.addEventListener(
 // ==========================================
 
 resizeCanvas();
-gameLoop();
+initializeMenu();
