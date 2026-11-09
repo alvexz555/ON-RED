@@ -2,12 +2,13 @@
 /*
  * ON RED
  * MAIN GAME
- * Version: 1.0
+ * Version: 1.1
  *
  * Canvas 2D
  * Joystick virtual
  * Perfect Timing
  * Obstáculos com perseguição e separação
+ * Limites físicos da arena
  */
 
 // ==========================================
@@ -73,7 +74,45 @@ function activatePerfectTiming() {
     perfectButton.charge = 0;
     perfectButton.activationFlash = 0.2;
 
-    // Integração com colisões será feita posteriormente.
+    // Integração com colisões preservada.
+}
+
+// ==========================================
+// LIMITES DA ARENA
+// ==========================================
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function constrainPlayerToArena() {
+
+    const minX = Math.min(player.radius, canvas.width / 2);
+    const maxX = Math.max(canvas.width - player.radius, canvas.width / 2);
+
+    const minY = Math.min(player.radius, canvas.height / 2);
+    const maxY = Math.max(canvas.height - player.radius, canvas.height / 2);
+
+    player.x = clamp(player.x, minX, maxX);
+    player.y = clamp(player.y, minY, maxY);
+}
+
+function constrainObstaclesToArena() {
+
+    const half = obstacleConfig.size / 2;
+
+    const minX = Math.min(half, canvas.width / 2);
+    const maxX = Math.max(canvas.width - half, canvas.width / 2);
+
+    const minY = Math.min(half, canvas.height / 2);
+    const maxY = Math.max(canvas.height - half, canvas.height / 2);
+
+    perfectObstacles.forEach(obstacle => {
+
+        obstacle.x = clamp(obstacle.x, minX, maxX);
+        obstacle.y = clamp(obstacle.y, minY, maxY);
+
+    });
 }
 
 // ==========================================
@@ -130,7 +169,9 @@ function pointerUp(event) {
 // ==========================================
 
 function updatePerfectButton(deltaTime) {
+
     if (perfectButton.charge < 1) {
+
         perfectButton.charge +=
             deltaTime / perfectButton.cooldown;
 
@@ -139,6 +180,7 @@ function updatePerfectButton(deltaTime) {
     }
 
     if (perfectButton.activationFlash > 0) {
+
         perfectButton.activationFlash -= deltaTime;
 
         perfectButton.activationFlash =
@@ -151,16 +193,35 @@ function updatePerfectButton(deltaTime) {
 // ==========================================
 
 function resizeCanvas() {
+
+    const oldWidth = canvas.width;
+    const oldHeight = canvas.height;
+
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    player.x = canvas.width / 2;
-    player.y = canvas.height / 2;
+    if (oldWidth > 0 && oldHeight > 0) {
+
+        player.x =
+            (player.x / oldWidth) * canvas.width;
+
+        player.y =
+            (player.y / oldHeight) * canvas.height;
+
+    } else {
+
+        player.x = canvas.width / 2;
+        player.y = canvas.height / 2;
+    }
 
     joystick.baseY = canvas.height - 90;
 
     updatePerfectButtonPosition();
+
     resetJoystick();
+
+    constrainPlayerToArena();
+    constrainObstaclesToArena();
 }
 
 // ==========================================
@@ -168,6 +229,7 @@ function resizeCanvas() {
 // ==========================================
 
 function resetJoystick() {
+
     joystick.x = 0;
     joystick.y = 0;
 
@@ -179,6 +241,7 @@ function resetJoystick() {
 }
 
 function getPosition(event) {
+
     const rect = canvas.getBoundingClientRect();
 
     return {
@@ -188,6 +251,7 @@ function getPosition(event) {
 }
 
 function updateJoystick(event) {
+
     const pos = getPosition(event);
 
     const dx = pos.x - joystick.baseX;
@@ -201,6 +265,7 @@ function updateJoystick(event) {
     );
 
     if (distance > 0) {
+
         const angle = Math.atan2(dy, dx);
 
         joystick.knobX =
@@ -220,6 +285,7 @@ function updateJoystick(event) {
         joystick.y = (dy / distance) * strength;
 
     } else {
+
         joystick.x = 0;
         joystick.y = 0;
 
@@ -248,6 +314,7 @@ let spawnTimer = 0;
 // ==========================================
 
 function spawnPerfectObstacle() {
+
     if (
         perfectObstacles.length >=
         obstacleConfig.maxObstacles
@@ -261,6 +328,7 @@ function spawnPerfectObstacle() {
     let y;
 
     switch (side) {
+
         case 0:
             x = Math.random() * canvas.width;
             y = -40;
@@ -282,7 +350,7 @@ function spawnPerfectObstacle() {
             break;
     }
 
-        perfectObstacles.push({
+    perfectObstacles.push({
         x,
         y,
         vx: 0,
@@ -308,7 +376,9 @@ function updatePerfectObstacles(deltaTime) {
     spawnTimer += deltaTime;
 
     if (spawnTimer >= obstacleConfig.spawnInterval) {
+
         spawnTimer = 0;
+
         spawnPerfectObstacle();
     }
 
@@ -324,14 +394,14 @@ function updatePerfectObstacles(deltaTime) {
     perfectObstacles.forEach((obstacle, index) => {
 
         const desired = ObstacleAI.getDesiredVelocity(
-    obstacle,
-    index,
-    player,
-    obstacleConfig.speed
-);
+            obstacle,
+            index,
+            player,
+            obstacleConfig.speed
+        );
 
-const chaseX = desired.x;
-const chaseY = desired.y;
+        const chaseX = desired.x;
+        const chaseY = desired.y;
 
         // COMBINAR PERSEGUIÇÃO E REPULSÃO
 
@@ -355,16 +425,20 @@ const chaseY = desired.y;
 
         obstacle.x += obstacle.vx * deltaTime;
         obstacle.y += obstacle.vy * deltaTime;
-    }); 
 
+    });
 
-    // FÍSICA DE SEPARAÇÃO DOS OBSTÁCULOS
+    // SEPARAÇÃO FÍSICA
 
     ObstaclePhysics.separate(
         perfectObstacles,
         obstacleConfig.size,
         deltaTime
     );
+
+    // LIMITES APLICADOS APÓS TODA A FÍSICA
+
+    constrainObstaclesToArena();
 }
 
 // ==========================================
@@ -381,17 +455,34 @@ function update(deltaTime) {
     player.y +=
         joystick.y * player.speed * deltaTime * 60;
 
+    // LIMITES DO JOGADOR
+
+    constrainPlayerToArena();
+
     // SISTEMAS DO JOGO
 
     updatePerfectObstacles(deltaTime);
+
     updatePerfectButton(deltaTime);
 }
 
-///==========================================
-/// DESENHO DA ARENA
-///==========================================
+// ==========================================
+// DESENHO DA ARENA
+// ==========================================
 
 function drawArena() {
+
+    // FUNDO BASE OPACO
+
+    ctx.fillStyle = "#03060d";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
     const hexSize = 28;
     const hexWidth = Math.sqrt(3) * hexSize;
     const hexHeight = hexSize * 1.5;
@@ -401,11 +492,13 @@ function drawArena() {
         row < canvas.height / hexHeight + 2;
         row++
     ) {
+
         for (
             let col = -1;
             col < canvas.width / hexWidth + 2;
             col++
         ) {
+
             const x = col * hexWidth +
                 (row % 2) * hexWidth / 2;
 
@@ -414,6 +507,7 @@ function drawArena() {
             ctx.beginPath();
 
             for (let i = 0; i < 6; i++) {
+
                 const angle =
                     (Math.PI / 180) * (60 * i - 30);
 
@@ -434,6 +528,7 @@ function drawArena() {
 
             ctx.strokeStyle = "rgba(22, 139, 255, 0.22)";
             ctx.lineWidth = 1;
+
             ctx.stroke();
         }
     }
@@ -443,8 +538,8 @@ function drawArena() {
 // DESENHO DO JOGADOR
 // ==========================================
 
-
 function drawPlayer() {
+
     ctx.save();
 
     ctx.shadowColor = "#ff2525";
@@ -466,6 +561,7 @@ function drawPlayer() {
     ctx.shadowBlur = 0;
 
     ctx.beginPath();
+
     ctx.arc(
         player.x - 4,
         player.y - 4,
@@ -627,8 +723,8 @@ function draw() {
         canvas.width,
         canvas.height
     );
-    
-    drawArena(); 
+
+    drawArena();
     drawPerfectObstacles();
     drawPlayer();
     drawJoystick();
@@ -684,4 +780,3 @@ document.addEventListener(
 
 resizeCanvas();
 gameLoop();
-                
