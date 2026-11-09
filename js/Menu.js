@@ -2,7 +2,7 @@
 /*
  * ON RED
  * MENU MODULE
- * Version: 1.0
+ * Version: 1.1 - Diagnostic
  */
 
 const ONREDMenu = (() => {
@@ -16,41 +16,51 @@ const ONREDMenu = (() => {
         bestScore: document.getElementById("bestScore")
     };
 
-    function loadBestScore() {
+    function checkElements() {
+        for (const [name, element] of Object.entries(elements)) {
+            if (!element) {
+                console.error(`[ON RED] Elemento não encontrado: ${name}`);
+                return false;
+            }
+        }
 
-        const score = Number(
-            localStorage.getItem("onRedBestScore") || 0
-        );
+        return true;
+    }
+
+    function loadBestScore() {
+        let score = 0;
+
+        try {
+            score = Number(
+                localStorage.getItem("onRedBestScore") || 0
+            );
+        } catch (error) {
+            console.warn("[ON RED] Não foi possível acessar o recorde.", error);
+        }
 
         elements.bestScore.textContent =
             String(score).padStart(6, "0");
     }
 
     function showMenu() {
-
         elements.container.classList.remove("hidden");
         elements.settingsPanel.classList.add("hidden");
-
         loadBestScore();
     }
 
     function hideMenu() {
-
         elements.container.classList.add("hidden");
     }
 
     function openSettings() {
-
         elements.settingsPanel.classList.remove("hidden");
     }
 
     function closeSettings() {
-
         elements.settingsPanel.classList.add("hidden");
     }
 
     function startGame() {
-
         hideMenu();
 
         document.dispatchEvent(
@@ -59,23 +69,20 @@ const ONREDMenu = (() => {
     }
 
     function initialize() {
+        console.log("[ON RED] Inicializando menu...");
 
-        elements.play.addEventListener(
-            "click",
-            startGame
-        );
+        if (!checkElements()) {
+            console.error("[ON RED] Falha na inicialização do menu.");
+            return;
+        }
 
-        elements.settings.addEventListener(
-            "click",
-            openSettings
-        );
-
-        elements.back.addEventListener(
-            "click",
-            closeSettings
-        );
+        elements.play.addEventListener("click", startGame);
+        elements.settings.addEventListener("click", openSettings);
+        elements.back.addEventListener("click", closeSettings);
 
         showMenu();
+
+        console.log("[ON RED] Menu inicializado com sucesso.");
     }
 
     return {
