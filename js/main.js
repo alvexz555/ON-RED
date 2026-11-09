@@ -84,6 +84,21 @@ function activatePerfectTiming() {
     return true;
 }
 
+// ==========================================
+// SPAWN INICIAL DO JOGADOR
+// ==========================================
+
+function spawnPlayer() {
+
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+
+    console.log(
+        "[ON RED] Player spawned:",
+        player.x,
+        player.y
+    );
+}
 
 // ==========================================
 // LIMITES DA ARENA
@@ -851,18 +866,20 @@ function initializeMenu() {
 
     // INICIAR ARENA
 
-    playButton.addEventListener("click", () => {
+playButton.addEventListener("click", () => {
 
-        if (gameStarted) return;
+    if (gameStarted) return;
 
-        gameStarted = true;
+    gameStarted = true;
 
-        settingsPanel.classList.add("hidden");
-        menu.classList.add("hidden");
+    settingsPanel.classList.add("hidden");
+    menu.classList.add("hidden");
 
-        resizeCanvas();
+    resizeCanvas();
 
-        lastFrameTime = 0;
+    spawnPlayer();
+
+    lastFrameTime = 0;
 
         console.log("[ON RED] Arena iniciada.");
 
