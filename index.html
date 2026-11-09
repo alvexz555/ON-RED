@@ -1,52 +1,87 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+    <meta name="theme-color" content="#080B12">
+
     <title>ON RED</title>
 
-    <style>
-        * {
-            margin: 0 !important;
-            padding: 0 !important;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background: #03060d;
-        }
-
-        body {
-            position: fixed;
-            inset: 0;
-            user-select: none;
-            -webkit-user-select: none;
-            touch-action: none;
-        }
-
-        #gameCanvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            display: block;
-            width: 100vw;
-            height: 100vh;
-            border: none;
-            outline: none;
-            touch-action: none;
-        }
-    </style>
+    <link rel="stylesheet" href="./css/style.css">
+    <link rel="stylesheet" href="./css/menu.css">
 </head>
 
 <body>
+
+    <!-- GAME CANVAS -->
     <canvas id="gameCanvas"></canvas>
 
+    <!-- MAIN MENU -->
+    <main id="mainMenu" class="main-menu">
+
+        <div class="menu-content">
+
+            <header class="menu-header">
+                <div class="game-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <p class="game-subtitle">
+                    SURVIVE · PERFECT TIMING · MERGE
+                </p>
+            </header>
+
+            <section class="menu-actions">
+
+                <button id="playButton" class="menu-button play-button">
+                    <span>PLAY</span>
+                    <span class="button-arrow">›</span>
+                </button>
+
+                <div class="score-panel">
+                    <span class="score-label">BEST SCORE</span>
+                    <span id="bestScore" class="score-value">000000</span>
+                </div>
+
+                <button id="settingsButton" class="menu-button settings-button">
+                    SETTINGS
+                </button>
+
+            </section>
+
+            <footer class="menu-footer">
+                <span>ARCADE SURVIVAL</span>
+                <span>ON RED · V1.0</span>
+            </footer>
+
+        </div>
+
+        <!-- SETTINGS -->
+        <section id="settingsPanel" class="settings-panel hidden">
+
+            <h2>SETTINGS</h2>
+
+            <p>CONFIGURAÇÕES</p>
+
+            <button id="backButton" class="menu-button">
+                BACK
+            </button>
+
+        </section>
+
+    </main>
+
+    <!-- GAME MODULES -->
     <script src="./js/obstaclePhysics.js"></script>
     <script src="./js/obstacleAI.js"></script>
+
+    <!-- MENU MODULE -->
+    <script src="./js/menu.js"></script>
+
+    <!-- MAIN GAME -->
     <script src="./js/main.js"></script>
+
 </body>
 </html>
