@@ -228,8 +228,6 @@ function updatePerfectButton(deltaTime) {
 // ==========================================
 // DIMENSÕES DA TELA
 // ==========================================
-
-function resizeCanvas() {
 function resizeCanvas() {
 
     // REMOVER MARGENS E ROLAGEM DO NAVEGADOR
