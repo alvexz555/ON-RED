@@ -832,14 +832,12 @@ document.addEventListener(
 
 let gameStarted = false;
 
-document.addEventListener("onred:start", () => {
-
+window.startONREDGame = function () {
     if (gameStarted) return;
 
     gameStarted = true;
 
     resizeCanvas();
-
     spawnPlayer();
 
     lastFrameTime = 0;
@@ -847,7 +845,7 @@ document.addEventListener("onred:start", () => {
     console.log("[ON RED] Arena iniciada.");
 
     requestAnimationFrame(gameLoop);
-});
+};
 
 // ==========================================
 // INICIALIZAÇÃO
