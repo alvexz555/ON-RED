@@ -767,6 +767,7 @@ function drawPerfectButton() {
 // DESENHO GERAL
 // ==========================================
 
+
 function draw() {
 
     ctx.clearRect(
@@ -781,7 +782,13 @@ function draw() {
     drawPlayer();
     drawJoystick();
     drawPerfectButton();
+
+    // HEALTH UI
+    if (window.ONREDHealthUI) {
+        window.ONREDHealthUI.draw(ctx, canvas);
+    }
 }
+
 
 // ==========================================
 // LOOP PRINCIPAL
