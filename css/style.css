@@ -9,8 +9,7 @@
     box-sizing: border-box;
 }
 
-html,
-body {
+html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
@@ -23,26 +22,21 @@ body {
     user-select: none;
     -webkit-user-select: none;
     touch-action: none;
-    font-family: Arial, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 button {
-    font-family: inherit;
+    font: inherit;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 }
-
-/* =================================
-   GAME CANVAS
-================================= */
 
 #gameCanvas {
     position: fixed;
     inset: 0;
     display: block;
-    width: 100%;
-    height: 100%;
-    z-index: 1;
+    width: 100vw;
+    height: 100vh;
     touch-action: none;
 }
 
@@ -54,61 +48,27 @@ button {
     position: fixed;
     inset: 0;
     z-index: 100;
+
     display: none;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-    isolation: isolate;
+
+    padding: 24px;
 
     background:
         radial-gradient(
-            ellipse at 50% 42%,
-            rgba(150, 0, 20, 0.75) 0%,
-            rgba(75, 0, 12, 0.94) 42%,
-            #160207 100%
-        );
+            circle at center,
+            rgba(125, 12, 24, 0.15),
+            transparent 55%
+        ),
+        rgba(3, 6, 13, 0.96);
+
+    opacity: 0;
 }
 
 .game-over-screen.active {
     display: flex;
-    animation: gameOverAppear 0.7s ease-out both;
-}
-
-/* Luz vermelha de fundo */
-
-.game-over-screen::before {
-    content: "";
-    position: absolute;
-    inset: -30%;
-    z-index: -1;
-
-    background:
-        radial-gradient(
-            circle at 50% 45%,
-            rgba(255, 0, 35, 0.25),
-            transparent 45%
-        );
-
-    animation: redPulse 4s ease-in-out infinite;
-}
-
-/* Textura sutil */
-
-.game-over-screen::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
-
-    background: repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent 3px,
-        rgba(0, 0, 0, 0.12) 4px
-    );
-
-    opacity: 0.35;
+    animation: gameOverAppear 0.35s ease forwards;
 }
 
 /* =================================
@@ -116,16 +76,21 @@ button {
 ================================= */
 
 .game-over-content {
-    width: min(90%, 440px);
+    width: 100%;
+    max-width: 360px;
+
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 34px;
-    padding: 30px 10px;
 
-    animation: contentAppear 0.9s ease-out both;
+    gap: 38px;
+
+    text-align: center;
 }
+
+/* =================================
+   HEADER
+================================= */
 
 .game-over-header {
     display: flex;
@@ -135,162 +100,76 @@ button {
 }
 
 .game-over-logo {
-    color: #ffffff;
-    font-size: 20px;
+    color: #FFFFFF;
+    font-size: 27px;
     font-weight: 900;
     letter-spacing: 5px;
 }
 
 .game-over-logo span {
-    color: #ff263d;
+    color: #FF3030;
 }
 
 .game-over-label {
-    color: #ff7b88;
+    color: #778397;
     font-size: 9px;
-    letter-spacing: 4px;
     font-weight: bold;
+    letter-spacing: 3px;
 }
 
 /* =================================
-   MELTING TITLE
+   GAME OVER MESSAGE
 ================================= */
 
 .game-over-message {
     width: 100%;
+
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 24px;
+
+    gap: 15px;
+}
+
+.game-over-message h1 {
+    color: #FF3030;
+
+    font-size: clamp(35px, 10vw, 48px);
+    font-weight: 900;
+
+    letter-spacing: 3px;
+
+    text-shadow:
+        0 0 12px rgba(255, 48, 48, 0.35),
+        0 0 35px rgba(255, 48, 48, 0.12);
+}
+
+.game-over-message p {
+    color: #A3ADBC;
+
+    font-size: 10px;
+    font-weight: bold;
+
+    letter-spacing: 3px;
 }
 
 .game-over-line {
-    display: block;
-    width: 72%;
-    height: 1px;
+    width: 65px;
+    height: 2px;
 
-    background: linear-gradient(
-        90deg,
-        transparent,
-        #ff263d,
-        transparent
-    );
+    background: #FF3030;
 
-    box-shadow: 0 0 12px rgba(255, 0, 35, 0.8);
-}
-
-.melting-title {
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    white-space: nowrap;
-
-    color: #ff263d;
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: clamp(43px, 11vw, 62px);
-    font-weight: 900;
-    letter-spacing: -1.5px;
-    line-height: 1.2;
-
-    text-shadow:
-        0 0 8px rgba(255, 0, 35, 0.9),
-        0 0 22px rgba(255, 0, 35, 0.55),
-        0 4px 0 #8b0017;
-
-    filter: drop-shadow(0 0 12px rgba(255, 0, 35, 0.3));
-}
-
-.melt-letter {
-    position: relative;
-    display: inline-block;
-    overflow: visible;
-}
-
-.word-gap {
-    display: inline-block;
-    width: 0.35em;
-}
-
-/* Gotas de derretimento */
-
-.drip {
-    position: absolute;
-    display: block;
-    top: 76%;
-
-    width: 5px;
-    height: 15px;
-
-    background: linear-gradient(
-        to bottom,
-        #ff263d 0%,
-        #ed001f 65%,
-        #990018 100%
-    );
-
-    border-radius: 0 0 8px 8px;
-
-    transform-origin: top center;
-    animation: dripFlow 2.8s ease-in-out infinite;
-}
-
-.drip::after {
-    content: "";
-    position: absolute;
-    bottom: -4px;
-    left: 50%;
-    width: 6px;
-    height: 7px;
-
-    background: #ed001f;
-    border-radius: 50%;
-
-    transform: translateX(-50%);
-    box-shadow: 0 0 7px rgba(255, 0, 35, 0.7);
-}
-
-.drip-a {
-    left: 25%;
-}
-
-.drip-b {
-    left: 75%;
-    height: 9px;
-    animation-delay: -1.2s;
-}
-
-/* Variação individual das letras */
-
-.melt-1 .drip-a { height: 19px; }
-.melt-2 .drip-b { height: 17px; }
-.melt-3 .drip-a { height: 12px; }
-.melt-4 .drip-b { height: 20px; }
-.melt-5 .drip-a { height: 16px; }
-.melt-6 .drip-b { height: 13px; }
-.melt-7 .drip-a { height: 21px; }
-.melt-8 .drip-b { height: 16px; }
-
-.melt-2 .drip-a { animation-delay: -0.7s; }
-.melt-3 .drip-b { animation-delay: -1.5s; }
-.melt-4 .drip-a { animation-delay: -2s; }
-.melt-5 .drip-b { animation-delay: -0.9s; }
-.melt-6 .drip-a { animation-delay: -1.8s; }
-.melt-7 .drip-b { animation-delay: -0.4s; }
-.melt-8 .drip-a { animation-delay: -1.3s; }
-
-.game-over-subtitle {
-    color: #ff9ba5;
-    font-size: 10px;
-    font-weight: bold;
-    letter-spacing: 5px;
+    box-shadow:
+        0 0 10px rgba(255, 48, 48, 0.5);
 }
 
 /* =================================
-   GAME OVER BUTTONS
+   ACTIONS
 ================================= */
 
 .game-over-actions {
-    width: min(100%, 270px);
+    width: 100%;
+
     display: flex;
     flex-direction: column;
     gap: 13px;
@@ -298,52 +177,67 @@ button {
 
 .game-over-button {
     width: 100%;
-    min-height: 52px;
+    min-height: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 12px;
+
+    border: 1px solid transparent;
     border-radius: 5px;
 
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 900;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
 
     transition:
-        transform 0.18s ease,
-        box-shadow 0.18s ease,
-        background 0.18s ease;
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.15s ease;
 }
 
 .game-over-button:active {
-    transform: scale(0.96);
+    transform: scale(0.97);
 }
+
+/* =================================
+   RETRY BUTTON
+================================= */
 
 .retry-button {
-    color: #ffffff;
-    background: #e9002b;
-    border: 1px solid #ff5269;
+    color: #FFFFFF;
+    background: #E92735;
 
     box-shadow:
-        0 0 15px rgba(255, 0, 40, 0.35),
-        inset 0 0 12px rgba(255, 255, 255, 0.08);
-}
-
-.retry-button span {
-    margin-left: 8px;
-    font-size: 17px;
+        0 0 20px rgba(233, 39, 53, 0.16);
 }
 
 .retry-button:hover {
-    background: #ff1740;
-    box-shadow: 0 0 25px rgba(255, 0, 40, 0.6);
+    background: #FF3545;
 }
 
+.retry-button span {
+    font-size: 22px;
+    line-height: 1;
+}
+
+/* =================================
+   MAIN MENU BUTTON
+================================= */
+
 .menu-return-button {
-    color: #ff7b88;
-    background: rgba(35, 0, 8, 0.7);
-    border: 1px solid rgba(255, 38, 61, 0.45);
+    color: #DCE3ED;
+
+    background: #111925;
+
+    border-color: #263447;
 }
 
 .menu-return-button:hover {
-    color: #ffffff;
-    background: rgba(120, 0, 20, 0.55);
+    background: #192536;
+    border-color: #168BFF;
 }
 
 /* =================================
@@ -351,57 +245,25 @@ button {
 ================================= */
 
 .game-over-footer {
-    color: rgba(255, 120, 135, 0.5);
-    font-size: 8px;
-    letter-spacing: 3px;
+    color: #465164;
+
+    font-size: 9px;
+    font-weight: bold;
+
+    letter-spacing: 2px;
 }
 
 /* =================================
-   ANIMATIONS
+   ANIMATION
 ================================= */
 
 @keyframes gameOverAppear {
+
     from {
         opacity: 0;
     }
 
     to {
-        opacity: 1;
-    }
-}
-
-@keyframes contentAppear {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes redPulse {
-    0%, 100% {
-        transform: scale(1);
-        opacity: 0.65;
-    }
-
-    50% {
-        transform: scale(1.12);
-        opacity: 1;
-    }
-}
-
-@keyframes dripFlow {
-    0%, 100% {
-        transform: translateY(0) scaleY(0.7);
-        opacity: 0.85;
-    }
-
-    50% {
-        transform: translateY(5px) scaleY(1.05);
         opacity: 1;
     }
 }
@@ -410,16 +272,17 @@ button {
    SMALL SCREENS
 ================================= */
 
-@media (max-width: 360px) {
+@media (max-height: 600px) {
+
     .game-over-content {
-        gap: 27px;
+        gap: 22px;
     }
 
-    .melting-title {
-        font-size: 42px;
+    .game-over-message h1 {
+        font-size: 34px;
     }
 
-    .game-over-subtitle {
-        letter-spacing: 3px;
+    .game-over-button {
+        min-height: 47px;
     }
 }
