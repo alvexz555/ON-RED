@@ -1,138 +1,140 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
-
-    <meta name="theme-color" content="#080B12">
-
-    <meta name="description" content="ON RED - Arcade Survival">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ON RED</title>
-
-    <!-- GLOBAL STYLES -->
     <link rel="stylesheet" href="./css/style.css">
-
-    <!-- MENU STYLES -->
-    <link rel="stylesheet" href="./css/menu.css">
 </head>
-
 <body>
 
-    <!-- GAME CANVAS -->
+    <!-- MENU PRINCIPAL -->
+    <main id="mainMenu" class="main-menu">
+        <div class="menu-content">
+            <div class="logo">ON <span>RED</span></div>
+
+            <button id="playButton">PLAY</button>
+            <button id="settingsButton">SETTINGS</button>
+
+            <div id="settingsPanel" class="settings-panel">
+                <button id="backButton">BACK</button>
+            </div>
+
+            <div class="menu-footer">
+                <span>ARCADE SURVIVAL</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- GAME -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- MAIN MENU -->
-    <main id="mainMenu" class="main-menu">
+    <!-- GAME OVER -->
+    <section
+        id="gameOverScreen"
+        class="game-over-screen"
+        aria-hidden="true"
+    >
+        <div class="game-over-content">
 
-        <div class="menu-content">
-
-            <!-- GAME LOGO -->
-            <header class="menu-header">
-
-                <div class="game-logo">
+            <header class="game-over-header">
+                <div class="game-over-logo">
                     ON <span>RED</span>
                 </div>
 
-                <p class="game-subtitle">
-                    SURVIVE · PERFECT TIMING · MERGE
-                </p>
-
+                <span class="game-over-label">
+                    SURVIVAL TERMINATED
+                </span>
             </header>
 
-            <!-- MENU ACTIONS -->
-            <section class="menu-actions">
+            <div class="game-over-message">
 
-                <button
-                    type="button"
-                    id="playButton"
-                    class="menu-button play-button"
-                >
-                    <span>PLAY</span>
-                    <span class="button-arrow">›</span>
-                </button>
+                <span class="game-over-line"></span>
 
-                <!-- BEST SCORE -->
-                <div class="score-panel">
+                <h1 class="melting-title" aria-label="GAME OVER">
 
-                    <span class="score-label">
-                        BEST SCORE
+                    <span class="melt-letter melt-1" aria-hidden="true">G
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
                     </span>
 
-                    <span id="bestScore" class="score-value">
-                        000000
+                    <span class="melt-letter melt-2" aria-hidden="true">A
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
                     </span>
 
-                </div>
+                    <span class="melt-letter melt-3" aria-hidden="true">M
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
+                    </span>
 
-                <!-- SETTINGS BUTTON -->
+                    <span class="melt-letter melt-4" aria-hidden="true">E
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
+                    </span>
+
+                    <span class="word-gap" aria-hidden="true"></span>
+
+                    <span class="melt-letter melt-5" aria-hidden="true">O
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
+                    </span>
+
+                    <span class="melt-letter melt-6" aria-hidden="true">V
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
+                    </span>
+
+                    <span class="melt-letter melt-7" aria-hidden="true">E
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
+                    </span>
+
+                    <span class="melt-letter melt-8" aria-hidden="true">R
+                        <i class="drip drip-a"></i>
+                        <i class="drip drip-b"></i>
+                    </span>
+
+                </h1>
+
+                <p class="game-over-subtitle">
+                    YOUR RUN HAS ENDED
+                </p>
+
+                <span class="game-over-line"></span>
+
+            </div>
+
+            <div class="game-over-actions">
                 <button
-                    type="button"
-                    id="settingsButton"
-                    class="menu-button settings-button"
+                    id="retryButton"
+                    class="game-over-button retry-button"
                 >
-                    SETTINGS
+                    RETRY <span>↻</span>
                 </button>
 
-            </section>
+                <button
+                    id="gameOverMenuButton"
+                    class="game-over-button menu-return-button"
+                >
+                    MAIN MENU
+                </button>
+            </div>
 
-            <!-- FOOTER -->
-            <footer class="menu-footer">
-
-                <span>ARCADE SURVIVAL</span>
-                <span>ON RED · V1.0</span>
-
+            <footer class="game-over-footer">
+                ON RED · ARCADE SURVIVAL
             </footer>
 
         </div>
+    </section>
 
-        <!-- SETTINGS PANEL -->
-        <section
-            id="settingsPanel"
-            class="settings-panel hidden"
-        >
-
-            <h2>SETTINGS</h2>
-
-            <p>CONFIGURAÇÕES</p>
-
-            <button
-                type="button"
-                id="backButton"
-                class="menu-button"
-            >
-                BACK
-            </button>
-
-        </section>
-
-    </main>
-
-    <!-- GAME PHYSICS -->
+    <!-- SCRIPTS -->
     <script src="./js/obstaclePhysics.js"></script>
-
-    <!-- OBSTACLE AI -->
     <script src="./js/obstacleAI.js"></script>
-
-    <!-- MENU SYSTEM -->
     <script src="./js/menu.js"></script>
-
-    <!-- HEALTH SYSTEM -->
     <script src="./js/healthSystem.js"></script>
-
-    <!-- HEALTH UI -->
     <script src="./js/healthUI.js"></script>
-
-    <!-- COLLISION SYSTEM -->
     <script src="./js/collisionSystem.js"></script>
-
-    <!-- MAIN GAME ENGINE -->
     <script src="./js/main.js"></script>
 
 </body>
