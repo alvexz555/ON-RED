@@ -1,7 +1,8 @@
+
 /*
  * ON RED
  * MAIN GAME
- * Version: 1.2
+ * Version: 1.3
  *
  * Canvas 2D
  * Joystick virtual
@@ -10,6 +11,8 @@
  * Limites físicos da arena
  * Sistema de colisão e dano
  * Feedback visual de impacto
+ * Game Over
+ * Restart / Main Menu
  */
 
 // ==========================================
@@ -18,6 +21,31 @@
 
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
+
+// ==========================================
+// ELEMENTOS DA INTERFACE
+// ==========================================
+
+const mainMenu = document.getElementById("mainMenu");
+const settingsPanel = document.getElementById("settingsPanel");
+
+const gameOverScreen = document.getElementById("gameOverScreen");
+const retryButton = document.getElementById("retryButton");
+const gameOverMenuButton = document.getElementById("gameOverMenuButton");
+
+// ==========================================
+// ESTADOS DO JOGO
+// ==========================================
+
+const GAME_STATE = {
+    MENU: "MENU",
+    PLAYING: "PLAYING",
+    GAME_OVER: "GAME_OVER"
+};
+
+let gameState = GAME_STATE.MENU;
+let gameStarted = false;
+let loopRunning = false;
 
 // ==========================================
 // JOGADOR
@@ -72,6 +100,8 @@ function updatePerfectButtonPosition() {
 
 function activatePerfectTiming() {
 
+    if (gameState !== GAME_STATE.PLAYING) return false;
+
     if (perfectButton.charge < 1) {
         return false;
     }
@@ -81,7 +111,8 @@ function activatePerfectTiming() {
 
     console.log("[ON RED] PERFECT TIMING ativado!");
 
-    // Integração com colisões será implementada posteriormente.
+    // Integração com os obstáculos será implementada
+    // na etapa específica do Perfect Timing.
 
     return true;
 }
@@ -146,6 +177,8 @@ function constrainObstaclesToArena() {
 
 function pointerDown(event) {
 
+    if (gameState !== GAME_STATE.PLAYING) return;
+
     event.preventDefault();
 
     if (
@@ -187,6 +220,8 @@ function pointerDown(event) {
 }
 
 function pointerMove(event) {
+
+    if (gameState !== GAME_STATE.PLAYING) return;
 
     if (!joystick.active) return;
     if (event.pointerId !== joystick.pointerId) return;
@@ -472,6 +507,26 @@ function updatePerfectObstacles(deltaTime) {
 }
 
 // ==========================================
+// GAME OVER
+// ==========================================
+
+function triggerGameOver() {
+
+    if (gameState === GAME_STATE.GAME_OVER) return;
+
+    gameState = GAME_STATE.GAME_OVER;
+
+    resetJoystick();
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.add("active");
+        gameOverScreen.setAttribute("aria-hidden", "false");
+    }
+
+    console.log("[ON RED] GAME OVER!");
+}
+
+// ==========================================
 // SISTEMA DE COLISÃO E DANO
 // ==========================================
 
@@ -482,13 +537,14 @@ function handlePlayerCollision() {
 
     if (!collision || !health) return;
 
+    if (gameState !== GAME_STATE.PLAYING) return;
+
     const healthState = health.getState();
 
-    // Impedir dano depois do Game Over.
-
-    if (healthState.gameOver) return;
-
-    // Verificar contato entre jogador e obstáculos.
+    if (healthState.gameOver) {
+        triggerGameOver();
+        return;
+    }
 
     const hasCollision = collision.checkCollisions(
         player,
@@ -498,13 +554,9 @@ function handlePlayerCollision() {
 
     if (!hasCollision) return;
 
-    // Registrar impacto e iniciar invulnerabilidade.
-
     const registered = collision.registerCollision();
 
     if (!registered) return;
-
-    // Aplicar dano ao sistema de saúde.
 
     const result = health.applyDamage(
         collision.getState().damage
@@ -526,8 +578,7 @@ function handlePlayerCollision() {
     }
 
     if (result.gameOver) {
-
-        console.log("[ON RED] GAME OVER!");
+        triggerGameOver();
     }
 }
 
@@ -536,6 +587,8 @@ function handlePlayerCollision() {
 // ==========================================
 
 function update(deltaTime) {
+
+    if (gameState !== GAME_STATE.PLAYING) return;
 
     // MOVIMENTO DO JOGADOR
 
@@ -813,8 +866,6 @@ function draw() {
     drawPerfectObstacles();
     drawPlayer();
 
-    // EFEITO ELÉTRICO DO IMPACTO
-
     if (window.ONREDCollisionSystem) {
 
         ONREDCollisionSystem.drawImpact(
@@ -826,12 +877,147 @@ function draw() {
     drawJoystick();
     drawPerfectButton();
 
-    // INTERFACE DE VIDA E HP
-
     if (window.ONREDHealthUI) {
-
         ONREDHealthUI.draw(ctx, canvas);
     }
+}
+
+// ==========================================
+// RESET COMPLETO DA PARTIDA
+// ==========================================
+
+function resetGame() {
+
+    perfectObstacles.length = 0;
+
+    spawnTimer = 0;
+
+    resetJoystick();
+
+    perfectButton.charge = 1;
+    perfectButton.activationFlash = 0;
+
+    resizeCanvas();
+    spawnPlayer();
+
+    if (window.ONREDHealthSystem) {
+        ONREDHealthSystem.reset();
+    }
+
+    if (window.ONREDCollisionSystem) {
+        ONREDCollisionSystem.reset();
+    }
+
+    lastFrameTime = 0;
+
+    console.log("[ON RED] Partida reiniciada.");
+}
+
+// ==========================================
+// INICIAR PARTIDA
+// ==========================================
+
+window.startONREDGame = function () {
+
+    if (gameStarted) return;
+
+    gameStarted = true;
+    gameState = GAME_STATE.PLAYING;
+
+    resetGame();
+
+    if (mainMenu) {
+        mainMenu.classList.add("hidden");
+    }
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    console.log("[ON RED] Arena iniciada.");
+
+    if (!loopRunning) {
+        loopRunning = true;
+        requestAnimationFrame(gameLoop);
+    }
+};
+
+// Compatibilidade com menu.js que dispara o evento onred:start.
+document.addEventListener("onred:start", function () {
+    window.startONREDGame();
+});
+
+// ==========================================
+// REINICIAR PARTIDA
+// ==========================================
+
+function restartONREDGame() {
+
+    if (gameState !== GAME_STATE.GAME_OVER) return;
+
+    gameStarted = true;
+    gameState = GAME_STATE.PLAYING;
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (mainMenu) {
+        mainMenu.classList.add("hidden");
+    }
+
+    resetGame();
+
+    if (!loopRunning) {
+        loopRunning = true;
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// ==========================================
+// RETORNAR AO MENU PRINCIPAL
+// ==========================================
+
+function returnToMainMenu() {
+
+    if (gameState !== GAME_STATE.GAME_OVER) return;
+
+    gameState = GAME_STATE.MENU;
+    gameStarted = false;
+
+    resetJoystick();
+
+    perfectObstacles.length = 0;
+    spawnTimer = 0;
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (settingsPanel) {
+        settingsPanel.classList.add("hidden");
+    }
+
+    if (mainMenu) {
+        mainMenu.classList.remove("hidden");
+    }
+
+    console.log("[ON RED] Retornando ao menu principal.");
+}
+
+// ==========================================
+// EVENTOS DOS BOTÕES
+// ==========================================
+
+if (retryButton) {
+    retryButton.addEventListener("click", restartONREDGame);
+}
+
+if (gameOverMenuButton) {
+    gameOverMenuButton.addEventListener("click", returnToMainMenu);
 }
 
 // ==========================================
@@ -851,8 +1037,10 @@ function gameLoop(timestamp) {
 
     lastFrameTime = timestamp;
 
-    update(deltaTime);
-    draw();
+    if (gameState === GAME_STATE.PLAYING) {
+        update(deltaTime);
+        draw();
+    }
 
     requestAnimationFrame(gameLoop);
 }
@@ -878,40 +1066,9 @@ document.addEventListener(
 );
 
 // ==========================================
-// INTEGRAÇÃO DO MENU COM O JOGO
-// ==========================================
-
-let gameStarted = false;
-
-window.startONREDGame = function () {
-
-    if (gameStarted) return;
-
-    gameStarted = true;
-
-    resizeCanvas();
-    spawnPlayer();
-
-    // RESET DOS SISTEMAS
-
-    if (window.ONREDHealthSystem) {
-        ONREDHealthSystem.reset();
-    }
-
-    if (window.ONREDCollisionSystem) {
-        ONREDCollisionSystem.reset();
-    }
-
-    lastFrameTime = 0;
-
-    console.log("[ON RED] Arena iniciada.");
-
-    requestAnimationFrame(gameLoop);
-};
-
-// ==========================================
 // INICIALIZAÇÃO
 // ==========================================
 
 resizeCanvas();
 
+console.log("[ON RED] Engine carregada.");
