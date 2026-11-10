@@ -4,7 +4,17 @@
  * MENU MODULE
  * Version: 1.2 - Direct Integration
  */
-
+document.addEventListener("click", function (event) {
+    console.log(
+        "[CLICK TEST]",
+        "Elemento:",
+        event.target,
+        "ID:",
+        event.target.id,
+        "Classe:",
+        event.target.className
+    );
+}, true);
 const ONREDMenu = (() => {
     const elements = {
         container: document.getElementById("mainMenu"),
