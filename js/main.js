@@ -1,13 +1,15 @@
 /*
  * ON RED
  * MAIN GAME
- * Version: 1.1
+ * Version: 1.2
  *
  * Canvas 2D
  * Joystick virtual
  * Perfect Timing
  * Obstáculos com perseguição e separação
  * Limites físicos da arena
+ * Sistema de colisão e dano
+ * Feedback visual de impacto
  */
 
 // ==========================================
@@ -60,13 +62,13 @@ const perfectButton = {
 };
 
 function updatePerfectButtonPosition() {
+
     perfectButton.x =
         canvas.width - perfectButton.margin - perfectButton.size;
 
     perfectButton.y =
         canvas.height - perfectButton.margin - perfectButton.size;
 }
-
 
 function activatePerfectTiming() {
 
@@ -79,7 +81,7 @@ function activatePerfectTiming() {
 
     console.log("[ON RED] PERFECT TIMING ativado!");
 
-    // Integração com colisões preservada.
+    // Integração com colisões será implementada posteriormente.
 
     return true;
 }
@@ -119,7 +121,7 @@ function constrainPlayerToArena() {
     player.x = clamp(player.x, minX, maxX);
     player.y = clamp(player.y, minY, maxY);
 }
-                          
+
 function constrainObstaclesToArena() {
 
     const half = obstacleConfig.size / 2;
@@ -142,11 +144,10 @@ function constrainObstaclesToArena() {
 // CONTROLES DE TOQUE
 // ==========================================
 
-
 function pointerDown(event) {
+
     event.preventDefault();
 
-    // Ignorar entradas que não sejam toque ou mouse.
     if (
         event.pointerType !== "touch" &&
         event.pointerType !== "mouse" &&
@@ -157,7 +158,6 @@ function pointerDown(event) {
 
     const pos = getPosition(event);
 
-    // ÁREA DE TOQUE AMPLIADA
     const hitboxPadding = 20;
 
     const insideButton =
@@ -171,7 +171,6 @@ function pointerDown(event) {
         return;
     }
 
-    // JOYSTICK
     if (joystick.active) return;
 
     const dx = pos.x - joystick.baseX;
@@ -188,6 +187,7 @@ function pointerDown(event) {
 }
 
 function pointerMove(event) {
+
     if (!joystick.active) return;
     if (event.pointerId !== joystick.pointerId) return;
 
@@ -196,6 +196,7 @@ function pointerMove(event) {
 }
 
 function pointerUp(event) {
+
     if (event.pointerId !== joystick.pointerId) return;
 
     resetJoystick();
@@ -228,9 +229,8 @@ function updatePerfectButton(deltaTime) {
 // ==========================================
 // DIMENSÕES DA TELA
 // ==========================================
-function resizeCanvas() {
 
-    // REMOVER MARGENS E ROLAGEM DO NAVEGADOR
+function resizeCanvas() {
 
     document.documentElement.style.margin = "0";
     document.documentElement.style.padding = "0";
@@ -239,8 +239,6 @@ function resizeCanvas() {
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.overflow = "hidden";
-
-    // FIXAR CANVAS NA ÁREA VISÍVEL
 
     canvas.style.position = "fixed";
     canvas.style.left = "0";
@@ -251,8 +249,6 @@ function resizeCanvas() {
     canvas.style.margin = "0";
     canvas.style.padding = "0";
 
-    // DIMENSÕES REAIS DA TELA
-
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
 
@@ -262,15 +258,11 @@ function resizeCanvas() {
     canvas.width = screenWidth;
     canvas.height = screenHeight;
 
-    // POSICIONAR CONTROLES
-
     joystick.baseY = canvas.height - 90;
 
     updatePerfectButtonPosition();
 
     resetJoystick();
-
-    // REAPLICAR LIMITES FÍSICOS
 
     constrainPlayerToArena();
     constrainObstaclesToArena();
@@ -423,8 +415,6 @@ function spawnPerfectObstacle() {
 
 function updatePerfectObstacles(deltaTime) {
 
-    // CONTROLE DE SPAWN
-
     spawnTimer += deltaTime;
 
     if (spawnTimer >= obstacleConfig.spawnInterval) {
@@ -434,14 +424,10 @@ function updatePerfectObstacles(deltaTime) {
         spawnPerfectObstacle();
     }
 
-    // CALCULAR REPULSÃO
-
     const repulsions = ObstaclePhysics.calculateRepulsion(
         perfectObstacles,
         obstacleConfig.size
     );
-
-    // PERSEGUIÇÃO INDIVIDUAL
 
     perfectObstacles.forEach((obstacle, index) => {
 
@@ -454,8 +440,6 @@ function updatePerfectObstacles(deltaTime) {
 
         const chaseX = desired.x;
         const chaseY = desired.y;
-
-        // COMBINAR PERSEGUIÇÃO E REPULSÃO
 
         const repulsion = repulsions[index];
 
@@ -473,14 +457,10 @@ function updatePerfectObstacles(deltaTime) {
         obstacle.vy +=
             (desiredY - obstacle.vy) * response;
 
-        // MOVIMENTAÇÃO
-
         obstacle.x += obstacle.vx * deltaTime;
         obstacle.y += obstacle.vy * deltaTime;
 
     });
-
-    // SEPARAÇÃO FÍSICA
 
     ObstaclePhysics.separate(
         perfectObstacles,
@@ -488,9 +468,67 @@ function updatePerfectObstacles(deltaTime) {
         deltaTime
     );
 
-    // LIMITES APLICADOS APÓS TODA A FÍSICA
-
     constrainObstaclesToArena();
+}
+
+// ==========================================
+// SISTEMA DE COLISÃO E DANO
+// ==========================================
+
+function handlePlayerCollision() {
+
+    const collision = window.ONREDCollisionSystem;
+    const health = window.ONREDHealthSystem;
+
+    if (!collision || !health) return;
+
+    const healthState = health.getState();
+
+    // Impedir dano depois do Game Over.
+
+    if (healthState.gameOver) return;
+
+    // Verificar contato entre jogador e obstáculos.
+
+    const hasCollision = collision.checkCollisions(
+        player,
+        perfectObstacles,
+        obstacleConfig.size
+    );
+
+    if (!hasCollision) return;
+
+    // Registrar impacto e iniciar invulnerabilidade.
+
+    const registered = collision.registerCollision();
+
+    if (!registered) return;
+
+    // Aplicar dano ao sistema de saúde.
+
+    const result = health.applyDamage(
+        collision.getState().damage
+    );
+
+    if (!result.applied) return;
+
+    console.log(
+        "[ON RED] Player atingido! HP:",
+        result.state.hp
+    );
+
+    if (result.lifeLost) {
+
+        console.log(
+            "[ON RED] VIDA PERDIDA! Vidas restantes:",
+            result.state.lives
+        );
+    }
+
+    if (result.gameOver) {
+
+        console.log("[ON RED] GAME OVER!");
+    }
 }
 
 // ==========================================
@@ -516,6 +554,15 @@ function update(deltaTime) {
     updatePerfectObstacles(deltaTime);
 
     updatePerfectButton(deltaTime);
+
+    // SISTEMA DE COLISÃO
+
+    if (window.ONREDCollisionSystem) {
+
+        ONREDCollisionSystem.update(deltaTime);
+
+        handlePlayerCollision();
+    }
 }
 
 // ==========================================
@@ -523,8 +570,6 @@ function update(deltaTime) {
 // ==========================================
 
 function drawArena() {
-
-    // FUNDO BASE OPACO
 
     ctx.fillStyle = "#03060d";
 
@@ -660,8 +705,6 @@ function drawPerfectObstacles() {
 
 function drawJoystick() {
 
-    // BASE
-
     ctx.beginPath();
 
     ctx.arc(
@@ -674,8 +717,6 @@ function drawJoystick() {
 
     ctx.fillStyle = "rgba(180,180,180,0.3)";
     ctx.fill();
-
-    // CONTROLE
 
     ctx.beginPath();
 
@@ -707,8 +748,6 @@ function drawPerfectButton() {
     const fillHeight =
         innerSize * perfectButton.charge;
 
-    // FUNDO
-
     ctx.fillStyle = "#101820";
 
     ctx.fillRect(
@@ -717,8 +756,6 @@ function drawPerfectButton() {
         size,
         size
     );
-
-    // PREENCHIMENTO DE CARGA
 
     ctx.fillStyle = perfectButton.charge >= 1
         ? "#168BFF"
@@ -730,8 +767,6 @@ function drawPerfectButton() {
         innerSize,
         fillHeight
     );
-
-    // CONTORNO
 
     ctx.strokeStyle =
         perfectButton.activationFlash > 0
@@ -746,8 +781,6 @@ function drawPerfectButton() {
         size,
         size
     );
-
-    // TEXTO
 
     ctx.fillStyle = "#FFFFFF";
     ctx.textAlign = "center";
@@ -767,7 +800,6 @@ function drawPerfectButton() {
 // DESENHO GERAL
 // ==========================================
 
-
 function draw() {
 
     ctx.clearRect(
@@ -780,15 +812,27 @@ function draw() {
     drawArena();
     drawPerfectObstacles();
     drawPlayer();
+
+    // EFEITO ELÉTRICO DO IMPACTO
+
+    if (window.ONREDCollisionSystem) {
+
+        ONREDCollisionSystem.drawImpact(
+            ctx,
+            player
+        );
+    }
+
     drawJoystick();
     drawPerfectButton();
 
-    // HEALTH UI
+    // INTERFACE DE VIDA E HP
+
     if (window.ONREDHealthUI) {
-        window.ONREDHealthUI.draw(ctx, canvas);
+
+        ONREDHealthUI.draw(ctx, canvas);
     }
 }
-
 
 // ==========================================
 // LOOP PRINCIPAL
@@ -840,12 +884,23 @@ document.addEventListener(
 let gameStarted = false;
 
 window.startONREDGame = function () {
+
     if (gameStarted) return;
 
     gameStarted = true;
 
     resizeCanvas();
     spawnPlayer();
+
+    // RESET DOS SISTEMAS
+
+    if (window.ONREDHealthSystem) {
+        ONREDHealthSystem.reset();
+    }
+
+    if (window.ONREDCollisionSystem) {
+        ONREDCollisionSystem.reset();
+    }
 
     lastFrameTime = 0;
 
@@ -859,3 +914,4 @@ window.startONREDGame = function () {
 // ==========================================
 
 resizeCanvas();
+
