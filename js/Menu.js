@@ -2,11 +2,10 @@
 /*
  * ON RED
  * MENU MODULE
- * Version: 1.1 - Diagnostic
+ * Version: 1.2 - Direct Integration
  */
 
 const ONREDMenu = (() => {
-
     const elements = {
         container: document.getElementById("mainMenu"),
         play: document.getElementById("playButton"),
@@ -23,7 +22,6 @@ const ONREDMenu = (() => {
                 return false;
             }
         }
-
         return true;
     }
 
@@ -31,15 +29,12 @@ const ONREDMenu = (() => {
         let score = 0;
 
         try {
-            score = Number(
-                localStorage.getItem("onRedBestScore") || 0
-            );
+            score = Number(localStorage.getItem("onRedBestScore") || 0);
         } catch (error) {
-            console.warn("[ON RED] Não foi possível acessar o recorde.", error);
+            console.warn("[ON RED] Erro ao carregar recorde:", error);
         }
 
-        elements.bestScore.textContent =
-            String(score).padStart(6, "0");
+        elements.bestScore.textContent = String(score).padStart(6, "0");
     }
 
     function showMenu() {
@@ -61,24 +56,17 @@ const ONREDMenu = (() => {
     }
 
     function startGame() {
-        hideMenu();
+        if (typeof window.startONREDGame !== "function") {
+            console.error("[ON RED] Função de início do jogo não encontrada.");
+            return;
+        }
 
-        document.dispatchEvent(
-            new Event("onred:start")
-        );
+        window.startONREDGame();
+        hideMenu();
     }
 
     function initialize() {
-        console.log("[ON RED] Inicializando menu...");
-
-        if (!checkElements()) {
-            console.error("[ON RED] Falha na inicialização do menu.");
-            return;
-        }
-        elements.container.style.position = "fixed";
-        elements.container.style.inset = "0";
-        elements.container.style.zIndex = "10";
-        elements.container.style.pointerEvents = "auto";
+        if (!checkElements()) return;
 
         elements.play.addEventListener("click", startGame);
         elements.settings.addEventListener("click", openSettings);
@@ -86,7 +74,7 @@ const ONREDMenu = (() => {
 
         showMenu();
 
-        console.log("[ON RED] Menu inicializado com sucesso.");
+        console.log("[ON RED] Menu inicializado.");
     }
 
     return {
@@ -94,7 +82,6 @@ const ONREDMenu = (() => {
         showMenu,
         hideMenu
     };
-
 })();
 
 ONREDMenu.initialize();
