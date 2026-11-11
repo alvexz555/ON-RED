@@ -332,30 +332,27 @@
 }
 /* ==========================================
    ON RED - MELTING PLASTIC GAME OVER
-   VERSION 3.2 - CONNECTED STRETCH
+   VERSION 3.3 - SHARP MOTION
 ========================================== */
 
 .melting-title {
     position: relative;
     display: inline-block;
 
-    color: #ff2020;
     font-family: Arial, sans-serif;
     font-size: clamp(2.8rem, 10vw, 5rem);
     font-weight: 1000;
-    letter-spacing: -2px;
     line-height: 1.1;
+    letter-spacing: -2px;
 
-    isolation: isolate;
-    transform-origin: center center;
+    color: #ff2525;
 
     background: linear-gradient(
         180deg,
         #ffffff 0%,
-        #ffaaaa 8%,
-        #ff5555 20%,
-        #ff2525 42%,
-        #d90000 70%,
+        #ff7777 12%,
+        #ff2525 38%,
+        #c90000 72%,
         #650000 100%
     );
 
@@ -363,14 +360,14 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
 
-    filter:
-        drop-shadow(0 3px 1px #710000)
-        drop-shadow(0 0 12px rgba(255, 0, 0, 0.5));
+    filter: drop-shadow(0 3px 1px #710000);
 
-    animation: plasticHeat 3s ease-in-out infinite;
+    transform-origin: center top;
+
+    animation: plasticBody 2.4s ease-in-out infinite;
 }
 
-/* CAMADA INFERIOR CONECTADA */
+/* CAMADA INFERIOR */
 
 .melting-title::after {
     content: attr(data-text);
@@ -380,13 +377,11 @@
 
     pointer-events: none;
 
-    color: #d90000;
     background: linear-gradient(
         180deg,
-        #ff5555 0%,
-        #ed1111 35%,
-        #b50000 75%,
-        #590000 100%
+        #ff5555,
+        #e00000 60%,
+        #690000
     );
 
     -webkit-background-clip: text;
@@ -397,37 +392,38 @@
 
     transform-origin: center top;
 
-    animation: plasticDrip 3s ease-in-out infinite;
+    animation: plasticLower 2.4s ease-in-out infinite;
 }
 
-/* ESTICAMENTO DO CORPO */
+/* CORPO ESTICANDO E VOLTANDO */
 
-@keyframes plasticHeat {
+@keyframes plasticBody {
     0%, 100% {
         transform: scaleY(1);
-        letter-spacing: -2px;
     }
 
     45% {
-        transform: scaleY(1.045);
-        letter-spacing: -1.5px;
+        transform: scaleY(1.09);
     }
 
     70% {
-        transform: scaleY(0.99);
-        letter-spacing: -2px;
+        transform: scaleY(0.97);
     }
 }
 
-/* MOVIMENTO DA PARTE INFERIOR */
+/* PARTE INFERIOR ACOMPANHA O ESTICAMENTO */
 
-@keyframes plasticDrip {
+@keyframes plasticLower {
     0%, 100% {
         transform: translateY(0) scaleY(1);
     }
 
-    50% {
-        transform: translateY(4px) scaleY(1.10);
+    45% {
+        transform: translateY(7px) scaleY(1.18);
+    }
+
+    70% {
+        transform: translateY(-2px) scaleY(0.96);
     }
 }
 
