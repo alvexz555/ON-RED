@@ -1,97 +1,481 @@
 
-/*
- * ON RED
- * MENU MODULE
- * Version: 1.2 - Direct Integration
- */
-document.addEventListener("click", function (event) {
-    console.log(
-        "[CLICK TEST]",
-        "Elemento:",
-        event.target,
-        "ID:",
-        event.target.id,
-        "Classe:",
-        event.target.className
-    );
-}, true);
-const ONREDMenu = (() => {
-    const elements = {
-        container: document.getElementById("mainMenu"),
-        play: document.getElementById("playButton"),
-        settings: document.getElementById("settingsButton"),
-        settingsPanel: document.getElementById("settingsPanel"),
-        back: document.getElementById("backButton"),
-        bestScore: document.getElementById("bestScore")
-    };
+/* =====================================
+   ON RED - HYBRID ARCADE MENU
+   VERSION 3.1
+===================================== */
 
-    function checkElements() {
-        for (const [name, element] of Object.entries(elements)) {
-            if (!element) {
-                console.error(`[ON RED] Elemento não encontrado: ${name}`);
-                return false;
+/* =====================================
+   MAIN MENU
+===================================== */
+
+.main-menu,
+.main-menu * {
+    box-sizing: border-box;
+}
+
+.main-menu {
+    position: fixed;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+
+    z-index: 100;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+    overflow-y: auto;
+
+    background-color: #080B12;
+    background-image:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(18, 75, 120, 0.22),
+            transparent 65%
+        );
+
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* GRID BACKGROUND */
+
+.main-menu::before {
+    content: "";
+
+    position: absolute;
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background-image:
+        linear-gradient(
+            rgba(50, 145, 220, 0.04) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(50, 145, 220, 0.04) 1px,
+            transparent 1px
+        );
+
+    background-size: 36px 36px;
+
+    pointer-events: none;
+}
+
+/* MAIN CONTENT */
+
+.menu-content {
+    position: relative;
+    z-index: 2;
+
+    width: 100%;
+    max-width: 340px;
+
+    margin: auto;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 42px;
+}
+
+/* LOGO */
+
+.menu-header {
+    width: 100%;
+    text-align: center;
+}
+
+.game-logo {
+    color: #FFFFFF;
+
+    font-size: 64px;
+    font-weight: 900;
+    line-height: 1;
+
+    letter-spacing: -4px;
+    white-space: nowrap;
+}
+
+.game-logo span {
+    color: #FF3948;
+
+    text-shadow:
+        0 0 12px rgba(255, 57, 72, 0.55);
+}
+
+.game-subtitle {
+    margin-top: 14px;
+
+    color: #58BFFF;
+
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+/* MENU ACTIONS */
+
+.menu-actions {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 13px;
+}
+
+/* BUTTON BASE */
+
+.menu-button {
+    width: 100%;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(90, 160, 215, 0.28);
+    border-radius: 9px;
+
+    background: #111B29;
+    color: #FFFFFF;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.menu-button:active {
+    transform: scale(0.97);
+}
+
+/* PLAY */
+
+.play-button {
+    gap: 15px;
+
+    border: 1px solid #168BFF;
+    background: #123D60;
+
+    box-shadow:
+        0 0 20px rgba(22, 139, 255, 0.16);
+}
+
+.button-arrow {
+    color: #58BFFF;
+    font-size: 25px;
+}
+
+/* BEST SCORE */
+
+.score-panel {
+    width: 100%;
+    height: 78px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+
+    background: #0F1724;
+}
+
+.score-label {
+    color: #8293A8;
+
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.score-value {
+    color: #58BFFF;
+
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: 4px;
+}
+
+/* SETTINGS */
+
+.settings-button {
+    background: #101722;
+}
+
+/* FOOTER */
+
+.menu-footer {
+    width: 100%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    color: #637187;
+
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+/* SETTINGS PANEL */
+
+.settings-panel {
+    position: absolute;
+    z-index: 5;
+
+    width: 88%;
+    max-width: 340px;
+
+    padding: 28px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 20px;
+
+    text-align: center;
+
+    border: 1px solid #168BFF;
+    border-radius: 12px;
+
+    background: #0B111D;
+}
+
+.settings-panel h2 {
+    color: #FFFFFF;
+
+    font-size: 24px;
+    letter-spacing: 3px;
+}
+
+.settings-panel p {
+    color: #8796A9;
+    font-size: 11px;
+}
+
+/* HIDDEN ELEMENTS */
+
+.hidden {
+    display: none !important;
+}
+
+
+/* =====================================
+   GAME OVER - MELTING PLASTIC
+===================================== */
+
+/* SVG TITLE */
+
+.melting-title {
+    display: block;
+
+    width: min(100%, 480px);
+    height: auto;
+
+    margin: 0 auto;
+
+    overflow: visible;
+
+    filter:
+        drop-shadow(0 4px 1px #720000)
+        drop-shadow(0 8px 4px rgba(35, 0, 0, 0.8))
+        drop-shadow(0 0 16px rgba(255, 0, 0, 0.35));
+}
+
+/* LETTER SHAPE */
+
+.plastic-body {
+    transform-origin: center;
+    animation: plasticHeat 4s ease-in-out infinite;
+}
+
+.plastic-letters {
+    font-family: Impact, "Arial Black", Arial, sans-serif;
+
+    font-size: 76px;
+    font-weight: 1000;
+
+    letter-spacing: -2px;
+
+    stroke: #9B0000;
+    stroke-width: 1.2px;
+    stroke-linejoin: round;
+
+    paint-order: stroke fill;
+}
+
+/* PLASTIC DRIPS */
+
+.plastic-drips {
+    transform-origin: center top;
+}
+
+.drip {
+    transform-box: fill-box;
+    transform-origin: center top;
+}
+
+/* Each drip moves independently */
+
+.drip-one {
+    animation: dripStretch 3.8s ease-in-out infinite;
+}
+
+.drip-two {
+    animation: dripStretch 4.6s ease-in-out infinite;
+    animation-delay: -1.2s;
+}
+
+.drip-three {
+    animation: dripStretch 5s ease-in-out infinite;
+    animation-delay: -2.1s;
+}
+
+.drip-four {
+    animation: dripStretch 4.2s ease-in-out infinite;
+    animation-delay: -0.8s;
+}
+
+.drip-five {
+    animation: dripStretch 4.8s ease-in-out infinite;
+    animation-delay: -2.8s;
+}
+
+/* HEATED PLASTIC BODY */
+
+@keyframes plasticHeat {
+    0%, 100% {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(1.018);
+    }
+}
+
+/* SLOW MELTING MOVEMENT */
+
+@keyframes dripStretch {
+    0%, 100% {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(1.16);
+    }
+}
+
+
+/* =====================================
+   GAME OVER SCREEN DETAILS
+===================================== */
+
+.game-over-screen {
+    overflow-y: auto;
+}
+
+.game-over-content {
+    position: relative;
+    z-index: 2;
+}
+
+.game-over-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.game-over-message h1 {
+    margin: 0;
+}
+
+.game-over-message p {
+    margin-top: 12px;
+}
+
+
+/* =====================================
+   RESPONSIVE
+===================================== */
+
+@media screen and (max-height: 650px) {
+
+    .menu-content {
+        gap: 22px;
+    }
+
+    .game-logo {
+        font-size: 50px;
+    }
+
+    .game-subtitle {
+        margin-top: 8px;
+    }
+
+    .menu-button {
+        height: 46px;
+    }
+
+    .score-panel {
+        height: 62px;
+    }
+
+    .melting-title {
+        width: min(100%, 400px);
+    }
+}
+
+@media screen and (max-width: 360px) {
+
+    .main-menu {
+        padding: 18px;
+    }
+
+    .game-logo {
+        font-size: 56px;
+    }
+
+    .game-subtitle {
+        font-size: 8px;
+        letter-spacing: 1px;
+    }
+
+    .melting-title {
+        width: 100%;
+    }
+}
+
+
+/* =====================================
+   ACCESSIBILITY
+===================================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .plastic-body,
+    .drip {
+        animation: none !important;
+    }
             }
-        }
-        return true;
-    }
-
-    function loadBestScore() {
-        let score = 0;
-
-        try {
-            score = Number(localStorage.getItem("onRedBestScore") || 0);
-        } catch (error) {
-            console.warn("[ON RED] Erro ao carregar recorde:", error);
-        }
-
-        elements.bestScore.textContent = String(score).padStart(6, "0");
-    }
-
-    function showMenu() {
-        elements.container.classList.remove("hidden");
-        elements.settingsPanel.classList.add("hidden");
-        loadBestScore();
-    }
-
-    function hideMenu() {
-        elements.container.classList.add("hidden");
-    }
-
-    function openSettings() {
-        elements.settingsPanel.classList.remove("hidden");
-    }
-
-    function closeSettings() {
-        elements.settingsPanel.classList.add("hidden");
-    }
-
-    function startGame() {
-        if (typeof window.startONREDGame !== "function") {
-            console.error("[ON RED] Função de início do jogo não encontrada.");
-            return;
-        }
-
-        window.startONREDGame();
-        hideMenu();
-    }
-
-    function initialize() {
-        if (!checkElements()) return;
-
-        elements.play.addEventListener("click", startGame);
-        elements.settings.addEventListener("click", openSettings);
-        elements.back.addEventListener("click", closeSettings);
-
-        showMenu();
-
-        console.log("[ON RED] Menu inicializado.");
-    }
-
-    return {
-        initialize,
-        showMenu,
-        hideMenu
-    };
-})();
-
-ONREDMenu.initialize();
+    
