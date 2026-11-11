@@ -11,6 +11,7 @@
  * Limites físicos da arena
  * Sistema de colisão e dano
  * Feedback visual de impacto
+ * Score por sobrevivência + best score
  * Game Over
  * Restart / Main Menu
  */
@@ -32,6 +33,69 @@ const settingsPanel = document.getElementById("settingsPanel");
 const gameOverScreen = document.getElementById("gameOverScreen");
 const retryButton = document.getElementById("retryButton");
 const gameOverMenuButton = document.getElementById("gameOverMenuButton");
+const finalScoreLabel = document.getElementById("finalScore");
+const bestScoreGameOverLabel = document.getElementById("bestScoreGameOver");
+const menuBestScoreLabel = document.getElementById("bestScore");
+
+// ==========================================
+// SCORE
+// ==========================================
+
+const scoreState = {
+    value: 0,
+    pointsPerSecond: 100,
+    storageKey: "onRedBestScore",
+    best: 0
+};
+
+function loadBestScore() {
+
+    try {
+        scoreState.best =
+            Number(localStorage.getItem(scoreState.storageKey) || 0) || 0;
+    } catch (error) {
+        scoreState.best = 0;
+    }
+
+    return scoreState.best;
+}
+
+function saveBestScore(finalScore) {
+
+    if (finalScore <= scoreState.best) {
+        return false;
+    }
+
+    scoreState.best = finalScore;
+
+    try {
+        localStorage.setItem(
+            scoreState.storageKey,
+            String(finalScore)
+        );
+    } catch (error) {
+        return false;
+    }
+
+    return true;
+}
+
+function formatScore(value) {
+    return String(Math.floor(value)).padStart(6, "0");
+}
+
+function refreshBestScoreDisplays() {
+
+    if (bestScoreGameOverLabel) {
+        bestScoreGameOverLabel.textContent =
+            formatScore(scoreState.best);
+    }
+
+    if (menuBestScoreLabel) {
+        menuBestScoreLabel.textContent =
+            formatScore(scoreState.best);
+    }
+}
 
 // ==========================================
 // ESTADOS DO JOGO
@@ -89,6 +153,12 @@ const perfectButton = {
     y: 0
 };
 
+// ONDA DE CHOQUE DO PERFECT TIMING
+const perfectWave = {
+    duration: 0.4,
+    timer: 0
+};
+
 function updatePerfectButtonPosition() {
 
     perfectButton.x =
@@ -109,10 +179,34 @@ function activatePerfectTiming() {
     perfectButton.charge = 0;
     perfectButton.activationFlash = 0.2;
 
-    console.log("[ON RED] PERFECT TIMING ativado!");
+    // ONDA DE CHOQUE: EMPURRA TODOS OS OBSTÁCULOS
+    // PARA LONGE DO JOGADOR (ONDA RADIAL).
 
-    // Integração com os obstáculos será implementada
-    // na etapa específica do Perfect Timing.
+    perfectObstacles.forEach(obstacle => {
+
+        const dx = obstacle.x - player.x;
+        const dy = obstacle.y - player.y;
+
+        const distance = Math.hypot(dx, dy) || 1;
+
+        const nx = dx / distance;
+        const ny = dy / distance;
+
+        const force =
+            140 +
+            340 * (1 - Math.min(distance / 500, 1));
+
+        obstacle.vx = nx * force;
+        obstacle.vy = ny * force;
+
+        obstacle.role = "pressure";
+    });
+
+    if (ObstacleAI.attacker) {
+        ObstacleAI.selectAttacker(perfectObstacles);
+    }
+
+    perfectWave.timer = perfectWave.duration;
 
     return true;
 }
@@ -125,12 +219,6 @@ function spawnPlayer() {
 
     player.x = canvas.width / 2;
     player.y = canvas.height / 2;
-
-    console.log(
-        "[ON RED] Player spawned:",
-        player.x,
-        player.y
-    );
 }
 
 // ==========================================
@@ -258,6 +346,14 @@ function updatePerfectButton(deltaTime) {
 
         perfectButton.activationFlash =
             Math.max(0, perfectButton.activationFlash);
+    }
+
+    if (perfectWave.timer > 0) {
+
+        perfectWave.timer -= deltaTime;
+
+        perfectWave.timer =
+            Math.max(0, perfectWave.timer);
     }
 }
 
@@ -518,12 +614,21 @@ function triggerGameOver() {
 
     resetJoystick();
 
+    const finalScore = Math.floor(scoreState.value);
+
+    const isRecord = saveBestScore(finalScore);
+
+    if (finalScoreLabel) {
+        finalScoreLabel.textContent =
+            formatScore(finalScore);
+    }
+
+    refreshBestScoreDisplays();
+
     if (gameOverScreen) {
         gameOverScreen.classList.add("active");
         gameOverScreen.setAttribute("aria-hidden", "false");
     }
-
-    console.log("[ON RED] GAME OVER!");
 }
 
 // ==========================================
@@ -564,19 +669,6 @@ function handlePlayerCollision() {
 
     if (!result.applied) return;
 
-    console.log(
-        "[ON RED] Player atingido! HP:",
-        result.state.hp
-    );
-
-    if (result.lifeLost) {
-
-        console.log(
-            "[ON RED] VIDA PERDIDA! Vidas restantes:",
-            result.state.lives
-        );
-    }
-
     if (result.gameOver) {
         triggerGameOver();
     }
@@ -607,6 +699,11 @@ function update(deltaTime) {
     updatePerfectObstacles(deltaTime);
 
     updatePerfectButton(deltaTime);
+
+    // SCORE POR SOBREVIVÊNCIA
+
+    scoreState.value +=
+        deltaTime * scoreState.pointsPerSecond;
 
     // SISTEMA DE COLISÃO
 
@@ -877,8 +974,62 @@ function draw() {
     drawJoystick();
     drawPerfectButton();
 
+    drawScore();
+
     if (window.ONREDHealthUI) {
         ONREDHealthUI.draw(ctx, canvas);
+    }
+}
+
+// ==========================================
+// DESENHO DO SCORE E DA ONDA DE CHOQUE
+// ==========================================
+
+function drawScore() {
+
+    if (gameState === GAME_STATE.PLAYING) {
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = "bold 18px Arial";
+
+        ctx.fillText(
+            formatScore(scoreState.value),
+            canvas.width / 2,
+            18
+        );
+    }
+
+    if (perfectWave.timer > 0) {
+
+        const progress =
+            1 - perfectWave.timer / perfectWave.duration;
+
+        const radius =
+            player.radius + progress * 320;
+
+        ctx.save();
+
+        ctx.globalAlpha = 1 - progress;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            player.x,
+            player.y,
+            radius,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.strokeStyle = "#168BFF";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 20;
+        ctx.stroke();
+
+        ctx.restore();
     }
 }
 
@@ -897,6 +1048,10 @@ function resetGame() {
     perfectButton.charge = 1;
     perfectButton.activationFlash = 0;
 
+    perfectWave.timer = 0;
+
+    scoreState.value = 0;
+
     resizeCanvas();
     spawnPlayer();
 
@@ -909,8 +1064,6 @@ function resetGame() {
     }
 
     lastFrameTime = 0;
-
-    console.log("[ON RED] Partida reiniciada.");
 }
 
 // ==========================================
@@ -934,8 +1087,6 @@ window.startONREDGame = function () {
         gameOverScreen.classList.remove("active");
         gameOverScreen.setAttribute("aria-hidden", "true");
     }
-
-    console.log("[ON RED] Arena iniciada.");
 
     if (!loopRunning) {
         loopRunning = true;
@@ -1004,8 +1155,6 @@ function returnToMainMenu() {
     if (mainMenu) {
         mainMenu.classList.remove("hidden");
     }
-
-    console.log("[ON RED] Retornando ao menu principal.");
 }
 
 // ==========================================
@@ -1071,4 +1220,4 @@ document.addEventListener(
 
 resizeCanvas();
 
-console.log("[ON RED] Engine carregada.");
+loadBestScore();

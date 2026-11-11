@@ -2,19 +2,8 @@
 /*
  * ON RED
  * MENU MODULE
- * Version: 1.2 - Direct Integration
+ * Version: 1.3 - Direct Integration
  */
-document.addEventListener("click", function (event) {
-    console.log(
-        "[CLICK TEST]",
-        "Elemento:",
-        event.target,
-        "ID:",
-        event.target.id,
-        "Classe:",
-        event.target.className
-    );
-}, true);
 const ONREDMenu = (() => {
     const elements = {
         container: document.getElementById("mainMenu"),
@@ -83,8 +72,6 @@ const ONREDMenu = (() => {
         elements.back.addEventListener("click", closeSettings);
 
         showMenu();
-
-        console.log("[ON RED] Menu inicializado.");
     }
 
     return {

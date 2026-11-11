@@ -263,6 +263,6 @@
         getState
     };
 
-    console.log("[ON RED] Collision System v1.1 carregado.");
+    console.log("[ON RED] Collision System carregado.");
 
 })();
