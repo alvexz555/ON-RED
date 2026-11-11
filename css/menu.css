@@ -1,7 +1,7 @@
 
 /* =====================================
    ON RED - HYBRID ARCADE MENU
-   VERSION 3.1
+   VERSION 3.0
 ===================================== */
 
 .main-menu,
@@ -25,6 +25,7 @@
     justify-content: center;
 
     padding: 24px;
+
     overflow-y: auto;
 
     background-color: #080B12;
@@ -36,6 +37,7 @@
         );
 
     color: #FFFFFF;
+
     font-family: Arial, Helvetica, sans-serif;
 }
 
@@ -63,6 +65,7 @@
         );
 
     background-size: 36px 36px;
+
     pointer-events: none;
 }
 
@@ -88,6 +91,7 @@
 
 .menu-header {
     width: 100%;
+
     text-align: center;
 }
 
@@ -96,9 +100,11 @@
 
     font-size: 64px;
     font-weight: 900;
+
     line-height: 1;
 
     letter-spacing: -4px;
+
     white-space: nowrap;
 }
 
@@ -116,6 +122,7 @@
 
     font-size: 9px;
     font-weight: bold;
+
     letter-spacing: 2px;
 }
 
@@ -144,11 +151,13 @@
     border-radius: 9px;
 
     background: #111B29;
+
     color: #FFFFFF;
 
     font-family: Arial, Helvetica, sans-serif;
     font-size: 13px;
     font-weight: 800;
+
     letter-spacing: 2px;
 
     cursor: pointer;
@@ -166,6 +175,7 @@
     gap: 15px;
 
     border: 1px solid #168BFF;
+
     background: #123D60;
 
     box-shadow:
@@ -174,6 +184,7 @@
 
 .button-arrow {
     color: #58BFFF;
+
     font-size: 25px;
 }
 
@@ -201,6 +212,7 @@
 
     font-size: 10px;
     font-weight: bold;
+
     letter-spacing: 2px;
 }
 
@@ -209,6 +221,7 @@
 
     font-size: 24px;
     font-weight: 900;
+
     letter-spacing: 4px;
 }
 
@@ -231,6 +244,7 @@
 
     font-size: 9px;
     font-weight: bold;
+
     letter-spacing: 1px;
 }
 
@@ -276,129 +290,7 @@
     display: none !important;
 }
 
-
-/* =====================================
-   GAME OVER - MELTING PLASTIC
-===================================== */
-
-.melting-title {
-    display: block;
-
-    width: min(100%, 480px);
-    height: auto;
-
-    margin: 0 auto;
-    overflow: visible;
-
-    filter:
-        drop-shadow(0 4px 1px #720000)
-        drop-shadow(0 8px 4px rgba(35, 0, 0, 0.8))
-        drop-shadow(0 0 16px rgba(255, 0, 0, 0.35));
-}
-
-.plastic-body {
-    transform-origin: center;
-    animation: plasticHeat 4s ease-in-out infinite;
-}
-
-.plastic-letters {
-    font-family: Impact, "Arial Black", Arial, sans-serif;
-
-    font-size: 76px;
-    font-weight: 1000;
-    letter-spacing: -2px;
-
-    stroke: #9B0000;
-    stroke-width: 1.2px;
-    stroke-linejoin: round;
-
-    paint-order: stroke fill;
-}
-
-/* PLASTIC DRIPS */
-
-.plastic-drips {
-    transform-origin: center top;
-}
-
-.drip {
-    transform-box: fill-box;
-    transform-origin: center top;
-}
-
-.drip-one {
-    animation: dripStretch 3.8s ease-in-out infinite;
-}
-
-.drip-two {
-    animation: dripStretch 4.6s ease-in-out infinite;
-    animation-delay: -1.2s;
-}
-
-.drip-three {
-    animation: dripStretch 5s ease-in-out infinite;
-    animation-delay: -2.1s;
-}
-
-.drip-four {
-    animation: dripStretch 4.2s ease-in-out infinite;
-    animation-delay: -0.8s;
-}
-
-.drip-five {
-    animation: dripStretch 4.8s ease-in-out infinite;
-    animation-delay: -2.8s;
-}
-
-/* ANIMATIONS */
-
-@keyframes plasticHeat {
-    0%, 100% {
-        transform: scaleY(1);
-    }
-
-    50% {
-        transform: scaleY(1.018);
-    }
-}
-
-@keyframes dripStretch {
-    0%, 100% {
-        transform: scaleY(1);
-    }
-
-    50% {
-        transform: scaleY(1.16);
-    }
-}
-
-/* GAME OVER LAYOUT */
-
-.game-over-screen {
-    overflow-y: auto;
-}
-
-.game-over-content {
-    position: relative;
-    z-index: 2;
-}
-
-.game-over-message {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-.game-over-message h1 {
-    margin: 0;
-}
-
-.game-over-message p {
-    margin-top: 12px;
-}
-
-/* RESPONSIVE */
+/* SMALL SCREENS */
 
 @media screen and (max-height: 650px) {
 
@@ -421,10 +313,6 @@
     .score-panel {
         height: 62px;
     }
-
-    .melting-title {
-        width: min(100%, 400px);
-    }
 }
 
 @media screen and (max-width: 360px) {
@@ -441,142 +329,94 @@
         font-size: 8px;
         letter-spacing: 1px;
     }
-
-    .melting-title {
-        width: 100%;
-    }
-}
-
-/* ACCESSIBILITY */
-
-@media (prefers-reduced-motion: reduce) {
-
-    .plastic-body,
-    .drip {
-        animation: none !important;
-    }
 }
 /* ==========================================
-   ON RED - LIQUID PLASTIC TITLE
-   VERSION 4.0
+   ON RED - MELTING PLASTIC GAME OVER
 ========================================== */
 
 .melting-title {
-    display: block;
-    width: min(100%, 480px);
-    height: auto;
-    margin: 0 auto;
-    overflow: visible;
+    position: relative;
+    display: inline-block;
 
-    filter:
-        drop-shadow(0 3px 1px #8b0000)
-        drop-shadow(0 8px 5px rgba(40, 0, 0, .85))
-        drop-shadow(0 0 18px rgba(255, 0, 0, .3));
-}
+    color: #ff2020;
 
-.plastic-object {
-    transform-origin: center;
-    animation: plasticSoftness 5s ease-in-out infinite;
-}
-
-.plastic-letters {
-    font-family: Impact, "Arial Black", sans-serif;
-    font-size: 76px;
-    font-weight: 900;
+    font-family: Arial, sans-serif;
+    font-size: clamp(2.8rem, 10vw, 5rem);
+    font-weight: 1000;
     letter-spacing: -2px;
 
-    stroke: #8e0000;
-    stroke-width: 1.5px;
-    stroke-linejoin: round;
-    paint-order: stroke fill;
+    isolation: isolate;
+
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #ff7777 12%,
+        #ff2525 35%,
+        #a90000 75%,
+        #650000 100%
+    );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    filter:
+        drop-shadow(0 3px 1px #710000)
+        drop-shadow(0 0 12px rgba(255, 0, 0, 0.5));
+
+    animation: plasticHeat 3s ease-in-out infinite alternate;
 }
 
-/* MELTING MATERIAL */
+/* DEFORMAÇÃO DO PLÁSTICO */
 
-.plastic-drips {
-    transform-origin: center top;
-}
+@keyframes plasticHeat {
 
-.drip {
-    transform-box: fill-box;
-    transform-origin: center top;
-}
-
-.drip-a {
-    animation: plasticDrip 4.5s ease-in-out infinite;
-}
-
-.drip-b {
-    animation: plasticDrip 5.2s ease-in-out infinite;
-    animation-delay: -1.7s;
-}
-
-.drip-c {
-    animation: plasticDrip 6s ease-in-out infinite;
-    animation-delay: -2.5s;
-}
-
-.drip-d {
-    animation: plasticDrip 4.8s ease-in-out infinite;
-    animation-delay: -1s;
-}
-
-.drip-e {
-    animation: plasticDrip 5.5s ease-in-out infinite;
-    animation-delay: -3s;
-}
-
-/* GLOSSY REFLECTION */
-
-.plastic-reflections {
-    opacity: .65;
-    animation: shinePulse 4s ease-in-out infinite;
-}
-
-@keyframes plasticSoftness {
-    0%, 100% {
+    0% {
         transform: scaleY(1);
+        letter-spacing: -2px;
     }
 
     50% {
-        transform: scaleY(1.012);
+        transform: scaleY(1.035);
+        letter-spacing: -1px;
     }
+
+    100% {
+        transform: scaleY(0.98);
+        letter-spacing: -2.5px;
+    }
+}
+
+/* CAMADA DE PLÁSTICO DERRETIDO */
+
+.melting-title::after {
+    content: attr(data-text);
+
+    position: absolute;
+    inset: 0;
+
+    color: #d90000;
+
+    -webkit-text-fill-color: #d90000;
+
+    filter: blur(0.4px);
+
+    clip-path: inset(65% 0 0 0);
+
+    transform-origin: top;
+
+    animation: plasticDrip 3s ease-in-out infinite alternate;
+
+    z-index: -1;
 }
 
 @keyframes plasticDrip {
-    0%, 100% {
-        transform: scaleY(1);
+
+    0% {
+        transform: translateY(0) scaleY(1);
     }
 
-    50% {
-        transform: scaleY(1.2);
-    }
-}
-
-@keyframes shinePulse {
-    0%, 100% {
-        opacity: .4;
-    }
-
-    50% {
-        opacity: .85;
-    }
-}
-
-/* MOBILE */
-
-@media (max-width: 360px) {
-    .melting-title {
-        width: 100%;
-    }
-}
-
-/* ACCESSIBILITY */
-
-@media (prefers-reduced-motion: reduce) {
-    .plastic-object,
-    .drip,
-    .plastic-reflections {
-        animation: none !important;
+    100% {
+        transform: translateY(9px) scaleY(1.18);
     }
 }
