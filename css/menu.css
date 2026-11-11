@@ -330,3 +330,93 @@
         letter-spacing: 1px;
     }
 }
+/* ==========================================
+   ON RED - MELTING PLASTIC GAME OVER
+========================================== */
+
+.melting-title {
+    position: relative;
+    display: inline-block;
+
+    color: #ff2020;
+
+    font-family: Arial, sans-serif;
+    font-size: clamp(2.8rem, 10vw, 5rem);
+    font-weight: 1000;
+    letter-spacing: -2px;
+
+    isolation: isolate;
+
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #ff7777 12%,
+        #ff2525 35%,
+        #a90000 75%,
+        #650000 100%
+    );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    filter:
+        drop-shadow(0 3px 1px #710000)
+        drop-shadow(0 0 12px rgba(255, 0, 0, 0.5));
+
+    animation: plasticHeat 3s ease-in-out infinite alternate;
+}
+
+/* DEFORMAÇÃO DO PLÁSTICO */
+
+@keyframes plasticHeat {
+
+    0% {
+        transform: scaleY(1);
+        letter-spacing: -2px;
+    }
+
+    50% {
+        transform: scaleY(1.035);
+        letter-spacing: -1px;
+    }
+
+    100% {
+        transform: scaleY(0.98);
+        letter-spacing: -2.5px;
+    }
+}
+
+/* CAMADA DE PLÁSTICO DERRETIDO */
+
+.melting-title::after {
+    content: attr(data-text);
+
+    position: absolute;
+    inset: 0;
+
+    color: #d90000;
+
+    -webkit-text-fill-color: #d90000;
+
+    filter: blur(0.4px);
+
+    clip-path: inset(65% 0 0 0);
+
+    transform-origin: top;
+
+    animation: plasticDrip 3s ease-in-out infinite alternate;
+
+    z-index: -1;
+}
+
+@keyframes plasticDrip {
+
+    0% {
+        transform: translateY(0) scaleY(1);
+    }
+
+    100% {
+        transform: translateY(9px) scaleY(1.18);
+    }
+}
