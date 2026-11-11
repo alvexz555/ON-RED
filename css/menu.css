@@ -331,28 +331,27 @@
     }
 }
 /* ==========================================
-   ON RED - MELTING PLASTIC GAME OVER
-   VERSION 3.3 - SHARP MOTION
+   ON RED - GAME OVER
+   VERSION 3.4 - CLEAN STRETCH
 ========================================== */
 
 .melting-title {
     position: relative;
     display: inline-block;
 
-    font-family: Arial, sans-serif;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
     font-size: clamp(2.8rem, 10vw, 5rem);
     font-weight: 1000;
     line-height: 1.1;
     letter-spacing: -2px;
 
-    color: #ff2525;
-
     background: linear-gradient(
         180deg,
         #ffffff 0%,
-        #ff7777 12%,
-        #ff2525 38%,
-        #c90000 72%,
+        #ff7777 15%,
+        #ff2020 42%,
+        #c00000 75%,
         #650000 100%
     );
 
@@ -360,76 +359,28 @@
     background-clip: text;
     -webkit-text-fill-color: transparent;
 
-    filter: drop-shadow(0 3px 1px #710000);
+    text-shadow: none;
 
     transform-origin: center top;
+    will-change: transform;
 
-    animation: plasticBody 2.4s ease-in-out infinite;
+    animation: redPlasticStretch 2s ease-in-out infinite;
 }
 
-/* CAMADA INFERIOR */
-
-.melting-title::after {
-    content: attr(data-text);
-
-    position: absolute;
-    inset: 0;
-
-    pointer-events: none;
-
-    background: linear-gradient(
-        180deg,
-        #ff5555,
-        #e00000 60%,
-        #690000
-    );
-
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-
-    clip-path: inset(58% 0 0 0);
-
-    transform-origin: center top;
-
-    animation: plasticLower 2.4s ease-in-out infinite;
-}
-
-/* CORPO ESTICANDO E VOLTANDO */
-
-@keyframes plasticBody {
+@keyframes redPlasticStretch {
     0%, 100% {
         transform: scaleY(1);
     }
 
-    45% {
-        transform: scaleY(1.09);
+    35% {
+        transform: scaleY(1.12);
     }
 
-    70% {
+    55% {
+        transform: scaleY(1.04);
+    }
+
+    75% {
         transform: scaleY(0.97);
-    }
-}
-
-/* PARTE INFERIOR ACOMPANHA O ESTICAMENTO */
-
-@keyframes plasticLower {
-    0%, 100% {
-        transform: translateY(0) scaleY(1);
-    }
-
-    45% {
-        transform: translateY(7px) scaleY(1.18);
-    }
-
-    70% {
-        transform: translateY(-2px) scaleY(0.96);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .melting-title,
-    .melting-title::after {
-        animation: none;
     }
 }
