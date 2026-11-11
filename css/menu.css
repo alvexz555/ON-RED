@@ -332,6 +332,7 @@
 }
 /* ==========================================
    ON RED - MELTING PLASTIC GAME OVER
+   VERSION 3.1 - SOLID STRETCH
 ========================================== */
 
 .melting-title {
@@ -350,9 +351,10 @@
     background: linear-gradient(
         180deg,
         #ffffff 0%,
-        #ff7777 12%,
-        #ff2525 35%,
-        #a90000 75%,
+        #ffaaaa 8%,
+        #ff5555 20%,
+        #ff2525 42%,
+        #d90000 70%,
         #650000 100%
     );
 
@@ -364,30 +366,12 @@
         drop-shadow(0 3px 1px #710000)
         drop-shadow(0 0 12px rgba(255, 0, 0, 0.5));
 
-    animation: plasticHeat 3s ease-in-out infinite alternate;
+    transform-origin: center top;
+
+    animation: plasticHeat 3s ease-in-out infinite;
 }
 
-/* DEFORMAÇÃO DO PLÁSTICO */
-
-@keyframes plasticHeat {
-
-    0% {
-        transform: scaleY(1);
-        letter-spacing: -2px;
-    }
-
-    50% {
-        transform: scaleY(1.035);
-        letter-spacing: -1px;
-    }
-
-    100% {
-        transform: scaleY(0.98);
-        letter-spacing: -2.5px;
-    }
-}
-
-/* CAMADA DE PLÁSTICO DERRETIDO */
+/* CORPO INFERIOR CONTÍNUO */
 
 .melting-title::after {
     content: attr(data-text);
@@ -395,28 +379,65 @@
     position: absolute;
     inset: 0;
 
-    color: #d90000;
+    pointer-events: none;
 
-    -webkit-text-fill-color: #d90000;
+    background: linear-gradient(
+        180deg,
+        #ff5555 0%,
+        #ed1111 35%,
+        #b50000 75%,
+        #590000 100%
+    );
 
-    filter: blur(0.4px);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 
-    clip-path: inset(65% 0 0 0);
+    filter: blur(0.25px);
 
-    transform-origin: top;
+    clip-path: inset(58% 0 0 0);
 
-    animation: plasticDrip 3s ease-in-out infinite alternate;
+    transform-origin: center top;
 
-    z-index: -1;
+    animation: plasticDrip 3s ease-in-out infinite;
+
+    z-index: 1;
 }
 
-@keyframes plasticDrip {
+/* MOVIMENTO DO CORPO */
 
-    0% {
+@keyframes plasticHeat {
+    0%, 100% {
+        transform: scaleY(1);
+        letter-spacing: -2px;
+    }
+
+    45% {
+        transform: scaleY(1.045);
+        letter-spacing: -1.5px;
+    }
+
+    70% {
+        transform: scaleY(0.99);
+        letter-spacing: -2px;
+    }
+}
+
+/* ESTICAMENTO INFERIOR */
+
+@keyframes plasticDrip {
+    0%, 100% {
         transform: translateY(0) scaleY(1);
     }
 
-    100% {
-        transform: translateY(9px) scaleY(1.18);
+    50% {
+        transform: translateY(5px) scaleY(1.12);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .melting-title,
+    .melting-title::after {
+        animation: none;
     }
 }
