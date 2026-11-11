@@ -456,3 +456,127 @@
         animation: none !important;
     }
 }
+/* ==========================================
+   ON RED - LIQUID PLASTIC TITLE
+   VERSION 4.0
+========================================== */
+
+.melting-title {
+    display: block;
+    width: min(100%, 480px);
+    height: auto;
+    margin: 0 auto;
+    overflow: visible;
+
+    filter:
+        drop-shadow(0 3px 1px #8b0000)
+        drop-shadow(0 8px 5px rgba(40, 0, 0, .85))
+        drop-shadow(0 0 18px rgba(255, 0, 0, .3));
+}
+
+.plastic-object {
+    transform-origin: center;
+    animation: plasticSoftness 5s ease-in-out infinite;
+}
+
+.plastic-letters {
+    font-family: Impact, "Arial Black", sans-serif;
+    font-size: 76px;
+    font-weight: 900;
+    letter-spacing: -2px;
+
+    stroke: #8e0000;
+    stroke-width: 1.5px;
+    stroke-linejoin: round;
+    paint-order: stroke fill;
+}
+
+/* MELTING MATERIAL */
+
+.plastic-drips {
+    transform-origin: center top;
+}
+
+.drip {
+    transform-box: fill-box;
+    transform-origin: center top;
+}
+
+.drip-a {
+    animation: plasticDrip 4.5s ease-in-out infinite;
+}
+
+.drip-b {
+    animation: plasticDrip 5.2s ease-in-out infinite;
+    animation-delay: -1.7s;
+}
+
+.drip-c {
+    animation: plasticDrip 6s ease-in-out infinite;
+    animation-delay: -2.5s;
+}
+
+.drip-d {
+    animation: plasticDrip 4.8s ease-in-out infinite;
+    animation-delay: -1s;
+}
+
+.drip-e {
+    animation: plasticDrip 5.5s ease-in-out infinite;
+    animation-delay: -3s;
+}
+
+/* GLOSSY REFLECTION */
+
+.plastic-reflections {
+    opacity: .65;
+    animation: shinePulse 4s ease-in-out infinite;
+}
+
+@keyframes plasticSoftness {
+    0%, 100% {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(1.012);
+    }
+}
+
+@keyframes plasticDrip {
+    0%, 100% {
+        transform: scaleY(1);
+    }
+
+    50% {
+        transform: scaleY(1.2);
+    }
+}
+
+@keyframes shinePulse {
+    0%, 100% {
+        opacity: .4;
+    }
+
+    50% {
+        opacity: .85;
+    }
+}
+
+/* MOBILE */
+
+@media (max-width: 360px) {
+    .melting-title {
+        width: 100%;
+    }
+}
+
+/* ACCESSIBILITY */
+
+@media (prefers-reduced-motion: reduce) {
+    .plastic-object,
+    .drip,
+    .plastic-reflections {
+        animation: none !important;
+    }
+}
