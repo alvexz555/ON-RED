@@ -682,13 +682,32 @@ function update(deltaTime) {
 
     if (gameState !== GAME_STATE.PLAYING) return;
 
-    // MOVIMENTO DO JOGADOR
+    // ==========================================
+// MOVIMENTO DO JOGADOR
+// JOYSTICK + TECLADO
+// ==========================================
 
-    player.x +=
-        joystick.x * player.speed * deltaTime * 60;
+const keyboard = window.ONREDKeyboardController
+    ? window.ONREDKeyboardController.getVector(
+        gameState === GAME_STATE.PLAYING
+    )
+    : { x: 0, y: 0 };
 
-    player.y +=
-        joystick.y * player.speed * deltaTime * 60;
+// Combina os dois controles.
+let moveX = joystick.x + keyboard.x;
+let moveY = joystick.y + keyboard.y;
+
+// Normaliza para impedir velocidade excessiva.
+const movementMagnitude = Math.hypot(moveX, moveY);
+
+if (movementMagnitude > 1) {
+    moveX /= movementMagnitude;
+    moveY /= movementMagnitude;
+}
+
+// Aplica o movimento.
+player.x += moveX * player.speed * deltaTime * 60;
+player.y += moveY * player.speed * deltaTime * 60;
 
     // LIMITES DO JOGADOR
 
