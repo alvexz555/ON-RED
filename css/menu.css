@@ -372,15 +372,23 @@
         transform: scaleY(1);
     }
 
-    35% {
+    30% {
+        transform: scaleY(1.22);
+    }
+
+    45% {
+        transform: scaleY(1.30);
+    }
+
+    60% {
         transform: scaleY(1.12);
     }
 
-    55% {
-        transform: scaleY(1.04);
+    75% {
+        transform: scaleY(0.94);
     }
 
-    75% {
-        transform: scaleY(0.97);
+    88% {
+        transform: scaleY(1.04);
     }
 }
