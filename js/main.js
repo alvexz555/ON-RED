@@ -713,6 +713,18 @@ function update(deltaTime) {
 
         handlePlayerCollision();
     }
+
+    // SISTEMA MERGE (ESFERAS VERMELHAS)
+
+    if (window.ONREDMergeSystem) {
+
+        ONREDMergeSystem.update(
+            deltaTime,
+            player,
+            canvas,
+            window.ONREDHealthSystem
+        );
+    }
 }
 
 // ==========================================
@@ -961,6 +973,11 @@ function draw() {
 
     drawArena();
     drawPerfectObstacles();
+
+    if (window.ONREDMergeSystem) {
+        ONREDMergeSystem.draw(ctx);
+    }
+
     drawPlayer();
 
     if (window.ONREDCollisionSystem) {
@@ -1061,6 +1078,10 @@ function resetGame() {
 
     if (window.ONREDCollisionSystem) {
         ONREDCollisionSystem.reset();
+    }
+
+    if (window.ONREDMergeSystem) {
+        ONREDMergeSystem.reset(canvas, player);
     }
 
     lastFrameTime = 0;

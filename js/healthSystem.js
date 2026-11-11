@@ -128,13 +128,77 @@
     }
 
     // ==========================================
+    // RECUPERAR HP
+    // ==========================================
+
+    function heal(amount) {
+
+        if (state.gameOver) {
+            return {
+                applied: false,
+                reason: "game_over",
+                state: getState()
+            };
+        }
+
+        if (
+            typeof amount !== "number" ||
+            !Number.isFinite(amount) ||
+            amount <= 0
+        ) {
+            return {
+                applied: false,
+                reason: "invalid_heal",
+                state: getState()
+            };
+        }
+
+        const previousHP = state.hp;
+
+        // O HP nunca ultrapassa o máximo.
+        state.hp = Math.min(state.maxHP, state.hp + amount);
+
+        return {
+            applied: state.hp > previousHP,
+            healed: state.hp - previousHP,
+            state: getState()
+        };
+    }
+
+    // ==========================================
+    // VIDA EXTRA
+    // ==========================================
+
+    function addExtraLife() {
+
+        if (state.gameOver) {
+            return {
+                applied: false,
+                reason: "game_over",
+                state: getState()
+            };
+        }
+
+        state.lives++;
+        state.maxLives++;
+
+        return {
+            applied: true,
+            lifeGranted: true,
+            state: getState()
+        };
+    }
+
+    // ==========================================
     // API PÚBLICA
     // ==========================================
 
     window.ONREDHealthSystem = {
         reset,
         getState,
-        applyDamage
+        applyDamage,
+        heal,
+        addExtraLife
     };
 
     console.log("[ON RED] Health System carregado.");
