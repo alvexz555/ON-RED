@@ -682,6 +682,16 @@ function update(deltaTime) {
 
     if (gameState !== GAME_STATE.PLAYING) return;
 
+    // SHIFT: solicita Perfect Timing uma única vez por pressionamento.
+    if (
+        window.ONREDKeyboardController &&
+        window.ONREDKeyboardController.consumePerfectTimingRequest(
+            gameState === GAME_STATE.PLAYING
+        )
+    ) {
+        activatePerfectTiming();
+    }
+
     // ==========================================
 // MOVIMENTO DO JOGADOR
 // JOYSTICK + TECLADO
