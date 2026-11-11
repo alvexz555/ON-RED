@@ -11,7 +11,6 @@
     >
 
     <meta name="theme-color" content="#080B12">
-
     <meta name="description" content="ON RED - Arcade Survival">
 
     <title>ON RED</title>
@@ -109,98 +108,211 @@
 
     </main>
 
-    <!-- GAME OVER -->
+    <!-- GAME OVER SCREEN -->
     <section
         id="gameOverScreen"
-        class="game-over-screen"
-        aria-hidden="true"
+        class="game-over-screen hidden"
     >
 
         <div class="game-over-content">
 
-            <header class="game-over-header">
+            <!-- MELTING PLASTIC TITLE -->
+            <svg
+                class="melting-title"
+                viewBox="0 0 620 190"
+                role="img"
+                aria-label="GAME OVER"
+            >
 
-                <div class="game-over-logo">
-                    ON <span>RED</span>
-                </div>
+                <defs>
 
-                <span class="game-over-label">
-                    SURVIVAL TERMINATED
-                </span>
+                    <linearGradient
+                        id="moltenPlastic"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop offset="0%" stop-color="#fffafa"/>
+                        <stop offset="10%" stop-color="#ffbaba"/>
+                        <stop offset="24%" stop-color="#ff5555"/>
+                        <stop offset="48%" stop-color="#ed1111"/>
+                        <stop offset="75%" stop-color="#b50000"/>
+                        <stop offset="100%" stop-color="#590000"/>
+                    </linearGradient>
 
-            </header>
+                    <linearGradient
+                        id="plasticShine"
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="1"
+                    >
+                        <stop offset="0%" stop-color="#ffffff" stop-opacity=".85"/>
+                        <stop offset="35%" stop-color="#ffffff" stop-opacity=".22"/>
+                        <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+                    </linearGradient>
 
-            <div class="game-over-message">
+                    <filter
+                        id="plasticSurface"
+                        x="-15%"
+                        y="-20%"
+                        width="130%"
+                        height="150%"
+                    >
 
-                <span class="game-over-line"></span>
+                        <feTurbulence
+                            type="fractalNoise"
+                            baseFrequency="0.012 0.025"
+                            numOctaves="1"
+                            seed="7"
+                            result="texture"
+                        />
 
-                
-<svg class="melting-title"
-     viewBox="0 0 620 180"
-     role="img"
-     aria-label="GAME OVER">
+                        <feDisplacementMap
+                            in="SourceGraphic"
+                            in2="texture"
+                            scale="3"
+                            xChannelSelector="R"
+                            yChannelSelector="G"
+                            result="softShape"
+                        />
 
-    <defs>
-        <linearGradient id="plasticFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#fffafa"/>
-            <stop offset="9%" stop-color="#ffb4b4"/>
-            <stop offset="23%" stop-color="#ff5151"/>
-            <stop offset="52%" stop-color="#ed1010"/>
-            <stop offset="82%" stop-color="#a80000"/>
-            <stop offset="100%" stop-color="#590000"/>
-        </linearGradient>
+                        <feGaussianBlur
+                            in="SourceAlpha"
+                            stdDeviation="1.5"
+                            result="blurredAlpha"
+                        />
 
-        <filter id="plasticWarp" x="-10%" y="-15%" width="120%" height="145%">
-            <feTurbulence
-                type="fractalNoise"
-                baseFrequency="0.012 0.035"
-                numOctaves="1"
-                seed="8"
-                result="plasticNoise"/>
-            <feDisplacementMap
-                in="SourceGraphic"
-                in2="plasticNoise"
-                scale="4"
-                xChannelSelector="R"
-                yChannelSelector="G"/>
-        </filter>
-    </defs>
+                        <feSpecularLighting
+                            in="blurredAlpha"
+                            surfaceScale="4"
+                            specularConstant=".9"
+                            specularExponent="18"
+                            lighting-color="#ffffff"
+                            result="specular"
+                        >
+                            <fePointLight
+                                x="200"
+                                y="-100"
+                                z="180"
+                            />
+                        </feSpecularLighting>
 
-    <g class="plastic-body" filter="url(#plasticWarp)">
+                        <feComposite
+                            in="specular"
+                            in2="SourceAlpha"
+                            operator="in"
+                            result="plasticHighlight"
+                        />
 
-        <text class="plastic-letters"
-              x="310"
-              y="100"
-              text-anchor="middle"
-              fill="url(#plasticFill)">GAME OVER</text>
+                        <feBlend
+                            in="softShape"
+                            in2="plasticHighlight"
+                            mode="screen"
+                        />
 
-        <!-- Plástico escorrendo das letras -->
-        <g class="plastic-drips" fill="url(#plasticFill)">
-            <path class="drip drip-one"
-                  d="M105 88 C105 99 101 111 104 124 C106 134 116 134 119 125 C123 113 117 99 119 88 Z"/>
+                    </filter>
 
-            <path class="drip drip-two"
-                  d="M205 89 C207 101 202 111 205 126 C207 138 218 139 222 127 C226 113 218 99 220 89 Z"/>
+                </defs>
 
-            <path class="drip drip-three"
-                  d="M315 88 C315 101 311 116 316 137 C319 149 331 148 334 135 C337 118 330 101 332 88 Z"/>
+                <g
+                    class="plastic-object"
+                    filter="url(#plasticSurface)"
+                >
 
-            <path class="drip drip-four"
-                  d="M425 89 C425 100 421 110 424 122 C427 134 437 134 441 123 C445 110 439 99 441 89 Z"/>
+                    <!-- MAIN LETTERING -->
+                    <text
+                        class="plastic-letters"
+                        x="310"
+                        y="100"
+                        text-anchor="middle"
+                        fill="url(#moltenPlastic)"
+                    >GAME OVER</text>
 
-            <path class="drip drip-five"
-                  d="M515 88 C515 98 511 108 514 120 C517 131 527 131 530 120 C533 108 528 98 530 88 Z"/>
-        </g>
-    </g>
-</svg>
+                    <!-- MELTING PLASTIC -->
+                    <g
+                        fill="url(#moltenPlastic)"
+                        class="plastic-drips"
+                    >
 
-                <p>
-                    YOUR RUN HAS ENDED
-                </p>
+                        <path
+                            class="drip drip-a"
+                            d="M112 88
+                               C108 101 112 111 108 125
+                               C104 139 114 149 123 141
+                               C132 132 123 117 126 104
+                               L128 88 Z"
+                        />
 
-                <span class="game-over-line"></span>
+                        <path
+                            class="drip drip-b"
+                            d="M215 88
+                               C211 101 216 113 212 128
+                               C209 140 219 146 228 137
+                               C236 128 226 111 230 88 Z"
+                        />
 
-            </div>
+                        <path
+                            class="drip drip-c"
+                            d="M315 88
+                               C311 105 316 117 312 137
+                               C309 154 322 163 332 150
+                               C342 136 328 112 334 88 Z"
+                        />
+
+                        <path
+                            class="drip drip-d"
+                            d="M421 88
+                               C418 101 422 112 419 126
+                               C416 140 427 147 436 136
+                               C444 125 433 108 438 88 Z"
+                        />
+
+                        <path
+                            class="drip drip-e"
+                            d="M510 88
+                               C507 101 511 111 508 124
+                               C505 137 515 143 524 134
+                               C532 124 522 108 527 88 Z"
+                        />
+
+                    </g>
+
+                    <!-- SURFACE REFLECTIONS -->
+                    <g
+                        class="plastic-reflections"
+                        fill="none"
+                        stroke="url(#plasticShine)"
+                        stroke-linecap="round"
+                    >
+
+                        <path
+                            d="M105 48 Q145 33 185 43"
+                            stroke-width="4"
+                        />
+
+                        <path
+                            d="M240 43 Q280 32 315 40"
+                            stroke-width="3"
+                        />
+
+                        <path
+                            d="M365 43 Q410 32 450 43"
+                            stroke-width="4"
+                        />
+
+                    </g>
+
+                </g>
+
+            </svg>
+
+            <p>
+                YOUR RUN HAS ENDED
+            </p>
+
+            <span class="game-over-line"></span>
 
             <div class="game-over-actions">
 
