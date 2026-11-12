@@ -213,6 +213,9 @@
 
                 if (collectiveRetryTimer <= 0) {
                     const records = Array.from(eliminated.values());
+                    records.forEach(record => {
+                        record.obstacle.state = "RESPAWNING";
+                    });
                     const positions = findSafePositions(
                         records.length,
                         arena,
