@@ -706,7 +706,12 @@ function handlePlayerCollision() {
 
     if (perfectTimingRuntime.requestTimer > 0 &&
         perfectButton.charge >= 1 &&
-        completePerfectTiming(targetObstacle)) return;
+        completePerfectTiming(targetObstacle)) {
+        // O jogador evita o dano, mas recebe a janela normal de
+        // invulnerabilidade para não tomar um segundo dano simultâneo.
+        collision.registerCollision();
+        return;
+    }
 
     const registered = collision.registerCollision();
 
