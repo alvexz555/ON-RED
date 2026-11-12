@@ -238,6 +238,10 @@ function completePerfectTiming(obstacle) {
 function findCollidingPerfectObstacle() {
     const collision = window.ONREDCollisionSystem;
     if (!collision || collision.getState().isInvulnerable) return null;
+    if (window.ONREDPerfectTimingSystem &&
+        typeof ONREDPerfectTimingSystem.findImpactTarget === "function") {
+        return ONREDPerfectTimingSystem.findImpactTarget(player, perfectObstacles, obstacleConfig.size);
+    }
     for (const obstacle of perfectObstacles) {
         if (obstacle.state === "ACTIVE" &&
             collision.checkCollisions(player, [obstacle], obstacleConfig.size)) return obstacle;
