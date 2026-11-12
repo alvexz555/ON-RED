@@ -397,15 +397,16 @@ function pointerUp(event) {
 // ATUALIZAÇÃO DO BOTÃO
 // ==========================================
 
-function updatePerfectButton(deltaTime) {
-    perfectTimingRuntime.feedbackTimer = Math.max(0, perfectTimingRuntime.feedbackTimer - deltaTime);
-    perfectTimingRuntime.effectTimer = Math.max(0, perfectTimingRuntime.effectTimer - deltaTime);
+function updatePerfectButton(deltaTime, timerDeltaTime = deltaTime) {
+    // Relógios de habilidade usam tempo real; animações/física continuam limitadas pelo frame.
+    perfectTimingRuntime.feedbackTimer = Math.max(0, perfectTimingRuntime.feedbackTimer - timerDeltaTime);
+    perfectTimingRuntime.effectTimer = Math.max(0, perfectTimingRuntime.effectTimer - timerDeltaTime);
     if (perfectTimingRuntime.effectTimer <= 0) perfectTimingRuntime.effect = null;
 
     if (perfectButton.charge < 1) {
 
         perfectButton.charge +=
-            deltaTime / perfectButton.cooldown;
+            timerDeltaTime / perfectButton.cooldown;
 
         perfectButton.charge =
             Math.min(perfectButton.charge, 1);
@@ -413,7 +414,7 @@ function updatePerfectButton(deltaTime) {
 
     if (perfectButton.activationFlash > 0) {
 
-        perfectButton.activationFlash -= deltaTime;
+        perfectButton.activationFlash -= timerDeltaTime;
 
         perfectButton.activationFlash =
             Math.max(0, perfectButton.activationFlash);
@@ -421,7 +422,7 @@ function updatePerfectButton(deltaTime) {
 
     if (perfectWave.timer > 0) {
 
-        perfectWave.timer -= deltaTime;
+        perfectWave.timer -= timerDeltaTime;
 
         perfectWave.timer =
             Math.max(0, perfectWave.timer);
@@ -612,7 +613,7 @@ function spawnPerfectObstacle() {
 // ATUALIZAÇÃO DOS OBSTÁCULOS
 // ==========================================
 
-function updatePerfectObstacles(deltaTime) {
+function updatePerfectObstacles(deltaTime, timerDeltaTime = deltaTime) {
 
     spawnTimer += deltaTime;
 
@@ -624,7 +625,7 @@ function updatePerfectObstacles(deltaTime) {
     }
 
     if (window.ONREDPerfectTimingSystem) {
-        ONREDPerfectTimingSystem.update(deltaTime, canvas, player, obstacleConfig.size, perfectObstacles);
+        ONREDPerfectTimingSystem.update(timerDeltaTime, canvas, player, obstacleConfig.size, perfectObstacles);
         ObstacleAI.updateRoles(perfectObstacles);
         if (!ObstacleAI.attacker && perfectObstacles.length) ObstacleAI.selectAttacker(perfectObstacles);
     }
@@ -752,7 +753,7 @@ function handlePlayerCollision() {
 // ATUALIZAÇÃO GERAL
 // ==========================================
 
-function update(deltaTime) {
+function update(deltaTime, timerDeltaTime = deltaTime) {
 
     if (gameState !== GAME_STATE.PLAYING) return;
 
@@ -809,9 +810,9 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
     // SISTEMAS DO JOGO
 
-    updatePerfectObstacles(deltaTime);
+    updatePerfectObstacles(deltaTime, timerDeltaTime);
 
-    updatePerfectButton(deltaTime);
+    updatePerfectButton(deltaTime, timerDeltaTime);
 
     // SCORE POR SOBREVIVÊNCIA
 
@@ -1387,17 +1388,18 @@ let lastFrameTime = 0;
 
 function gameLoop(timestamp) {
 
-    const deltaTime = lastFrameTime
-        ? Math.min(
-            (timestamp - lastFrameTime) / 1000,
-            0.05
-        )
+    const elapsedTime = lastFrameTime
+        ? Math.max(0, (timestamp - lastFrameTime) / 1000)
         : 0;
+
+    // Física e movimento mantêm o limite de 50 ms para evitar saltos.
+    // Cooldown e respawn recebem o tempo decorrido real, sem perder segundos.
+    const deltaTime = Math.min(elapsedTime, 0.05);
 
     lastFrameTime = timestamp;
 
     if (gameState === GAME_STATE.PLAYING) {
-        update(deltaTime);
+        update(deltaTime, elapsedTime);
         draw();
     }
 
