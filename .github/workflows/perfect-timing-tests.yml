@@ -1,0 +1,28 @@
+name: Perfect Timing tests
+
+on:
+  push:
+    branches:
+      - feature/perfect-timing-system
+  pull_request:
+    branches:
+      - main
+      - feature/ping-pong
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: |
+          node --check js/main.js
+          node --check js/collisionSystem.js
+          node --check js/perfectTimingSystem.js
+      - name: Run Perfect Timing unit tests
+        run: node --test tests/perfectTimingSystem.test.js
