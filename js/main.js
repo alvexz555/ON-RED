@@ -199,6 +199,7 @@ function applyPerfectTimingEffect() {
     if (type === "heal" && health) health.heal(perfectTimingConfig.healAmount);
     perfectTimingRuntime.feedback = labels[type];
     perfectTimingRuntime.feedbackTimer = 1.5;
+    return labels[type];
 }
 
 function completePerfectTiming(obstacle) {
@@ -225,9 +226,10 @@ function completePerfectTiming(obstacle) {
         perfectTimingRuntime.feedback = "5/5 ELIMINATED · HP RESTORED";
         perfectTimingRuntime.feedbackTimer = 2.5;
     } else {
-        applyPerfectTimingEffect();
-        perfectTimingRuntime.feedback = "OBSTACLE ELIMINATED · +" + perfectTimingConfig.scorePerElimination;
-        perfectTimingRuntime.feedbackTimer = 1.5;
+        const effectLabel = applyPerfectTimingEffect();
+        perfectTimingRuntime.feedback =
+            "ELIMINATED +" + perfectTimingConfig.scorePerElimination + " · " + effectLabel;
+        perfectTimingRuntime.feedbackTimer = 1.8;
     }
     perfectWave.timer = perfectWave.duration;
     return true;
@@ -957,19 +959,25 @@ function drawPerfectObstacles() {
         const half = obstacleConfig.size / 2;
 
         ctx.beginPath();
-
         ctx.rect(
             obstacle.x - half,
             obstacle.y - half,
             obstacleConfig.size,
             obstacleConfig.size
         );
-
         ctx.strokeStyle = "#168BFF";
         ctx.lineWidth = 3;
-
         ctx.stroke();
     });
+
+    // Penalidade de visibilidade escurece a arena, mas mantém
+    // jogador e controles desenhados depois desta camada legíveis.
+    if (perfectTimingRuntime.effect === "low_visibility") {
+        ctx.save();
+        ctx.fillStyle = "rgba(3, 6, 13, 0.48)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
 }
 
 // ==========================================
