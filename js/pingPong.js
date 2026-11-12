@@ -13,8 +13,8 @@
         spawnMargin: 32,
         minPlayerDistance: 130,
         spawnAttempts: 40,
-        knockbackSpeed: 700,
-        knockbackDamping: 7
+        knockbackSpeed: 900,
+        knockbackDamping: 4
     };
 
     let ball = null;
