@@ -747,12 +747,27 @@ player.y += moveY * player.speed * deltaTime * 60;
 
     if (window.ONREDMergeSystem) {
 
-        ONREDMergeSystem.update(
-            deltaTime,
-            player,
-            canvas,
-            window.ONREDHealthSystem
-        );
+       
+const mergeResults = ONREDMergeSystem.update(
+    deltaTime,
+    player,
+    canvas,
+    window.ONREDHealthSystem
+);
+
+// APLICA BÔNUS DE PONTUAÇÃO DO MERGE.
+
+mergeResults.forEach(result => {
+
+    if (
+        result.type === "bonus_score" &&
+        result.applied
+    ) {
+        scoreState.value += result.points;
+    }
+
+});
+
     }
 }
 
