@@ -8,19 +8,22 @@
 
     const CONFIG = {
         radius: 12,
-        speed: 260,
+        speed: 380,
         spawnInterval: 10, // Padrão provisório de teste; ajustar após playtests.
         spawnMargin: 32,
         minPlayerDistance: 130,
         spawnAttempts: 40,
-        knockbackSpeed: 420,
-        knockbackDamping: 7
+        knockbackSpeed: 900,
+        knockbackDamping: 4,
+        controlRecoveryDuration: 1,
+        controlMinMultiplier: 0.2
     };
 
     let ball = null;
     let spawnTimer = 0;
     let knockbackX = 0;
     let knockbackY = 0;
+    let controlSlowTimer = 0;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -219,6 +222,9 @@
         knockbackX = nx * CONFIG.knockbackSpeed;
         knockbackY = ny * CONFIG.knockbackSpeed;
 
+        // Reduz temporariamente a influência dos controles do jogador.
+        controlSlowTimer = CONFIG.controlRecoveryDuration;
+
         // Compartilha a janela global de invulnerabilidade do jogo.
         const registered = collisionSystem
             ? collisionSystem.registerCollision()
@@ -255,6 +261,8 @@
         ) {
             return;
         }
+
+        controlSlowTimer = Math.max(0, controlSlowTimer - deltaTime);
 
         applyPlayerKnockback(deltaTime, player, arena);
 
@@ -305,6 +313,17 @@
         spawnTimer = 0;
         knockbackX = 0;
         knockbackY = 0;
+        controlSlowTimer = 0;
+    }
+
+    function getControlMultiplier() {
+        if (controlSlowTimer <= 0) return 1;
+
+        const duration = Math.max(CONFIG.controlRecoveryDuration, 0.001);
+        const progress = 1 - controlSlowTimer / duration;
+
+        return CONFIG.controlMinMultiplier +
+            (1 - CONFIG.controlMinMultiplier) * progress;
     }
 
     function configure(options) {
@@ -339,7 +358,9 @@
             active: Boolean(ball),
             ball: ball ? { ...ball } : null,
             spawnTimer,
-            knockback: { x: knockbackX, y: knockbackY }
+            knockback: { x: knockbackX, y: knockbackY },
+            controlSlowTimer,
+            controlMultiplier: getControlMultiplier()
         };
     }
 
@@ -356,7 +377,8 @@
         remove,
         configure,
         getConfig,
-        getState
+        getState,
+        getControlMultiplier
     };
 
     console.log("[ON RED] Ping Pong Enemy carregado.");
