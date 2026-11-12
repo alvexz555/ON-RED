@@ -20,20 +20,22 @@
     // CONFIGURAÇÃO
     // ==========================================
 
-    const CONFIG = {
-        radius: 9,
-        healAmount: 25,
+  const CONFIG = {
+    radius: 9,
+    healAmount: 25,
 
-        maxOrbs: 4,
-        initialOrbs: 2,
-        spawnInterval: 6,
+    bonusScorePerOrb: 250,
 
-        margin: 55,
-        spawnAttempts: 20,
+    maxOrbs: 4,
+    initialOrbs: 2,
+    spawnInterval: 6,
 
-        pulseSpeed: 3.2,
-        glowBlur: 18
-    };
+    margin: 55,
+    spawnAttempts: 20,
+
+    pulseSpeed: 3.2,
+    glowBlur: 18
+};
 
     // ==========================================
     // ESTADO INTERNO
