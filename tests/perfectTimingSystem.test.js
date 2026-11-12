@@ -21,6 +21,14 @@ const arena = { width: 900, height: 700 };
 const player = { x: 450, y: 350, radius: 15 };
 const size = 34;
 
+test("impact target is selected by closing velocity, not array order or nearest center", () => {
+    system.reset();
+    const slowNear = system.registerObstacle({ x: 100, y: 100, vx: 0, vy: 0, role: "pressure" });
+    const fastFar = system.registerObstacle({ x: 130, y: 100, vx: -120, vy: 0, role: "pressure" });
+    const playerAtImpact = { x: 115, y: 100, radius: 15 };
+    assert.equal(system.findImpactTarget(playerAtImpact, [slowNear, fastFar], 34), fastFar);
+});
+
 test("elimination removes only the selected active obstacle", () => {
     const active = setupFive();
     const target = active[2];
