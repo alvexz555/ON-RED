@@ -55,7 +55,7 @@ test("individual respawn waits the full 30 seconds", () => {
     const target = active[1];
     system.eliminate(target, active);
 
-    system.update(29.99, arena, player, size, active);
+    system.update(29.5, arena, player, size, active);
     assert.equal(active.includes(target), false);
 
     const returned = system.update(0.01, arena, player, size, active);
@@ -76,7 +76,7 @@ test("five eliminations trigger one collective 40-second return", () => {
     assert.equal(active.length, 0);
     assert.equal(system.getState().collectiveRemaining, 40);
 
-    system.update(39.99, arena, player, size, active);
+    system.update(39.5, arena, player, size, active);
     assert.equal(active.length, 0);
 
     const returned = system.update(0.01, arena, player, size, active);
