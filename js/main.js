@@ -743,7 +743,20 @@ player.y += moveY * player.speed * deltaTime * 60;
         handlePlayerCollision();
     }
 
-    // SISTEMA MERGE (ESFERAS VERMELHAS)
+    // INIMIGO PING PONG
+    if (window.ONREDPingPong) {
+        ONREDPingPong.update(
+            deltaTime,
+            player,
+            canvas,
+            window.ONREDHealthSystem,
+            window.ONREDCollisionSystem,
+            perfectObstacles,
+            obstacleConfig.size
+        );
+    }
+
+        // SISTEMA MERGE (ESFERAS VERMELHAS)
 
     if (window.ONREDMergeSystem) {
 
@@ -1018,6 +1031,10 @@ function draw() {
     drawArena();
     drawPerfectObstacles();
 
+    if (window.ONREDPingPong) {
+        ONREDPingPong.draw(ctx);
+    }
+
     if (window.ONREDMergeSystem) {
         ONREDMergeSystem.draw(ctx);
     }
@@ -1128,6 +1145,10 @@ function resetGame() {
         ONREDMergeSystem.reset(canvas, player);
     }
 
+    if (window.ONREDPingPong) {
+        ONREDPingPong.reset(canvas, player);
+    }
+
     lastFrameTime = 0;
 }
 
@@ -1207,6 +1228,10 @@ function returnToMainMenu() {
 
     perfectObstacles.length = 0;
     spawnTimer = 0;
+
+    if (window.ONREDPingPong) {
+        ONREDPingPong.reset(canvas, player);
+    }
 
     if (gameOverScreen) {
         gameOverScreen.classList.remove("active");
