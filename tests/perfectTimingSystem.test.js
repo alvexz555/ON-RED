@@ -105,6 +105,26 @@ test("respawn positions are inside arena and separated from player", () => {
     );
 });
 
+test("collective respawn restores all five together without overlaps", () => {
+    const active = setupFive();
+    for (let i = 0; i < 5; i++) system.eliminate(active[0], active);
+
+    const returned = system.update(12, arena, player, size, active);
+    assert.equal(returned.length, 5);
+    assert.equal(active.length, 5);
+
+    for (let i = 0; i < active.length; i++) {
+        assert.ok(Math.hypot(active[i].x - player.x, active[i].y - player.y) >=
+            player.radius + size / 2 + 80);
+        for (let j = i + 1; j < active.length; j++) {
+            assert.ok(
+                Math.abs(active[i].x - active[j].x) >= size + 20 ||
+                Math.abs(active[i].y - active[j].y) >= size + 20
+            );
+        }
+    }
+});
+
 test("respawn never exceeds the five-obstacle cap", () => {
     const active = setupFive();
     system.eliminate(active[0], active);
