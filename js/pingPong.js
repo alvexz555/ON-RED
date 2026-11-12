@@ -8,12 +8,12 @@
 
     const CONFIG = {
         radius: 12,
-        speed: 260,
+        speed: 380,
         spawnInterval: 10, // Padrão provisório de teste; ajustar após playtests.
         spawnMargin: 32,
         minPlayerDistance: 130,
         spawnAttempts: 40,
-        knockbackSpeed: 420,
+        knockbackSpeed: 700,
         knockbackDamping: 7
     };
 
