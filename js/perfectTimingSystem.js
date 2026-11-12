@@ -35,6 +35,37 @@
         return obstacle;
     }
 
+    function findImpactTarget(player, obstacles, obstacleSize) {
+        if (!player || !Array.isArray(obstacles) || !Number.isFinite(obstacleSize)) return null;
+        const half = obstacleSize / 2;
+        let selected = null, bestApproach = -Infinity, bestPenetration = -Infinity;
+
+        for (const obstacle of obstacles) {
+            if (!obstacle || obstacle.state !== "ACTIVE") continue;
+            const closestX = Math.max(obstacle.x - half, Math.min(player.x, obstacle.x + half));
+            const closestY = Math.max(obstacle.y - half, Math.min(player.y, obstacle.y + half));
+            const ox = player.x - closestX, oy = player.y - closestY;
+            const distanceSquared = ox * ox + oy * oy;
+            if (distanceSquared > player.radius * player.radius) continue;
+
+            const distance = Math.sqrt(distanceSquared);
+            const cx = player.x - obstacle.x, cy = player.y - obstacle.y;
+            const centerDistance = Math.hypot(cx, cy) || 1;
+            const approach = ((Number(obstacle.vx) || 0) * cx +
+                (Number(obstacle.vy) || 0) * cy) / centerDistance;
+            const penetration = player.radius - distance;
+
+            if (approach > bestApproach ||
+                (Math.abs(approach - bestApproach) < 0.000001 &&
+                 penetration > bestPenetration)) {
+                selected = obstacle;
+                bestApproach = approach;
+                bestPenetration = penetration;
+            }
+        }
+        return selected;
+    }
+
     function eliminate(obstacle, activeObstacles) {
         if (!obstacle || !Array.isArray(activeObstacles)) {
             return { applied: false, reason: "invalid_input" };
@@ -264,6 +295,7 @@
 
     const api = {
         registerObstacle,
+        findImpactTarget,
         eliminate,
         update,
         getState,
