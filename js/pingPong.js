@@ -82,7 +82,7 @@
             }
         }
 
-        return candidate;
+        return null;
     }
 
     function randomDirection() {
@@ -113,6 +113,8 @@
             obstacles,
             obstacleSize
         );
+        if (!position) return false;
+
         const direction = randomDirection();
 
         ball = {
