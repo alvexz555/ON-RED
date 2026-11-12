@@ -10,7 +10,8 @@
 
     const CONFIG = {
         maxObstacles: 5,
-        respawnDelay: 12,
+        individualRespawnDelay: 30,
+        collectiveRespawnDelay: 40,
         playerSafeMargin: 80,
         obstacleGap: 20,
         spawnAttempts: 100,
@@ -80,7 +81,7 @@
         obstacle.state = "ELIMINATED";
         eliminated.set(obstacle.id, {
             obstacle,
-            remaining: CONFIG.respawnDelay
+            remaining: CONFIG.individualRespawnDelay
         });
 
         const collectiveTriggered =
@@ -88,7 +89,7 @@
             eliminated.size === CONFIG.maxObstacles;
 
         if (collectiveTriggered) {
-            collectiveTimer = CONFIG.respawnDelay;
+            collectiveTimer = CONFIG.collectiveRespawnDelay;
             collectiveRetryTimer = 0;
 
             eliminated.forEach(record => {
