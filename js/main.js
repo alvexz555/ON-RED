@@ -153,10 +153,15 @@ const perfectButton = {
     y: 0
 };
 
-// ONDA DE CHOQUE DO PERFECT TIMING
-const perfectWave = {
-    duration: 0.4,
-    timer: 0
+const perfectWave = { duration: 0.4, timer: 0 };
+const perfectTimingConfig = {
+    scorePerElimination: 500, requestWindow: 0.25, positiveChance: 0.7,
+    effectDuration: 5, playerSpeedBoost: 1.35, playerSpeedPenalty: 0.75,
+    obstacleSlowdown: 0.75, obstacleSpeedBoost: 1.25,
+    scoreMultiplier: 2, healAmount: 25
+};
+const perfectTimingRuntime = {
+    requestTimer: 0, effect: null, effectTimer: 0, feedback: "", feedbackTimer: 0
 };
 
 function updatePerfectButtonPosition() {
@@ -169,46 +174,73 @@ function updatePerfectButtonPosition() {
 }
 
 function activatePerfectTiming() {
+    if (gameState !== GAME_STATE.PLAYING || perfectButton.charge < 1) return false;
+    perfectTimingRuntime.requestTimer = perfectTimingConfig.requestWindow;
+    perfectTimingRuntime.feedback = "PERFECT TIMING ARMED";
+    perfectTimingRuntime.feedbackTimer = 0.45;
+    return true;
+}
 
-    if (gameState !== GAME_STATE.PLAYING) return false;
+function applyPerfectTimingEffect() {
+    const health = window.ONREDHealthSystem;
+    const positive = Math.random() < perfectTimingConfig.positiveChance;
+    const choices = positive
+        ? ["speed_up", "score_up", "heal", "obstacle_slow"]
+        : ["speed_down", "obstacle_fast", "low_visibility"];
+    const type = choices[Math.floor(Math.random() * choices.length)];
+    perfectTimingRuntime.effect = type;
+    perfectTimingRuntime.effectTimer = perfectTimingConfig.effectDuration;
 
-    if (perfectButton.charge < 1) {
-        return false;
-    }
+    const labels = {
+        speed_up: "SPEED BOOST", score_up: "SCORE x2", heal: "HP RESTORED",
+        obstacle_slow: "OBSTACLES SLOWED", speed_down: "SPEED REDUCED",
+        obstacle_fast: "OBSTACLES FASTER", low_visibility: "LOW VISIBILITY"
+    };
+    if (type === "heal" && health) health.heal(perfectTimingConfig.healAmount);
+    perfectTimingRuntime.feedback = labels[type];
+    perfectTimingRuntime.feedbackTimer = 1.5;
+}
+
+function completePerfectTiming(obstacle) {
+    const system = window.ONREDPerfectTimingSystem;
+    const health = window.ONREDHealthSystem;
+    if (!system || !health || !obstacle || perfectButton.charge < 1) return false;
+
+    const result = system.eliminate(obstacle, perfectObstacles);
+    if (!result.applied) return false;
 
     perfectButton.charge = 0;
-    perfectButton.activationFlash = 0.2;
+    perfectButton.activationFlash = 0.25;
+    perfectTimingRuntime.requestTimer = 0;
+    scoreState.value += perfectTimingConfig.scorePerElimination;
+    ObstacleAI.updateRoles(perfectObstacles);
+    ObstacleAI.selectAttacker(perfectObstacles);
 
-    // ONDA DE CHOQUE: EMPURRA TODOS OS OBSTÁCULOS
-    // PARA LONGE DO JOGADOR (ONDA RADIAL).
-
-    perfectObstacles.forEach(obstacle => {
-
-        const dx = obstacle.x - player.x;
-        const dy = obstacle.y - player.y;
-
-        const distance = Math.hypot(dx, dy) || 1;
-
-        const nx = dx / distance;
-        const ny = dy / distance;
-
-        const force =
-            140 +
-            340 * (1 - Math.min(distance / 500, 1));
-
-        obstacle.vx = nx * force;
-        obstacle.vy = ny * force;
-
-        obstacle.role = "pressure";
-    });
-
-    if (ObstacleAI.attacker) {
-        ObstacleAI.selectAttacker(perfectObstacles);
+    if (result.collectiveTriggered) {
+        const state = health.getState();
+        health.heal(state.maxHP - state.hp);
+        if (Math.random() < 0.2) health.addExtraLife();
+        perfectTimingRuntime.effect = null;
+        perfectTimingRuntime.effectTimer = 0;
+        perfectTimingRuntime.feedback = "5/5 ELIMINATED · HP RESTORED";
+        perfectTimingRuntime.feedbackTimer = 2.5;
+    } else {
+        applyPerfectTimingEffect();
+        perfectTimingRuntime.feedback = "OBSTACLE ELIMINATED · +" + perfectTimingConfig.scorePerElimination;
+        perfectTimingRuntime.feedbackTimer = 1.5;
     }
-
     perfectWave.timer = perfectWave.duration;
-
     return true;
+}
+
+function findCollidingPerfectObstacle() {
+    const collision = window.ONREDCollisionSystem;
+    if (!collision || collision.getState().isInvulnerable) return null;
+    for (const obstacle of perfectObstacles) {
+        if (obstacle.state === "ACTIVE" &&
+            collision.checkCollisions(player, [obstacle], obstacleConfig.size)) return obstacle;
+    }
+    return null;
 }
 
 // ==========================================
@@ -330,6 +362,10 @@ function pointerUp(event) {
 // ==========================================
 
 function updatePerfectButton(deltaTime) {
+    perfectTimingRuntime.requestTimer = Math.max(0, perfectTimingRuntime.requestTimer - deltaTime);
+    perfectTimingRuntime.feedbackTimer = Math.max(0, perfectTimingRuntime.feedbackTimer - deltaTime);
+    perfectTimingRuntime.effectTimer = Math.max(0, perfectTimingRuntime.effectTimer - deltaTime);
+    if (perfectTimingRuntime.effectTimer <= 0) perfectTimingRuntime.effect = null;
 
     if (perfectButton.charge < 1) {
 
@@ -490,10 +526,10 @@ let spawnTimer = 0;
 
 function spawnPerfectObstacle() {
 
-    if (
-        perfectObstacles.length >=
-        obstacleConfig.maxObstacles
-    ) {
+    const lifecycle = window.ONREDPerfectTimingSystem
+        ? ONREDPerfectTimingSystem.getState()
+        : { eliminatedCount: 0 };
+    if (perfectObstacles.length + lifecycle.eliminatedCount >= obstacleConfig.maxObstacles) {
         return;
     }
 
@@ -525,13 +561,10 @@ function spawnPerfectObstacle() {
             break;
     }
 
-    perfectObstacles.push({
-        x,
-        y,
-        vx: 0,
-        vy: 0,
-        role: "pressure"
-    });
+    const obstacle = window.ONREDPerfectTimingSystem
+        ? ONREDPerfectTimingSystem.registerObstacle({ x, y, vx: 0, vy: 0, role: "pressure" })
+        : { x, y, vx: 0, vy: 0, role: "pressure", state: "ACTIVE" };
+    perfectObstacles.push(obstacle);
 
     ObstacleAI.updateRoles(perfectObstacles);
 
@@ -555,6 +588,17 @@ function updatePerfectObstacles(deltaTime) {
         spawnPerfectObstacle();
     }
 
+    if (window.ONREDPerfectTimingSystem) {
+        ONREDPerfectTimingSystem.update(deltaTime, canvas, player, obstacleConfig.size, perfectObstacles);
+        ObstacleAI.updateRoles(perfectObstacles);
+        if (!ObstacleAI.attacker && perfectObstacles.length) ObstacleAI.selectAttacker(perfectObstacles);
+    }
+
+    const effect = perfectTimingRuntime.effect;
+    const obstacleSpeedMultiplier = effect === "obstacle_slow"
+        ? perfectTimingConfig.obstacleSlowdown
+        : effect === "obstacle_fast" ? perfectTimingConfig.obstacleSpeedBoost : 1;
+
     const repulsions = ObstaclePhysics.calculateRepulsion(
         perfectObstacles,
         obstacleConfig.size
@@ -566,7 +610,7 @@ function updatePerfectObstacles(deltaTime) {
             obstacle,
             index,
             player,
-            obstacleConfig.speed
+            obstacleConfig.speed * obstacleSpeedMultiplier
         );
 
         const chaseX = desired.x;
@@ -651,13 +695,12 @@ function handlePlayerCollision() {
         return;
     }
 
-    const hasCollision = collision.checkCollisions(
-        player,
-        perfectObstacles,
-        obstacleConfig.size
-    );
+    const targetObstacle = findCollidingPerfectObstacle();
+    if (!targetObstacle) return;
 
-    if (!hasCollision) return;
+    if (perfectTimingRuntime.requestTimer > 0 &&
+        perfectButton.charge >= 1 &&
+        completePerfectTiming(targetObstacle)) return;
 
     const registered = collision.registerCollision();
 
@@ -723,8 +766,11 @@ const controlMultiplier =
         ? window.ONREDPingPong.getControlMultiplier()
         : 1;
 
-player.x += moveX * player.speed * controlMultiplier * deltaTime * 60;
-player.y += moveY * player.speed * controlMultiplier * deltaTime * 60;
+const effectSpeedMultiplier = perfectTimingRuntime.effect === "speed_up"
+    ? perfectTimingConfig.playerSpeedBoost
+    : perfectTimingRuntime.effect === "speed_down" ? perfectTimingConfig.playerSpeedPenalty : 1;
+player.x += moveX * player.speed * controlMultiplier * effectSpeedMultiplier * deltaTime * 60;
+player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * deltaTime * 60;
 
     // LIMITES DO JOGADOR
 
@@ -738,8 +784,9 @@ player.y += moveY * player.speed * controlMultiplier * deltaTime * 60;
 
     // SCORE POR SOBREVIVÊNCIA
 
-    scoreState.value +=
-        deltaTime * scoreState.pointsPerSecond;
+    const scoreMultiplier = perfectTimingRuntime.effect === "score_up"
+        ? perfectTimingConfig.scoreMultiplier : 1;
+    scoreState.value += deltaTime * scoreState.pointsPerSecond * scoreMultiplier;
 
     // SISTEMA DE COLISÃO
 
@@ -906,7 +953,7 @@ function drawPlayer() {
 function drawPerfectObstacles() {
 
     perfectObstacles.forEach(obstacle => {
-
+        if (obstacle.state !== "ACTIVE") return;
         const half = obstacleConfig.size / 2;
 
         ctx.beginPath();
@@ -1014,11 +1061,9 @@ function drawPerfectButton() {
     ctx.font = "bold 12px Arial";
 
     ctx.fillText(
-        perfectButton.charge >= 1
-            ? "READY"
-            : `${Math.floor(perfectButton.charge * 100)}%`,
-        x + size / 2,
-        y + size / 2
+        perfectTimingRuntime.requestTimer > 0 ? "ARMED" :
+        perfectButton.charge >= 1 ? "READY" : `${Math.floor(perfectButton.charge * 100)}%`,
+        x + size / 2, y + size / 2
     );
 }
 
@@ -1086,6 +1131,31 @@ function drawScore() {
         );
     }
 
+    if (perfectTimingRuntime.feedbackTimer > 0) {
+        ctx.save();
+        ctx.fillStyle = "#FFFFFF";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = "bold 12px Arial";
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 12;
+        ctx.fillText(perfectTimingRuntime.feedback, canvas.width / 2, 44);
+        ctx.restore();
+    }
+
+    if (window.ONREDPerfectTimingSystem) {
+        const state = ONREDPerfectTimingSystem.getState();
+        if (state.collectiveActive) {
+            ctx.save();
+            ctx.fillStyle = "#FFFFFF";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.font = "bold 13px Arial";
+            ctx.fillText("5/5 RETURN IN " + Math.ceil(state.collectiveRemaining) + "s", canvas.width / 2, 62);
+            ctx.restore();
+        }
+    }
+
     if (perfectWave.timer > 0) {
 
         const progress =
@@ -1134,6 +1204,12 @@ function resetGame() {
     perfectButton.activationFlash = 0;
 
     perfectWave.timer = 0;
+    perfectTimingRuntime.requestTimer = 0;
+    perfectTimingRuntime.effect = null;
+    perfectTimingRuntime.effectTimer = 0;
+    perfectTimingRuntime.feedback = "";
+    perfectTimingRuntime.feedbackTimer = 0;
+    if (window.ONREDPerfectTimingSystem) ONREDPerfectTimingSystem.reset();
 
     scoreState.value = 0;
 
