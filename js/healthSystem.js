@@ -2,71 +2,41 @@
 /*
  * ON RED
  * HEALTH SYSTEM
- * Version: 1.0
+ * Version: 1.1
  *
- * Sistema modular de vidas e HP.
- * 3 vidas iniciais.
- * HP de 0 a 100.
+ * 1 vida inicial + até 4 vidas extras.
+ * Máximo total: 5 vidas.
  */
 
 (function () {
     "use strict";
 
-    // ==========================================
-    // CONFIGURAÇÃO
-    // ==========================================
-
     const CONFIG = {
-        maxLives: 3,
+        initialLives: 1,
+        maxExtraLives: 4,
+        maxLives: 5,
         maxHP: 100
     };
 
-    // ==========================================
-    // ESTADO
-    // ==========================================
-
-    let state = {
-        lives: CONFIG.maxLives,
-        maxLives: CONFIG.maxLives,
-
-        hp: CONFIG.maxHP,
-        maxHP: CONFIG.maxHP,
-
-        gameOver: false
-    };
-
-    // ==========================================
-    // RESET
-    // ==========================================
+    let state = {};
 
     function reset() {
         state = {
-            lives: CONFIG.maxLives,
+            lives: CONFIG.initialLives,
             maxLives: CONFIG.maxLives,
-
             hp: CONFIG.maxHP,
             maxHP: CONFIG.maxHP,
-
             gameOver: false
         };
 
         return getState();
     }
 
-    // ==========================================
-    // OBTER ESTADO
-    // ==========================================
-
     function getState() {
         return { ...state };
     }
 
-    // ==========================================
-    // APLICAR DANO
-    // ==========================================
-
     function applyDamage(amount) {
-
         if (state.gameOver) {
             return {
                 applied: false,
@@ -88,31 +58,18 @@
         }
 
         const previousHP = state.hp;
-
         state.hp = Math.max(0, state.hp - amount);
 
         const damageApplied = previousHP - state.hp;
-
         let lifeLost = false;
 
-        // ======================================
-        // PERDA DE VIDA
-        // ======================================
-
         if (state.hp <= 0) {
-
             state.lives--;
-
             lifeLost = true;
 
             if (state.lives > 0) {
-
-                // Recupera o HP para a próxima vida.
                 state.hp = CONFIG.maxHP;
-
             } else {
-
-                // Todas as vidas foram perdidas.
                 state.hp = 0;
                 state.gameOver = true;
             }
@@ -127,12 +84,7 @@
         };
     }
 
-    // ==========================================
-    // RECUPERAR HP
-    // ==========================================
-
     function heal(amount) {
-
         if (state.gameOver) {
             return {
                 applied: false,
@@ -155,8 +107,10 @@
 
         const previousHP = state.hp;
 
-        // O HP nunca ultrapassa o máximo.
-        state.hp = Math.min(state.maxHP, state.hp + amount);
+        state.hp = Math.min(
+            state.maxHP,
+            state.hp + amount
+        );
 
         return {
             applied: state.hp > previousHP,
@@ -165,12 +119,7 @@
         };
     }
 
-    // ==========================================
-    // VIDA EXTRA
-    // ==========================================
-
     function addExtraLife() {
-
         if (state.gameOver) {
             return {
                 applied: false,
@@ -179,8 +128,15 @@
             };
         }
 
+        if (state.lives >= CONFIG.maxLives) {
+            return {
+                applied: false,
+                reason: "life_limit_reached",
+                state: getState()
+            };
+        }
+
         state.lives++;
-        state.maxLives++;
 
         return {
             applied: true,
@@ -189,9 +145,7 @@
         };
     }
 
-    // ==========================================
-    // API PÚBLICA
-    // ==========================================
+    reset();
 
     window.ONREDHealthSystem = {
         reset,
