@@ -715,9 +715,16 @@ if (movementMagnitude > 1) {
     moveY /= movementMagnitude;
 }
 
-// Aplica o movimento.
-player.x += moveX * player.speed * deltaTime * 60;
-player.y += moveY * player.speed * deltaTime * 60;
+// Aplica o movimento. Após um impacto do Ping Pong, a influência
+// do joystick/teclado começa reduzida e retorna gradualmente em 1 segundo.
+const controlMultiplier =
+    window.ONREDPingPong &&
+    typeof window.ONREDPingPong.getControlMultiplier === "function"
+        ? window.ONREDPingPong.getControlMultiplier()
+        : 1;
+
+player.x += moveX * player.speed * controlMultiplier * deltaTime * 60;
+player.y += moveY * player.speed * controlMultiplier * deltaTime * 60;
 
     // LIMITES DO JOGADOR
 
