@@ -144,9 +144,7 @@
         const state = health.getState();
 
         // HP ABAIXO DE 100%: RECUPERA HP.
-
         if (state.hp < state.maxHP) {
-
             const result = health.heal(CONFIG.healAmount);
 
             return {
@@ -158,9 +156,17 @@
             };
         }
 
-        // HP EM 100%: CONCEDE VIDA EXTRA.
-
+        // HP EM 100%: TENTA CONCEDER VIDA EXTRA.
         const result = health.addExtraLife();
+
+        // LIMITE DE 5 VIDAS ATINGIDO: CONVERTE A ESFERA EM PONTOS.
+        if (result.reason === "life_limit_reached") {
+            return {
+                type: "bonus_score",
+                applied: true,
+                points: CONFIG.bonusScorePerOrb
+            };
+        }
 
         return {
             type: "extra_life",
