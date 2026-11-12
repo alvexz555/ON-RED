@@ -24,7 +24,7 @@
     radius: 9,
     healAmount: 25,
 
-    bonusScorePerOrb: 250,
+    bonusScorePerOrb: 1000,
 
     maxOrbs: 4,
     initialOrbs: 2,
