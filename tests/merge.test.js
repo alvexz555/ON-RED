@@ -134,7 +134,8 @@ test("TESTE 03: coleta com HP em 100% concede vida extra", () => {
 
     const before = health.getState();
     assert.equal(before.hp, 100);
-    assert.equal(before.lives, 3);
+    assert.equal(before.lives, 1);
+    assert.equal(before.maxLives, 5);
 
     const orbsBefore = merge.getOrbs().length;
     const orb = merge.getOrbs()[0];
@@ -151,8 +152,8 @@ test("TESTE 03: coleta com HP em 100% concede vida extra", () => {
 
     const after = health.getState();
 
-    assert.equal(after.lives, 4);
-    assert.equal(after.maxLives, 4);
+    assert.equal(after.lives, 2);
+    assert.equal(after.maxLives, 5);
     assert.equal(after.hp, 100);
 
     // A esfera foi removida.
@@ -226,15 +227,23 @@ test("TESTE 05: várias esferas mantêm HP e vidas consistentes", () => {
 
     const orbsToCollect = merge.getOrbs();
 
+    let bonusPoints = 0;
+
     orbsToCollect.forEach(orb => {
-        merge.update(0, playerAt(orb.x, orb.y), ARENA, health);
+        const results = merge.update(0, playerAt(orb.x, orb.y), ARENA, health);
+        results.forEach(result => {
+            if (result.type === "bonus_score" && result.applied) {
+                bonusPoints += result.points;
+            }
+        });
     });
 
     const state = health.getState();
 
     assert.equal(state.hp, 100);
-    assert.equal(state.lives, 3 + orbsToCollect.length);
-    assert.equal(state.maxLives, 3 + orbsToCollect.length);
+    assert.equal(state.lives, 5);
+    assert.equal(state.maxLives, 5);
+    assert.equal(bonusPoints, Math.max(0, orbsToCollect.length - 4) * 250);
     assert.equal(merge.getOrbs().length, 0);
 });
 
@@ -277,8 +286,8 @@ test("TESTE 05c: reset restaura HP, vidas e esferas", () => {
     const config = merge.getConfig();
 
     assert.equal(state.hp, 100);
-    assert.equal(state.lives, 3);
-    assert.equal(state.maxLives, 3);
+    assert.equal(state.lives, 1);
+    assert.equal(state.maxLives, 5);
     assert.equal(state.gameOver, false);
     assert.equal(merge.getOrbs().length, config.initialOrbs);
 });
@@ -287,9 +296,7 @@ test("TESTE 05d: em game over a coleta não altera HP nem vidas", () => {
 
     const { health, merge } = startMatch();
 
-    // Cada dano letal consome uma vida; 3 danos encerram a partida.
-    health.applyDamage(1000);
-    health.applyDamage(1000);
+    // A partida começa com 1 vida; um dano letal encerra a partida.
     health.applyDamage(1000);
 
     assert.equal(health.getState().gameOver, true);
@@ -302,4 +309,41 @@ test("TESTE 05d: em game over a coleta não altera HP nem vidas", () => {
     assert.equal(state.hp, 0);
     assert.equal(state.lives, 0);
     assert.equal(state.gameOver, true);
+});
+
+
+// TESTE 06 — CONVERSÃO EM PONTUAÇÃO NO LIMITE DE VIDAS
+
+test("TESTE 06: coleta com HP cheio e 5 vidas concede 250 pontos", () => {
+
+    const { health, merge } = startMatch();
+
+    // Começa com 1 vida e conquista as 4 vidas extras permitidas.
+    for (let i = 0; i < 4; i++) {
+        const result = health.addExtraLife();
+        assert.equal(result.applied, true);
+    }
+
+    const before = health.getState();
+    assert.equal(before.lives, 5);
+    assert.equal(before.maxLives, 5);
+    assert.equal(before.hp, 100);
+
+    const orb = merge.getOrbs()[0];
+    const results = merge.update(
+        0,
+        playerAt(orb.x, orb.y),
+        ARENA,
+        health
+    );
+
+    assert.equal(results.length, 1);
+    assert.equal(results[0].type, "bonus_score");
+    assert.equal(results[0].applied, true);
+    assert.equal(results[0].points, 250);
+
+    const after = health.getState();
+    assert.equal(after.lives, 5);
+    assert.equal(after.hp, 100);
+    assert.equal(merge.getOrbs().length, 1);
 });
