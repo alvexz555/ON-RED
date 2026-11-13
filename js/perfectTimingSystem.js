@@ -10,7 +10,7 @@
 
     const CONFIG = {
         maxObstacles: 5,
-        individualRespawnDelay: 15,
+        individualRespawnDelay: 25,
         collectiveRespawnDelay: 10,
         playerSafeMargin: 80,
         obstacleGap: 20,
