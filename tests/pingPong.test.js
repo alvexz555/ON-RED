@@ -108,6 +108,7 @@ test("five valid impacts activate electric overload and electrify the player on 
     assert.ok(state.electrifiedTimer > 0);
     assert.equal(state.stunTimer, 0);
     assert.equal(state.controlMultiplier, 0.2, "a recuperação normal do knockback continua ativa após a eletrização");
+    assert.equal(state.overloaded, false);
     assert.equal(electricStates[5], true);
 });
 
