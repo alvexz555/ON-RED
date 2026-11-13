@@ -19,8 +19,7 @@
         controlRecoveryDuration: 1,
         controlMinMultiplier: 0.2,
         collisionSpeedMultiplier: 1.08,
-        overloadHitCount: 5,
-        overloadDuration: 5,
+        overloadHitCount: 20,
         electrifiedDuration: 3,
         stunIntervalMin: 0.22,
         stunIntervalMax: 0.58,
@@ -34,7 +33,6 @@
     let knockbackY = 0;
     let controlSlowTimer = 0;
     let overloadHits = 0;
-    let overloadTimer = 0;
     let electrifiedTimer = 0;
     let stunTimer = 0;
     let nextStunIn = 0;
@@ -109,7 +107,6 @@
     function startOverload() {
         if (!ball || ball.electric) return;
         ball.electric = true;
-        overloadTimer = CONFIG.overloadDuration;
     }
 
     function registerValidImpact() {
@@ -125,7 +122,6 @@
     function endOverload() {
         if (ball) ball.electric = false;
         overloadHits = 0;
-        overloadTimer = 0;
         // O fim da sobrecarga remove apenas a eletricidade.
         // A velocidade acumulada só é restaurada no contato com o jogador.
     }
@@ -223,7 +219,6 @@
         if (wasElectric) {
             electrifyPlayer();
             endOverload();
-            setBallSpeed(CONFIG.speed);
         } else {
             overloadHits = 0;
             setBallSpeed(CONFIG.speed);
@@ -239,11 +234,6 @@
     }
 
     function updateElectricalState(deltaTime) {
-        if (overloadTimer > 0) {
-            overloadTimer = Math.max(0, overloadTimer - deltaTime);
-            if (overloadTimer === 0) endOverload();
-        }
-
         if (electrifiedTimer > 0) {
             electrifiedTimer = Math.max(0, electrifiedTimer - deltaTime);
             if (stunTimer > 0) {
@@ -285,8 +275,13 @@
         if (bounceFromWalls(arena)) registerValidImpact();
 
         if (hexSystem && typeof hexSystem.resolvePingPongCollision === "function") {
-            const hexHit = hexSystem.resolvePingPongCollision(ball, Boolean(ball.electric));
-            if (hexHit) registerValidImpact();
+            const wasElectric = Boolean(ball.electric);
+            const hexHit = hexSystem.resolvePingPongCollision(ball, wasElectric);
+            if (hexHit) {
+                // O impacto sempre acelera; se a bola estava eletrizada, consome a carga.
+                registerValidImpact();
+                if (wasElectric) endOverload();
+            }
         }
 
         collideWithPlayer(player, healthSystem, collisionSystem);
@@ -387,7 +382,6 @@
         knockbackY = 0;
         controlSlowTimer = 0;
         overloadHits = 0;
-        overloadTimer = 0;
         electrifiedTimer = 0;
         stunTimer = 0;
         nextStunIn = 0;
@@ -423,7 +417,6 @@
             controlMultiplier: getControlMultiplier(),
             impactCount: overloadHits,
             overloaded: Boolean(ball && ball.electric),
-            overloadTimer,
             electrifiedTimer,
             stunTimer
         };
@@ -433,7 +426,6 @@
         ball = null;
         spawnTimer = 0;
         overloadHits = 0;
-        overloadTimer = 0;
     }
 
     window.ONREDPingPong = {

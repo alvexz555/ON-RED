@@ -76,27 +76,27 @@ test("Ping Pong knockback does not block subsequent damage sources", () => {
     assert.equal(game.getRegisteredCollisions(), 0);
 });
 
-test("five valid impacts activate electric overload and electrify the player on contact", () => {
+test("twenty valid impacts activate electric overload and electrify the player on contact", () => {
     const game = createGame();
     const arena = { width: 5000, height: 5000 };
-    const player = { x: 4900, y: 4900, radius: 15 };
+    const player = { x: 10000, y: 10000, radius: 15 };
     const electricHexMock = {
         resolvePingPongCollision(_ball, electric) {
             electricStates.push(Boolean(electric));
-            return true;
+            return !electric;
         },
         isCirclePositionClear() { return true; }
     };
     const electricStates = [];
 
     assert.equal(game.pingPong.spawn(arena, player, [], 34, electricHexMock), true);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 20; i++) {
         game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, electricHexMock);
     }
 
     assert.equal(game.pingPong.getState().overloaded, true);
-    assert.equal(game.pingPong.getState().impactCount, 5);
-    assert.equal(electricStates.slice(0, 5).every(value => value === false), true);
+    assert.equal(game.pingPong.getState().impactCount, 20);
+    assert.equal(electricStates.slice(0, 20).every(value => value === false), true);
 
     const ball = game.pingPong.getState().ball;
     player.x = ball.x;
@@ -109,17 +109,48 @@ test("five valid impacts activate electric overload and electrify the player on 
     assert.equal(state.stunTimer, 0);
     assert.equal(state.controlMultiplier, 0.2, "a recuperação normal do knockback continua ativa após a eletrização");
     assert.equal(state.overloaded, false);
-    assert.equal(electricStates[5], true);
+    assert.equal(electricStates[20], true);
+});
+
+
+test("an electric hexagon hit consumes overload and preserves accumulated speed", () => {
+    const game = createGame();
+    const arena = { width: 5000, height: 5000 };
+    const player = { x: 4900, y: 4900, radius: 15 };
+    let consumeOnElectricHit = false;
+    const hexMock = {
+        resolvePingPongCollision(_ball, electric) {
+            return Boolean(electric && consumeOnElectricHit) || !electric;
+        },
+        isCirclePositionClear() { return true; }
+    };
+
+    game.pingPong.spawn(arena, player, [], 34, hexMock);
+    for (let i = 0; i < 20; i++) {
+        game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    }
+    const speedBeforeHit = Math.hypot(
+        game.pingPong.getState().ball.vx, game.pingPong.getState().ball.vy
+    );
+    assert.equal(game.pingPong.getState().overloaded, true);
+
+    consumeOnElectricHit = true;
+    game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    const state = game.pingPong.getState();
+
+    assert.equal(state.overloaded, false);
+    assert.equal(state.impactCount, 0);
+    assert.ok(Math.hypot(state.ball.vx, state.ball.vy) > speedBeforeHit);
 });
 
 test("electric stun temporarily blocks movement and expires automatically", () => {
     const game = createGame();
     const arena = { width: 5000, height: 5000 };
     const player = { x: 4900, y: 4900, radius: 15 };
-    const hexMock = { resolvePingPongCollision() { return true; }, isCirclePositionClear() { return true; } };
+    const hexMock = { resolvePingPongCollision(_ball, electric) { return !electric; }, isCirclePositionClear() { return true; } };
 
     game.pingPong.spawn(arena, player, [], 34, hexMock);
-    for (let i = 0; i < 5; i++) game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    for (let i = 0; i < 20; i++) game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
 
     const ball = game.pingPong.getState().ball;
     player.x = ball.x;
@@ -141,14 +172,15 @@ test("electric stun temporarily blocks movement and expires automatically", () =
 test("Ping Pong accelerates during overload but never exceeds the 1200 speed cap", () => {
     const game = createGame();
     const arena = { width: 5000, height: 5000 };
-    const player = { x: 4900, y: 4900, radius: 15 };
+    const player = { x: 10000, y: 10000, radius: 15 };
+    game.pingPong.configure({ collisionSpeedMultiplier: 1.01 });
     const hexMock = {
-        resolvePingPongCollision() { return true; },
+        resolvePingPongCollision(_ball, electric) { return !electric; },
         isCirclePositionClear() { return true; }
     };
     game.pingPong.spawn(arena, player, [], 34, hexMock);
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 20; i++) {
         game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
     }
     const speedAtOverload = Math.hypot(
@@ -157,42 +189,40 @@ test("Ping Pong accelerates during overload but never exceeds the 1200 speed cap
     assert.ok(speedAtOverload > 380);
     assert.equal(game.pingPong.getState().overloaded, true);
 
-    game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    for (let i = 0; i < 100; i++) {
+        game.pingPong.update(10, player, arena, game.health, game.collision, [], 34, hexMock);
+    }
     const speedDuringOverload = Math.hypot(
         game.pingPong.getState().ball.vx, game.pingPong.getState().ball.vy
     );
     assert.ok(speedDuringOverload > speedAtOverload);
-
-    for (let i = 0; i < 100; i++) {
-        game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
-    }
     const cappedState = game.pingPong.getState();
     const cappedSpeed = Math.hypot(cappedState.ball.vx, cappedState.ball.vy);
     assert.equal(game.pingPong.getConfig().maxSpeed, 1200);
     assert.ok(cappedSpeed <= 1200.001, `expected speed <= 1200, received ${cappedSpeed}`);
 });
 
-test("overload expiration removes electricity but preserves accumulated speed", () => {
+test("overload remains active indefinitely until a hexagon consumes it", () => {
     const game = createGame();
     const arena = { width: 5000, height: 5000 };
-    const player = { x: 4900, y: 4900, radius: 15 };
+    const player = { x: 10000, y: 10000, radius: 15 };
     const hexMock = {
-        resolvePingPongCollision() { return true; },
+        resolvePingPongCollision(_ball, electric) { return !electric; },
         isCirclePositionClear() { return true; }
     };
     game.pingPong.spawn(arena, player, [], 34, hexMock);
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 20; i++) {
         game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
     }
     const speedBeforeExpiry = Math.hypot(
         game.pingPong.getState().ball.vx, game.pingPong.getState().ball.vy
     );
 
-    game.pingPong.update(5, player, arena, game.health, game.collision, [], 34, null);
+    game.pingPong.update(10, player, arena, game.health, game.collision, [], 34, null);
     const state = game.pingPong.getState();
-    assert.equal(state.overloaded, false);
+    assert.equal(state.overloaded, true);
     assert.ok(Math.abs(Math.hypot(state.ball.vx, state.ball.vy) - speedBeforeExpiry) < 0.001);
-    assert.equal(state.impactCount, 0);
+    assert.equal(state.impactCount, 20);
 });
 
 test("Ping Pong resets to base speed only after touching the player", () => {
@@ -200,7 +230,7 @@ test("Ping Pong resets to base speed only after touching the player", () => {
     const arena = { width: 5000, height: 5000 };
     const player = { x: 4900, y: 4900, radius: 15 };
     const hexMock = {
-        resolvePingPongCollision() { return true; },
+        resolvePingPongCollision(_ball, electric) { return !electric; },
         isCirclePositionClear() { return true; }
     };
     game.pingPong.spawn(arena, player, [], 34, hexMock);
