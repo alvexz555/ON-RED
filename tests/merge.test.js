@@ -243,7 +243,7 @@ test("TESTE 05: várias esferas mantêm HP e vidas consistentes", () => {
     assert.equal(state.hp, 100);
     assert.equal(state.lives, 5);
     assert.equal(state.maxLives, 5);
-    assert.equal(bonusPoints, Math.max(0, orbsToCollect.length - 4) * 250);
+    assert.equal(bonusPoints, Math.max(0, orbsToCollect.length - 4) * 1000);
     assert.equal(merge.getOrbs().length, 0);
 });
 
@@ -314,7 +314,7 @@ test("TESTE 05d: em game over a coleta não altera HP nem vidas", () => {
 
 // TESTE 06 — CONVERSÃO EM PONTUAÇÃO NO LIMITE DE VIDAS
 
-test("TESTE 06: coleta com HP cheio e 5 vidas concede 250 pontos", () => {
+test("TESTE 06: coleta com HP cheio e 5 vidas concede 1000 pontos", () => {
 
     const { health, merge } = startMatch();
 
@@ -340,7 +340,7 @@ test("TESTE 06: coleta com HP cheio e 5 vidas concede 250 pontos", () => {
     assert.equal(results.length, 1);
     assert.equal(results[0].type, "bonus_score");
     assert.equal(results[0].applied, true);
-    assert.equal(results[0].points, 250);
+    assert.equal(results[0].points, 1000);
 
     const after = health.getState();
     assert.equal(after.lives, 5);
