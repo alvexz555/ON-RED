@@ -75,3 +75,65 @@ test("Ping Pong knockback does not block subsequent damage sources", () => {
     assert.deepEqual(game.damageCalls, [25, 25]);
     assert.equal(game.getRegisteredCollisions(), 0);
 });
+
+test("five valid impacts activate electric overload and electrify the player on contact", () => {
+    const game = createGame();
+    const arena = { width: 5000, height: 5000 };
+    const player = { x: 4900, y: 4900, radius: 15 };
+    const electricHexMock = {
+        resolvePingPongCollision(_ball, electric) {
+            electricStates.push(Boolean(electric));
+            return true;
+        },
+        isCirclePositionClear() { return true; }
+    };
+    const electricStates = [];
+
+    assert.equal(game.pingPong.spawn(arena, player, [], 34, electricHexMock), true);
+    for (let i = 0; i < 5; i++) {
+        game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, electricHexMock);
+    }
+
+    assert.equal(game.pingPong.getState().overloaded, true);
+    assert.equal(game.pingPong.getState().impactCount, 5);
+    assert.equal(electricStates.slice(0, 5).every(value => value === false), true);
+
+    const ball = game.pingPong.getState().ball;
+    player.x = ball.x;
+    player.y = ball.y;
+    game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, electricHexMock);
+
+    const state = game.pingPong.getState();
+    assert.equal(state.overloaded, false);
+    assert.ok(state.electrifiedTimer > 0);
+    assert.equal(state.stunTimer, 0);
+    assert.equal(state.controlMultiplier, 0.2, "a recuperação normal do knockback continua ativa após a eletrização");
+    assert.equal(state.overloaded, false);
+    assert.equal(electricStates[5], true);
+});
+
+test("electric stun temporarily blocks movement and expires automatically", () => {
+    const game = createGame();
+    const arena = { width: 5000, height: 5000 };
+    const player = { x: 4900, y: 4900, radius: 15 };
+    const hexMock = { resolvePingPongCollision() { return true; }, isCirclePositionClear() { return true; } };
+
+    game.pingPong.spawn(arena, player, [], 34, hexMock);
+    for (let i = 0; i < 5; i++) game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+
+    const ball = game.pingPong.getState().ball;
+    player.x = ball.x;
+    player.y = ball.y;
+    game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+
+    let guard = 0;
+    while (game.pingPong.getState().stunTimer === 0 && guard++ < 100) {
+        game.pingPong.update(0.1, player, arena, game.health, game.collision, [], 34, hexMock);
+    }
+    assert.ok(game.pingPong.getState().stunTimer > 0);
+    assert.equal(game.pingPong.getControlMultiplier(), 0);
+
+    game.pingPong.update(4, player, arena, game.health, game.collision, [], 34, hexMock);
+    assert.equal(game.pingPong.getState().electrifiedTimer, 0);
+    assert.equal(game.pingPong.getControlMultiplier(), 1);
+});

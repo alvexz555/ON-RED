@@ -1160,7 +1160,8 @@ function draw() {
     if (window.ONREDHexagonSystem) ONREDHexagonSystem.draw(ctx);
 
     if (window.ONREDPingPong) {
-        ONREDPingPong.draw(ctx);
+        // Mantém a bola branca e seu destaque visual em contato com o jogador.
+        ONREDPingPong.draw(ctx, player);
     }
 
     if (window.ONREDMergeSystem) {
