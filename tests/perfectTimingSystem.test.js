@@ -21,6 +21,18 @@ const arena = { width: 900, height: 700 };
 const player = { x: 450, y: 350, radius: 15 };
 const size = 34;
 
+test("final configuration uses 5s cooldown, 25s individual and 10s collective respawn", () => {
+    assert.deepEqual(system.getConfig(), {
+        maxObstacles: 5,
+        individualRespawnDelay: 25,
+        collectiveRespawnDelay: 10,
+        playerSafeMargin: 80,
+        obstacleGap: 20,
+        spawnAttempts: 100,
+        retryInterval: 0.25
+    });
+});
+
 test("impact target is selected by closing velocity, not array order or nearest center", () => {
     system.reset();
     const slowNear = system.registerObstacle({ x: 100, y: 100, vx: 0, vy: 0, role: "pressure" });
@@ -50,21 +62,21 @@ test("the same obstacle cannot be eliminated twice", () => {
     assert.equal(system.getState().eliminatedCount, 1);
 });
 
-test("individual respawn waits the full 30 seconds", () => {
+test("individual respawn waits the full 25 seconds", () => {
     const active = setupFive();
     const target = active[1];
     system.eliminate(target, active);
 
-    system.update(29.5, arena, player, size, active);
+    system.update(24.99, arena, player, size, active);
     assert.equal(active.includes(target), false);
 
-    const returned = system.update(0.01, arena, player, size, active);
+    const returned = system.update(0.02, arena, player, size, active);
     assert.equal(returned.length, 1);
     assert.equal(active.length, 5);
     assert.equal(target.state, "ACTIVE");
 });
 
-test("five eliminations trigger one collective 40-second return", () => {
+test("five eliminations trigger one collective 10-second return", () => {
     const active = setupFive();
 
     for (let i = 0; i < 4; i++) {
@@ -74,12 +86,12 @@ test("five eliminations trigger one collective 40-second return", () => {
     const final = system.eliminate(active[0], active);
     assert.equal(final.collectiveTriggered, true);
     assert.equal(active.length, 0);
-    assert.equal(system.getState().collectiveRemaining, 40);
+    assert.equal(system.getState().collectiveRemaining, 10);
 
-    system.update(39.5, arena, player, size, active);
+    system.update(9.99, arena, player, size, active);
     assert.equal(active.length, 0);
 
-    const returned = system.update(0.01, arena, player, size, active);
+    const returned = system.update(0.02, arena, player, size, active);
     assert.equal(returned.length, 5);
     assert.equal(active.length, 5);
     assert.equal(system.getState().collectiveActive, false);
@@ -91,7 +103,7 @@ test("respawn positions are inside arena and separated from player", () => {
     const target = active[0];
     system.eliminate(target, active);
 
-    const returned = system.update(30, arena, player, size, active);
+    const returned = system.update(25, arena, player, size, active);
     assert.equal(returned.length, 1);
 
     const obstacle = returned[0];
@@ -109,7 +121,7 @@ test("collective respawn restores all five together without overlaps", () => {
     const active = setupFive();
     for (let i = 0; i < 5; i++) system.eliminate(active[0], active);
 
-    const returned = system.update(40, arena, player, size, active);
+    const returned = system.update(10, arena, player, size, active);
     assert.equal(returned.length, 5);
     assert.equal(active.length, 5);
 
@@ -128,6 +140,6 @@ test("collective respawn restores all five together without overlaps", () => {
 test("respawn never exceeds the five-obstacle cap", () => {
     const active = setupFive();
     system.eliminate(active[0], active);
-    system.update(30, arena, player, size, active);
+    system.update(25, arena, player, size, active);
     assert.ok(active.length <= 5);
 });
