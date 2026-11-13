@@ -140,7 +140,9 @@ test("an electric hexagon hit consumes overload and preserves accumulated speed"
 
     assert.equal(state.overloaded, false);
     assert.equal(state.impactCount, 0);
-    assert.ok(Math.hypot(state.ball.vx, state.ball.vy) > speedBeforeHit);
+    // A carga consumida preserva a velocidade acumulada; com a bola já
+    // no teto maxSpeed, a aceleração não pode ultrapassar o limite.
+    assert.ok(Math.hypot(state.ball.vx, state.ball.vy) >= speedBeforeHit);
 });
 
 test("electric stun temporarily blocks movement and expires automatically", () => {
