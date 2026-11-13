@@ -126,9 +126,9 @@ const player = {
 // ==========================================
 
 const joystick = {
-    baseX: 85,
+    baseX: 115,
     baseY: 0,
-    knobX: 85,
+    knobX: 115,
     knobY: 0,
     radius: 55,
     knobRadius: 22,
@@ -137,6 +137,13 @@ const joystick = {
     active: false,
     pointerId: null
 };
+
+// O joystick é um controle de toque: aparece e responde apenas em
+// dispositivos com entrada por toque (celular, tablet, telas híbridas).
+// Desktop com teclado/mouse usa o teclado e não vê o joystick.
+const hasTouchInput =
+    (navigator.maxTouchPoints > 0) ||
+    ("ontouchstart" in window);
 
 // ==========================================
 // BOTÃO PERFECT TIMING
@@ -361,6 +368,18 @@ function pointerDown(event) {
 
     if (joystick.active) return;
 
+    // Sem toque no dispositivo, o joystick não é um controle disponível.
+    if (!hasTouchInput) return;
+
+    // Mesmo com tela de toque, o joystick responde apenas a dedo/caneta;
+    // o mouse continua livre para o botão de Perfect Timing.
+    if (
+        event.pointerType !== "touch" &&
+        event.pointerType !== "pen"
+    ) {
+        return;
+    }
+
     const dx = pos.x - joystick.baseX;
     const dy = pos.y - joystick.baseY;
 
@@ -460,7 +479,7 @@ function resizeCanvas() {
     canvas.width = screenWidth;
     canvas.height = screenHeight;
 
-    joystick.baseY = canvas.height - 90;
+    joystick.baseY = canvas.height - 115;
 
     updatePerfectButtonPosition();
 
@@ -1028,6 +1047,9 @@ function drawPerfectObstacles() {
 // ==========================================
 
 function drawJoystick() {
+
+    // Em desktop sem toque o joystick não existe: nada é desenhado.
+    if (!hasTouchInput) return;
 
     ctx.beginPath();
 
