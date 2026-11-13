@@ -3,6 +3,7 @@ name: Perfect Timing tests
 on:
   push:
     branches:
+      - main
       - feature/perfect-timing-system
   pull_request:
     branches:
