@@ -7,8 +7,8 @@
     "use strict";
 
     const CONFIG = {
-        radius: 42,
-        maxHexagons: 3,
+        radius: 30,
+        maxHexagons: 5,
         spawnInterval: 14,
         spawnAttempts: 60,
         playerSafeMargin: 90,

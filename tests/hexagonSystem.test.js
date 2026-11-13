@@ -5,7 +5,7 @@ const hex = require("../js/hexagonSystem.js");
 function reset() {
     hex.reset();
     hex.configure({
-        radius: 42, maxHexagons: 3, spawnInterval: 14, spawnAttempts: 60,
+        radius: 30, maxHexagons: 5, spawnInterval: 14, spawnAttempts: 60,
         playerSafeMargin: 90, obstacleGap: 8, initialHealth: 3, pingPongDamage: 1
     });
 }
@@ -17,16 +17,16 @@ test("hexagon exposes six vertices and configurable geometry", () => {
     const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
     assert.ok(item);
     assert.equal(hex.vertices(item).length, 6);
-    assert.equal(item.radius, 42);
+    assert.equal(item.radius, 30);
 });
 
 test("spawn keeps hexagons inside arena and away from player", () => {
     reset();
     const item = hex.spawn(arena, player, [], 34);
     assert.ok(item);
-    assert.ok(item.x >= 46 && item.x <= arena.width - 46);
-    assert.ok(item.y >= 46 && item.y <= arena.height - 46);
-    assert.ok(Math.hypot(item.x-player.x,item.y-player.y) >= 147);
+    assert.ok(item.x >= 34 && item.x <= arena.width - 34);
+    assert.ok(item.y >= 34 && item.y <= arena.height - 34);
+    assert.ok(Math.hypot(item.x-player.x,item.y-player.y) >= 135);
 });
 
 test("spawn refuses overlapping player and pursuer locations", () => {
@@ -44,7 +44,7 @@ test("spawn refuses overlapping player and pursuer locations", () => {
 test("spawn respects maximum simultaneous hexagons", () => {
     reset();
     const farPlayer = {x:80,y:80,radius:15};
-    for (let i=0;i<3;i++) {
+    for (let i=0;i<5;i++) {
         const item = hex.spawn(arena, farPlayer, [], 34);
         assert.ok(item);
     }

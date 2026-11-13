@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/perfect-timing-system
+      - fix/hexagon-pingpong-balance-2026-11-13
   workflow_dispatch:
 
 permissions:
