@@ -9,8 +9,8 @@
     const CONFIG = {
         radius: 30,
         // Limite de objetos simultâneos, não de gerações ao longo da partida.
-        maxHexagons: 5,
-        spawnInterval: 14,
+        maxHexagons: 8,
+        spawnInterval: 8,
         spawnAttempts: 60,
         playerSafeMargin: 90,
         obstacleGap: 8,
