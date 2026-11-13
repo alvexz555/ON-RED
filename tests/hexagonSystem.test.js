@@ -1,0 +1,144 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const hex = require("../js/hexagonSystem.js");
+
+function reset() {
+    hex.reset();
+    hex.configure({
+        radius: 42, maxHexagons: 3, spawnInterval: 14, spawnAttempts: 60,
+        playerSafeMargin: 90, obstacleGap: 8, initialHealth: 3, pingPongDamage: 1
+    });
+}
+const arena = { width: 900, height: 700 };
+const player = { x: 450, y: 350, radius: 15 };
+
+test("hexagon exposes six vertices and configurable geometry", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    assert.ok(item);
+    assert.equal(hex.vertices(item).length, 6);
+    assert.equal(item.radius, 42);
+});
+
+test("spawn keeps hexagons inside arena and away from player", () => {
+    reset();
+    const item = hex.spawn(arena, player, [], 34);
+    assert.ok(item);
+    assert.ok(item.x >= 46 && item.x <= arena.width - 46);
+    assert.ok(item.y >= 46 && item.y <= arena.height - 46);
+    assert.ok(Math.hypot(item.x-player.x,item.y-player.y) >= 147);
+});
+
+test("spawn refuses overlapping player and pursuer locations", () => {
+    reset();
+    const originalRandom = Math.random;
+    Math.random = () => 0.5;
+    try {
+        assert.equal(hex.spawn(arena, {x:450,y:350,radius:15}, [], 34), null);
+        assert.equal(hex.spawn(arena, {x:100,y:100,radius:15}, [{x:450,y:350,state:"ACTIVE"}], 34), null);
+    } finally {
+        Math.random = originalRandom;
+    }
+});
+
+test("spawn respects maximum simultaneous hexagons", () => {
+    reset();
+    const farPlayer = {x:80,y:80,radius:15};
+    for (let i=0;i<3;i++) {
+        const item = hex.spawn(arena, farPlayer, [], 34);
+        assert.ok(item);
+    }
+    assert.equal(hex.spawn(arena, farPlayer, [], 34), null);
+});
+
+test("circle polygon contact detects overlap and ignores distant circles", () => {
+    reset();
+    const item = {x:200,y:200,radius:42};
+    const polygon = hex.vertices(item);
+    assert.ok(hex.circlePolygonContact({x:200,y:200,radius:10},polygon));
+    assert.equal(hex.circlePolygonContact({x:400,y:400,radius:10},polygon),null);
+});
+
+test("player is pushed out of hexagon and contact damage uses shared collision gate", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    const actor = {x:item.x,y:item.y,radius:15};
+    let damage = 0, registered = 0;
+    const collision = {
+        registerCollision(){registered++;return true;},
+        getState(){return {damage:25};}
+    };
+    const health = {applyDamage(value){damage+=value;return {gameOver:false};}};
+    assert.equal(hex.resolvePlayer(actor,health,collision),true);
+    assert.ok(Math.hypot(actor.x-item.x,actor.y-item.y) > item.radius+actor.radius-1);
+    assert.equal(registered,1);
+    assert.equal(damage,25);
+});
+
+test("player contact respects invulnerability and does not apply repeated damage", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    const actor = {x:item.x,y:item.y,radius:15};
+    let damage = 0;
+    const collision = {registerCollision(){return false;},getState(){return {damage:25};}};
+    const health = {applyDamage(value){damage+=value;return {gameOver:false};}};
+    hex.resolvePlayer(actor,health,collision);
+    assert.equal(damage,0);
+});
+
+test("square obstacle is separated from hexagon", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    const square = {x:item.x,y:item.y,state:"ACTIVE"};
+    assert.equal(hex.resolveObstacles([square],34),1);
+    const corners = [
+        {x:square.x-17,y:square.y-17},{x:square.x+17,y:square.y-17},
+        {x:square.x+17,y:square.y+17},{x:square.x-17,y:square.y+17}
+    ];
+    assert.equal(hex.circlePolygonContact({x:square.x,y:square.y,radius:0},hex.vertices(item)) === null,false);
+    assert.ok(Math.hypot(square.x-item.x,square.y-item.y) > 0);
+});
+
+test("Ping Pong damages hexagon and reflects from its surface", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    const ball = {x:item.x,y:item.y,vx:100,vy:0,radius:12};
+    assert.equal(hex.resolvePingPongCollision(ball),true);
+    assert.equal(item.health,2);
+    assert.ok(Math.hypot(ball.x-item.x,ball.y-item.y) > item.radius);
+});
+
+test("three valid Ping Pong impacts destroy and remove the hexagon", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    assert.equal(hex.damage(item,1),true);
+    assert.equal(hex.damage(item,1),true);
+    assert.equal(hex.damage(item,1),true);
+    assert.equal(item.destroyed,true);
+    assert.equal(hex.getState().count,0);
+    assert.equal(hex.damage(item,1),false);
+});
+
+test("Ping Pong spawn validation rejects positions overlapping hexagons", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    assert.equal(hex.isCirclePositionClear({x:item.x,y:item.y,radius:12}),false);
+    assert.equal(hex.isCirclePositionClear({x:800,y:600,radius:12}),true);
+});
+
+test("reset clears hexagons and generation timer", () => {
+    reset();
+    hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    hex.update(9,arena,player,[],34,null);
+    hex.reset();
+    assert.equal(hex.getState().count,0);
+    assert.equal(hex.getState().spawnTimer,0);
+});
+
+test("destroyed hexagons are excluded from collision and drawing state", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    hex.damage(item,3);
+    assert.equal(hex.getHexagons().includes(item),false);
+    assert.equal(hex.resolvePingPongCollision({x:item.x,y:item.y,vx:0,vy:0,radius:12}),false);
+});

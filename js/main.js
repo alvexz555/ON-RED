@@ -468,6 +468,7 @@ function resizeCanvas() {
 
     constrainPlayerToArena();
     constrainObstaclesToArena();
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.constrainToArena(canvas);
 }
 
 // ==========================================
@@ -811,6 +812,18 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
     updatePerfectObstacles(deltaTime, timerDeltaTime);
 
+    if (window.ONREDHexagonSystem) {
+        ONREDHexagonSystem.update(
+            deltaTime, canvas, player, perfectObstacles, obstacleConfig.size,
+            window.ONREDPingPong ? ONREDPingPong.getState() : null
+        );
+        ONREDHexagonSystem.resolveObstacles(perfectObstacles, obstacleConfig.size);
+        ONREDHexagonSystem.resolvePlayer(
+            player, window.ONREDHealthSystem, window.ONREDCollisionSystem
+        );
+        constrainPlayerToArena();
+    }
+
     updatePerfectButton(deltaTime, timerDeltaTime);
 
     // SCORE POR SOBREVIVÊNCIA
@@ -837,7 +850,8 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
             window.ONREDHealthSystem,
             window.ONREDCollisionSystem,
             perfectObstacles,
-            obstacleConfig.size
+            obstacleConfig.size,
+            window.ONREDHexagonSystem
         );
     }
 
@@ -1121,6 +1135,8 @@ function draw() {
     drawArena();
     drawPerfectObstacles();
 
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.draw(ctx);
+
     if (window.ONREDPingPong) {
         ONREDPingPong.draw(ctx);
     }
@@ -1233,6 +1249,7 @@ function drawScore() {
 function resetGame() {
 
     perfectObstacles.length = 0;
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.reset();
 
     spawnTimer = 0;
 
@@ -1348,6 +1365,7 @@ function returnToMainMenu() {
 
     perfectObstacles.length = 0;
     spawnTimer = 0;
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.reset();
 
     if (window.ONREDPingPong) {
         ONREDPingPong.reset(canvas, player);

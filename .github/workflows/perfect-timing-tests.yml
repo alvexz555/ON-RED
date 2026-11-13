@@ -25,5 +25,7 @@ jobs:
           node --check js/main.js
           node --check js/collisionSystem.js
           node --check js/perfectTimingSystem.js
+          node --check js/hexagonSystem.js
+          node --check js/pingPong.js
       - name: Run Perfect Timing unit tests
-        run: node --test tests/perfectTimingSystem.test.js
+        run: node --test tests/perfectTimingSystem.test.js tests/hexagonSystem.test.js

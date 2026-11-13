@@ -45,7 +45,7 @@
         return true;
     }
 
-    function createSpawnPosition(arena, player, obstacles, obstacleSize) {
+    function createSpawnPosition(arena, player, obstacles, obstacleSize, hexSystem) {
         const minX = CONFIG.radius + CONFIG.spawnMargin;
         const maxX = Math.max(minX, arena.width - minX);
         const minY = CONFIG.radius + CONFIG.spawnMargin;
@@ -79,7 +79,10 @@
                     candidate.y,
                     obstacles,
                     obstacleSize
-                )
+                ) &&
+                (!hexSystem || hexSystem.isCirclePositionClear({
+                    x: candidate.x, y: candidate.y, radius: CONFIG.radius
+                }))
             ) {
                 return candidate;
             }
@@ -107,14 +110,15 @@
         return { x: vx, y: vy };
     }
 
-    function spawn(arena, player, obstacles, obstacleSize) {
+    function spawn(arena, player, obstacles, obstacleSize, hexSystem) {
         if (ball || !arena || !player) return false;
 
         const position = createSpawnPosition(
             arena,
             player,
             obstacles,
-            obstacleSize
+            obstacleSize,
+            hexSystem
         );
         if (!position) return false;
 
@@ -249,7 +253,8 @@
         healthSystem,
         collisionSystem,
         obstacles,
-        obstacleSize
+        obstacleSize,
+        hexSystem
     ) {
         if (
             !Number.isFinite(deltaTime) ||
@@ -270,7 +275,7 @@
             spawnTimer += deltaTime;
             if (spawnTimer >= CONFIG.spawnInterval) {
                 spawnTimer = 0;
-                spawn(arena, player, obstacles, obstacleSize);
+                spawn(arena, player, obstacles, obstacleSize, hexSystem);
             }
             return;
         }
@@ -279,6 +284,9 @@
         ball.y += ball.vy * deltaTime;
 
         bounceFromWalls(arena);
+        if (hexSystem && typeof hexSystem.resolvePingPongCollision === "function") {
+            hexSystem.resolvePingPongCollision(ball);
+        }
         collideWithPlayer(player, healthSystem, collisionSystem);
         bounceFromWalls(arena);
     }
