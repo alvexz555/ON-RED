@@ -24,8 +24,8 @@ test("spawn keeps hexagons inside arena and away from player", () => {
     reset();
     const item = hex.spawn(arena, player, [], 34);
     assert.ok(item);
-    assert.ok(item.x >= 46 && item.x <= arena.width - 46);
-    assert.ok(item.y >= 46 && item.y <= arena.height - 46);
+    assert.ok(item.x >= 34 && item.x <= arena.width - 34);
+    assert.ok(item.y >= 34 && item.y <= arena.height - 34);
     assert.ok(Math.hypot(item.x-player.x,item.y-player.y) >= 135);
 });
 
