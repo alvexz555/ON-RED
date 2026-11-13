@@ -198,6 +198,100 @@
 
     </section>
 
+    <!-- VICTORY SCREEN -->
+    <section
+        id="victoryScreen"
+        class="game-over-screen victory-screen"
+        aria-hidden="true"
+    >
+
+        <div class="game-over-content">
+
+            <header class="game-over-header">
+
+                <div class="game-over-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <span class="game-over-label">
+                    PHASE 1 COMPLETE
+                </span>
+
+            </header>
+
+            <div class="game-over-message">
+
+                <span class="game-over-line"></span>
+
+                <h1 class="melting-title" data-text="FASE 1 CONCLUÍDA">
+                FASE 1 CONCLUÍDA
+                </h1>
+
+                <p>
+                    FINAL BOSS DEFEATED
+                </p>
+
+                <span class="game-over-line"></span>
+
+            </div>
+
+            <div class="game-over-actions">
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        SCORE
+                    </span>
+
+                    <span id="finalScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        BEST
+                    </span>
+
+                    <span id="bestScoreGameOver" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="victoryRetryButton"
+                    class="game-over-button retry-button"
+                >
+                    RETRY
+                    <span>↻</span>
+                </button>
+
+                <button
+                    type="button"
+                    id="victoryMenuButton"
+                    class="game-over-button menu-return-button"
+                >
+                    MAIN MENU
+                </button>
+
+                <div class="victory-phase2-card">
+                    <span>FASE 2 · ATUALIZAÇÕES EM BREVE</span>
+                </div>
+
+            </div>
+
+            <footer class="game-over-footer">
+                ON RED · ARCADE SURVIVAL
+            </footer>
+
+        </div>
+
+    </section>
+
     <!-- GAME PHYSICS -->
     <script src="./js/obstaclePhysics.js"></script>
 
@@ -230,6 +324,9 @@
 
     <!-- PERFECT TIMING LIFECYCLE -->
     <script src="./js/perfectTimingSystem.js"></script>
+
+    <!-- BOSS SYSTEM (FASE 1) -->
+    <script src="./js/bossSystem.js"></script>
 
     <!-- MAIN GAME ENGINE -->
     <script src="./js/main.js"></script>
