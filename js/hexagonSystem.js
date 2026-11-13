@@ -365,8 +365,9 @@
 
     const api = {
         update, spawn, draw, reset, configure, getConfig, getState, getHexagons,
-        vertices, circlePolygonContact, resolvePlayer, resolveObstacles,
-        resolvePingPongCollision, isCirclePositionClear, constrainToArena, damage
+        vertices, circlePolygonContact, polygonCollision, rectangleVertices,
+        resolvePlayer, resolveObstacles, resolvePingPongCollision,
+        isCirclePositionClear, constrainToArena, damage
     };
 
     if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -70,7 +70,7 @@ test("player is pushed out of hexagon and contact damage uses shared collision g
     };
     const health = {applyDamage(value){damage+=value;return {gameOver:false};}};
     assert.equal(hex.resolvePlayer(actor,health,collision),true);
-    assert.ok(Math.hypot(actor.x-item.x,actor.y-item.y) > item.radius+actor.radius-1);
+    assert.equal(hex.circlePolygonContact(actor, hex.vertices(item)), null);
     assert.equal(registered,1);
     assert.equal(damage,25);
 });
@@ -91,20 +91,19 @@ test("square obstacle is separated from hexagon", () => {
     const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
     const square = {x:item.x,y:item.y,state:"ACTIVE"};
     assert.equal(hex.resolveObstacles([square],34),1);
-    const corners = [
-        {x:square.x-17,y:square.y-17},{x:square.x+17,y:square.y-17},
-        {x:square.x+17,y:square.y+17},{x:square.x-17,y:square.y+17}
-    ];
-    assert.equal(hex.circlePolygonContact({x:square.x,y:square.y,radius:0},hex.vertices(item)) === null,false);
-    assert.ok(Math.hypot(square.x-item.x,square.y-item.y) > 0);
+    assert.equal(
+        hex.polygonCollision(hex.vertices(item), hex.rectangleVertices(square,34)),
+        null
+    );
 });
 
 test("Ping Pong damages hexagon and reflects from its surface", () => {
     reset();
     const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
-    const ball = {x:item.x,y:item.y,vx:100,vy:0,radius:12};
+    const ball = {x:item.x-item.radius-11,y:item.y,vx:100,vy:0,radius:12};
     assert.equal(hex.resolvePingPongCollision(ball),true);
     assert.equal(item.health,2);
+    assert.ok(ball.vx < 0, "a bola deve rebater para longe do hexágono");
     assert.ok(Math.hypot(ball.x-item.x,ball.y-item.y) > item.radius);
 });
 
