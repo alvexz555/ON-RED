@@ -5,7 +5,7 @@ const hex = require("../js/hexagonSystem.js");
 function reset() {
     hex.reset();
     hex.configure({
-        radius: 30, maxHexagons: 5, spawnInterval: 14, spawnAttempts: 60,
+        radius: 30, maxHexagons: 8, spawnInterval: 8, spawnAttempts: 60,
         playerSafeMargin: 90, obstacleGap: 8, initialHealth: 3, pingPongDamage: 1
     });
 }
@@ -44,7 +44,7 @@ test("spawn refuses overlapping player and pursuer locations", () => {
 test("spawn respects maximum simultaneous hexagons", () => {
     reset();
     const farPlayer = {x:80,y:80,radius:15};
-    for (let i=0;i<5;i++) {
+    for (let i=0;i<8;i++) {
         const item = hex.spawn(arena, farPlayer, [], 34);
         assert.ok(item);
     }
@@ -156,17 +156,17 @@ test("hexagon generation keeps replenishing after destruction without exceeding 
     reset();
     const farPlayer = { x: 80, y: 80, radius: 15 };
     const created = [];
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 8; i++) {
         const item = hex.spawn(arena, farPlayer, [], 34);
         assert.ok(item);
         created.push(item);
     }
-    assert.equal(hex.getState().count, 5);
+    assert.equal(hex.getState().count, 8);
 
     for (const item of created) hex.damage(item, item.health);
     assert.equal(hex.getState().count, 0);
 
-    hex.update(14, arena, farPlayer, [], 34, null);
+    hex.update(8, arena, farPlayer, [], 34, null);
     assert.equal(hex.getState().count, 1);
 
     for (let cycle = 0; cycle < 4; cycle++) {
@@ -177,4 +177,24 @@ test("hexagon generation keeps replenishing after destruction without exceeding 
     }
     assert.equal(hex.getState().count, 1);
     assert.ok(hex.getState().hexagons[0].id > created[4].id);
+});
+
+
+test("hexagons begin spawning after eight seconds, not fourteen", () => {
+    reset();
+    const farPlayer = { x: 80, y: 80, radius: 15 };
+    hex.update(7.99, arena, farPlayer, [], 34, null);
+    assert.equal(hex.getState().count, 0);
+    hex.update(0.01, arena, farPlayer, [], 34, null);
+    assert.equal(hex.getState().count, 1);
+});
+
+test("hexagon system supports eight simultaneous units", () => {
+    reset();
+    const farPlayer = { x: 80, y: 80, radius: 15 };
+    for (let i = 0; i < 8; i++) {
+        assert.ok(hex.spawn(arena, farPlayer, [], 34));
+    }
+    assert.equal(hex.getState().count, 8);
+    assert.equal(hex.spawn(arena, farPlayer, [], 34), null);
 });
