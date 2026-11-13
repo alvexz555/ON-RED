@@ -1,0 +1,568 @@
+/*
+ * ON RED
+ * BOSS SYSTEM — FINAL BOSS OF PHASE 1
+ * WARNING -> FIGHT -> DEFEATED -> IDLE (a vitória é disparada pelo engine)
+ *
+ * O Boss final da Fase 1:
+ * - WARNING (1,8s): aviso antes da aproximação.
+ * - FIGHT: patrulha lenta no terço superior, raios telegrafados, pongs.
+ * - DEFEATED (1,0s): explosão; o engine assume a vitória.
+ */
+(function (root) {
+    "use strict";
+
+    const CONFIG = {
+        triggerScore: 20000,
+        bossSize: 150,
+        minBossSize: 96,
+        bossHp: 1000,
+        damagePerParry: 100,
+        moveSpeed: 45,
+        patrolAmplitudeRatio: 0.3,
+        patrolYRatio: 0.22,
+        warningDuration: 1.8,
+        defeatDuration: 1.0,
+        victoryBonusScore: 5000,
+        ray: {
+            firstIn: 5.0,
+            interval: 7.0,
+            telegraphDuration: 1.2,
+            activeDuration: 0.22,
+            width: 10,
+            damage: 25,
+            count: 8,
+            angleStep: Math.PI / 8
+        },
+        pong: {
+            white: {
+                firstIn: 2.0,
+                interval: 3.4,
+                speed: 250,
+                radius: 12,
+                damage: 25,
+                rebounceSpeed: 420,
+                windowDistance: 105
+            },
+            electric: {
+                interval: 6.8,
+                projectiles: 2,
+                speed: 300,
+                angleStep: Math.PI / 20,
+                damage: 25
+            }
+        }
+    };
+
+    const RAY_SPEED = 300;
+
+    let phase = "IDLE";
+    let phaseTimer = 0;
+    let fightTimer = 0;
+    let boss = {
+        x: 0,
+        y: 0,
+        size: CONFIG.bossSize,
+        hp: CONFIG.bossHp,
+        maxHP: CONFIG.bossHp,
+        baseX: 0,
+        baseY: 0,
+        amplitudeX: 0,
+        patrolPhase: 0,
+        defeated: false
+    };
+    let weapon = null;
+    let whiteTimer = CONFIG.pong.white.firstIn;
+    let rayTimer = CONFIG.ray.firstIn;
+    let electricTimer = CONFIG.pong.electric.interval;
+    let rayVolleyIndex = 0;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function reset() {
+        phase = "IDLE";
+        phaseTimer = 0;
+        fightTimer = 0;
+        boss = {
+            x: 0,
+            y: 0,
+            size: CONFIG.bossSize,
+            hp: CONFIG.bossHp,
+            maxHP: CONFIG.bossHp,
+            baseX: 0,
+            baseY: 0,
+            amplitudeX: 0,
+            patrolPhase: 0,
+            defeated: false
+        };
+        weapon = null;
+        whiteTimer = CONFIG.pong.white.firstIn;
+        rayTimer = CONFIG.ray.firstIn;
+        electricTimer = CONFIG.pong.electric.interval;
+        rayVolleyIndex = 0;
+
+        return getState();
+    }
+
+    function getConfig() {
+        return {
+            triggerScore: CONFIG.triggerScore,
+            bossSize: CONFIG.bossSize,
+            minBossSize: CONFIG.minBossSize,
+            bossHp: CONFIG.bossHp,
+            damagePerParry: CONFIG.damagePerParry,
+            moveSpeed: CONFIG.moveSpeed,
+            patrolAmplitudeRatio: CONFIG.patrolAmplitudeRatio,
+            patrolYRatio: CONFIG.patrolYRatio,
+            warningDuration: CONFIG.warningDuration,
+            defeatDuration: CONFIG.defeatDuration,
+            victoryBonusScore: CONFIG.victoryBonusScore,
+            ray: { ...CONFIG.ray },
+            pong: {
+                white: { ...CONFIG.pong.white },
+                electric: { ...CONFIG.pong.electric }
+            }
+        };
+    }
+
+    function shouldStart(scoreValue) {
+        const value = Number(scoreValue);
+        return Number.isFinite(value) && value >= CONFIG.triggerScore;
+    }
+
+    function configure(options) {
+        if (!options || typeof options !== "object") return getConfig();
+
+        const numericKeys = [
+            "triggerScore", "bossSize", "minBossSize", "bossHp", "damagePerParry",
+            "moveSpeed", "patrolAmplitudeRatio", "patrolYRatio", "warningDuration",
+            "defeatDuration", "victoryBonusScore"
+        ];
+        for (const key of numericKeys) {
+            if (
+                Object.prototype.hasOwnProperty.call(options, key) &&
+                Number.isFinite(options[key]) && options[key] > 0
+            ) {
+                CONFIG[key] = options[key];
+            }
+        }
+
+        if (options.ray) {
+            for (const key of Object.keys(CONFIG.ray)) {
+                if (Number.isFinite(options.ray[key]) && options.ray[key] > 0) {
+                    CONFIG.ray[key] = options.ray[key];
+                }
+            }
+        }
+
+        if (options.pong) {
+            if (options.pong.white) {
+                for (const key of Object.keys(CONFIG.pong.white)) {
+                    if (Number.isFinite(options.pong.white[key]) && options.pong.white[key] > 0) {
+                        CONFIG.pong.white[key] = options.pong.white[key];
+                    }
+                }
+            }
+            if (options.pong.electric) {
+                for (const key of Object.keys(CONFIG.pong.electric)) {
+                    if (Number.isFinite(options.pong.electric[key]) && options.pong.electric[key] > 0) {
+                        CONFIG.pong.electric[key] = options.pong.electric[key];
+                    }
+                }
+            }
+        }
+
+        return getConfig();
+    }
+
+    function start(arena, player) {
+        if (phase !== "IDLE") return getState();
+
+        phase = "WARNING";
+        phaseTimer = CONFIG.warningDuration;
+
+        const width = arena && Number.isFinite(arena.width) ? arena.width : CONFIG.bossSize * 3;
+        const height = arena && Number.isFinite(arena.height) ? arena.height : CONFIG.bossSize * 3;
+
+        boss.size = clamp(CONFIG.bossSize, CONFIG.minBossSize, width * 0.34);
+        boss.amplitudeX = Math.min(width * CONFIG.patrolAmplitudeRatio, boss.size * 2);
+        boss.baseX = width / 2;
+        boss.baseY = height * CONFIG.patrolYRatio;
+        boss.hp = boss.maxHP;
+        boss.defeated = false;
+        boss.patrolPhase = 0;
+
+        return getState();
+    }
+
+    function updateBossMovement(deltaTime, arena) {
+        if (phase !== "FIGHT") return;
+
+        const half = boss.size / 2;
+        const minX = Math.max(half, 0);
+        const maxX = Math.max(arena.width - half, half);
+        const minY = Math.max(half, 0);
+        const maxY = Math.max(arena.height - half, half);
+
+        boss.x = clamp(arena.width / 2 + Math.sin(boss.patrolPhase) * boss.amplitudeX, minX, maxX);
+        boss.y = clamp(arena.height * CONFIG.patrolYRatio, minY, maxY);
+        boss.patrolPhase += deltaTime * (CONFIG.moveSpeed / Math.max(boss.amplitudeX, 0.0001));
+    }
+
+    function fireWhite(player) {
+        const angle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
+        const speed = CONFIG.pong.white.speed;
+        weapon = {
+            type: "white",
+            kind: "white",
+            state: "ACTIVE",
+            timer: 0,
+            x: boss.x,
+            y: boss.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: CONFIG.pong.white.radius,
+            damage: CONFIG.pong.white.damage,
+            rebounceSpeed: CONFIG.pong.white.reboundSpeed,
+            windowDistance: CONFIG.pong.white.windowDistance,
+            consumed: false
+        };
+    }
+
+    function fireRay(player) {
+        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
+        const offset = rayVolleyIndex % 2 === 0 ? 0 : CONFIG.ray.angleStep;
+        rayVolleyIndex += 1;
+        if (rayVolleyIndex >= CONFIG.ray.count) rayVolleyIndex = 0;
+        weapon = {
+            type: "ray",
+            kind: "ray",
+            state: "TELEGRAPH",
+            timer: CONFIG.ray.telegraphDuration,
+            angle: baseAngle + offset,
+            width: CONFIG.ray.width,
+            damage: CONFIG.ray.damage,
+            vx: 0,
+            vy: 0,
+            x: boss.x,
+            y: boss.y
+        };
+    }
+
+    function fireElectric(player) {
+        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
+        const projectiles = [];
+        for (let i = 0; i < CONFIG.pong.electric.projectiles; i++) {
+            const angle = baseAngle + (i - 0.5) * CONFIG.pong.electric.angleStep * 2;
+            projectiles.push({
+                type: "electric",
+                kind: "electric",
+                state: "ACTIVE",
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angle) * CONFIG.pong.electric.speed,
+                vy: Math.sin(angle) * CONFIG.pong.electric.speed,
+                radius: CONFIG.pong.white.radius,
+                damage: CONFIG.pong.electric.damage
+            });
+        }
+        weapon = {
+            type: "electric",
+            state: "ACTIVE",
+            timer: CONFIG.pong.electric.interval,
+            projectiles
+        };
+    }
+
+    function updateRay(deltaTime, player, health, collision) {
+        if (weapon.state === "TELEGRAPH") {
+            weapon.timer -= deltaTime;
+            if (weapon.timer <= 0) {
+                weapon.state = "ACTIVE";
+                weapon.timer = CONFIG.ray.activeDuration;
+                weapon.vx = Math.cos(weapon.angle) * RAY_SPEED;
+                weapon.vy = Math.sin(weapon.angle) * RAY_SPEED;
+                weapon.x = boss.x + Math.cos(weapon.angle) * boss.size / 2;
+                weapon.y = boss.y + Math.sin(weapon.angle) * boss.size / 2;
+            }
+            return;
+        }
+
+        if (weapon.state === "ACTIVE") {
+            weapon.timer -= deltaTime;
+            weapon.x += weapon.vx * deltaTime;
+            weapon.y += weapon.vy * deltaTime;
+
+            let rayHit = false;
+            if (collision && collision.checkCollisions(player, [weapon], weapon.width)) {
+                rayHit = true;
+            }
+
+            if (weapon.timer <= 0 || rayHit) {
+                weapon = null;
+            }
+
+            if (rayHit) {
+                collision.registerCollision();
+                health.applyDamage(CONFIG.ray.damage);
+            }
+        }
+    }
+
+    function updateWhite(deltaTime, player, health, collision) {
+        if (weapon.state !== "ACTIVE") return;
+        weapon.x += weapon.vx * deltaTime;
+        weapon.y += weapon.vy * deltaTime;
+
+        if (collision && collision.checkCollisions(player, [weapon], weapon.radius)) {
+            const damage = weapon.damage;
+            weapon = null;
+            collision.registerCollision();
+            health.applyDamage(damage);
+        }
+    }
+
+    function updateElectric(deltaTime, player, health, collision) {
+        weapon.timer -= deltaTime;
+        for (const projectile of weapon.projectiles) {
+            projectile.x += projectile.vx * deltaTime;
+            projectile.y += projectile.vy * deltaTime;
+
+            if (
+                projectile.state === "ACTIVE" &&
+                collision &&
+                collision.checkCollisions(player, [projectile], projectile.radius * 2)
+            ) {
+                projectile.state = "CONSUMED";
+                collision.registerCollision();
+                health.applyDamage(projectile.damage);
+            }
+        }
+
+        if (weapon.timer <= 0) {
+            weapon = null;
+        }
+    }
+
+    function updateCombat(deltaTime, player, health, collision) {
+        if (phase !== "FIGHT") return;
+
+        if (weapon && weapon.state === "CONSUMED") {
+            weapon = null;
+        }
+
+        if (!weapon) {
+            whiteTimer -= deltaTime;
+            rayTimer -= deltaTime;
+            electricTimer -= deltaTime;
+
+            if (whiteTimer <= 0) { whiteTimer = CONFIG.pong.white.interval; fireWhite(player); return; }
+            if (rayTimer <= 0) { rayTimer = CONFIG.ray.interval; fireRay(player); return; }
+            if (electricTimer <= 0) { electricTimer = CONFIG.pong.electric.interval; fireElectric(player); return; }
+            return;
+        }
+
+        if (weapon.type === "ray") {
+            updateRay(deltaTime, player, health, collision);
+        } else if (weapon.type === "white") {
+            updateWhite(deltaTime, player, health, collision);
+        } else if (weapon.type === "electric") {
+            updateElectric(deltaTime, player, health, collision);
+        }
+
+        const bossBody = { x: boss.x, y: boss.y, state: "ACTIVE", kind: "boss" };
+        if (collision && collision.checkCollisions(player, [bossBody], boss.size)) {
+            collision.registerCollision();
+            health.applyDamage(collision.getState().damage);
+        }
+    }
+
+    function update(deltaTime, arena, player, health, collision) {
+        if (!Number.isFinite(deltaTime) || deltaTime < 0) return getState();
+        if (!arena || !Number.isFinite(arena.width) || !Number.isFinite(arena.height)) return getState();
+        if (!player) return getState();
+
+        if (phase === "IDLE") return getState();
+
+        if (phase === "DEFEATED") {
+            phaseTimer -= deltaTime;
+            if (phaseTimer <= 0) phase = "IDLE";
+            return getState();
+        }
+
+        if (phase === "WARNING") {
+            phaseTimer -= deltaTime;
+            if (phaseTimer > 0) return getState();
+            phase = "FIGHT";
+            fightTimer = 0;
+            weapon = null;
+        }
+
+        fightTimer += deltaTime;
+        updateBossMovement(deltaTime, arena);
+        updateCombat(deltaTime, player, health, collision);
+
+        return getState();
+    }
+
+    function tryParry(player) {
+        if (phase !== "FIGHT") return { applied: false, reason: "phase" };
+        if (!weapon || weapon.type !== "white" || weapon.state !== "ACTIVE") {
+            return { applied: false, reason: "no_target" };
+        }
+
+        const distance = Math.hypot(player.x - weapon.x, player.y - weapon.y);
+        const speed = Math.hypot(weapon.vx, weapon.vy) || 1;
+        const approaching = (weapon.vx * (player.x - weapon.x) + weapon.vy * (player.y - weapon.y)) > 0;
+
+        if (distance > weapon.windowDistance) return { applied: false, reason: "out_of_range" };
+        if (!approaching) return { applied: false, reason: "not_approaching" };
+
+        weapon.state = "CONSUMED";
+        boss.hp = Math.max(0, boss.hp - CONFIG.damagePerParry);
+        const defeated = boss.hp <= 0;
+        if (defeated) {
+            phase = "DEFEATED";
+            phaseTimer = CONFIG.defeatDuration;
+            boss.defeated = true;
+        }
+
+        return { applied: true, damage: CONFIG.damagePerParry, hp: boss.hp, maxHP: boss.maxHP, defeated };
+    }
+
+    function drawWeapon(ctx) {
+        if (weapon.type === "ray") {
+            const startX = weapon.x + Math.cos(weapon.angle) * boss.size / 2;
+            const startY = weapon.y + Math.sin(weapon.angle) * boss.size / 2;
+            const endX = startX + Math.cos(weapon.angle) * 400;
+            const endY = startY + Math.sin(weapon.angle) * 400;
+
+            ctx.save();
+            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.45 : 1;
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = weapon.state === "TELEGRAPH" ? 8 : weapon.width;
+            ctx.shadowColor = "#168BFF";
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            ctx.restore();
+            return;
+        }
+
+        if (weapon.type === "white") {
+            ctx.save();
+            ctx.shadowColor = "#FFFFFF";
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.arc(weapon.x, weapon.y, weapon.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+            return;
+        }
+
+        if (Array.isArray(weapon.projectiles)) {
+            for (const projectile of weapon.projectiles) {
+                ctx.save();
+                ctx.shadowColor = "#8CEBFF";
+                ctx.shadowBlur = 18;
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+        }
+    }
+
+    function draw(ctx, canvas) {
+        if (!ctx) return;
+        if (phase === "IDLE" || phase === "DEFEATED") return;
+
+        ctx.save();
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 26;
+        ctx.fillStyle = "#168BFF";
+        ctx.fillRect(boss.x - boss.size / 2, boss.y - boss.size / 2, boss.size, boss.size);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(8, 13, 22, 0.9)";
+        ctx.fillRect(boss.x - boss.size / 2 + 10, boss.y - boss.size / 2 + 10, boss.size - 20, boss.size - 20);
+        ctx.strokeStyle = "#65B8FF";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(boss.x - boss.size / 2, boss.y - boss.size / 2, boss.size, boss.size);
+        ctx.restore();
+
+        if (weapon) drawWeapon(ctx);
+    }
+
+    function drawHUD(ctx, canvas) {
+        if (phase !== "FIGHT") return;
+        if (!ctx || !canvas) return;
+
+        const width = Math.min(420, canvas.width * 0.55);
+        const height = 8;
+        const x = (canvas.width - width) / 2;
+        const y = 66;
+
+        ctx.save();
+        ctx.fillStyle = "#303743";
+        ctx.fillRect(x, y, width, height);
+        const ratio = boss.maxHP > 0 ? Math.max(0, Math.min(1, boss.hp / boss.maxHP)) : 0;
+        ctx.fillStyle = "#FF303F";
+        ctx.fillRect(x, y, width * ratio, height);
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, width, height);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("BOSS", canvas.width / 2, y - 8);
+        ctx.textBaseline = "top";
+        ctx.fillText(Math.ceil(boss.hp) + "%", canvas.width / 2, y + height + 10);
+        ctx.restore();
+    }
+
+    function getState() {
+        const weaponCopy = weapon
+            ? {
+                ...weapon,
+                projectiles: weapon.projectiles ? weapon.projectiles.map(p => ({ ...p })) : null
+            }
+            : null;
+        return {
+            phase,
+            phaseTimer,
+            fightTimer,
+            boss: { ...boss },
+            weapon: weaponCopy
+        };
+    }
+
+    const api = {
+        reset,
+        start,
+        update,
+        draw,
+        drawHUD,
+        tryParry,
+        getState,
+        getConfig,
+        shouldStart,
+        configure
+    };
+
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = api;
+    }
+    if (root) {
+        root.ONREDBossSystem = api;
+    }
+
+    console.log("[ON RED] Boss System carregado.");
+})(typeof window !== "undefined" ? window : globalThis);

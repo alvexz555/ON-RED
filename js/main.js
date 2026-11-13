@@ -35,6 +35,9 @@ const gameOverMenuButton = document.getElementById("gameOverMenuButton");
 const finalScoreLabel = document.getElementById("finalScore");
 const bestScoreGameOverLabel = document.getElementById("bestScoreGameOver");
 const menuBestScoreLabel = document.getElementById("bestScore");
+const victoryScreen = document.getElementById("victoryScreen");
+const victoryRetryButton = document.getElementById("victoryRetryButton");
+const victoryMenuButton = document.getElementById("victoryMenuButton");
 
 // ==========================================
 // SCORE
@@ -103,12 +106,15 @@ function refreshBestScoreDisplays() {
 const GAME_STATE = {
     MENU: "MENU",
     PLAYING: "PLAYING",
-    GAME_OVER: "GAME_OVER"
+    GAME_OVER: "GAME_OVER",
+    VICTORY: "VICTORY"
 };
 
 let gameState = GAME_STATE.MENU;
 let gameStarted = false;
 let loopRunning = false;
+let bossPhase = "IDLE";
+let scoreFreezeTimer = 0;
 
 // ==========================================
 // JOGADOR
@@ -181,6 +187,19 @@ function updatePerfectButtonPosition() {
 
 function activatePerfectTiming() {
     if (gameState !== GAME_STATE.PLAYING || perfectButton.charge < 1) return false;
+
+    // Durante a luta do Boss, o Perfect Timing vira rebatida de projétil.
+    const boss = window.ONREDBossSystem;
+    if (boss && boss.getState().phase === "FIGHT") {
+        const parry = boss.tryParry(player);
+        if (parry.applied) {
+            perfectButton.charge = 0;
+            perfectButton.activationFlash = 0.25;
+            perfectTimingRuntime.feedback = "PERFECT! " + parry.damage + " HITS";
+            perfectTimingRuntime.feedbackTimer = 1.2;
+            return true;
+        }
+    }
 
     // O botão só ativa quando um obstáculo está efetivamente encostando no jogador.
     const targetObstacle = findCollidingPerfectObstacle();
@@ -730,6 +749,30 @@ function triggerGameOver() {
     }
 }
 
+function triggerVictory() {
+
+    const bonus = window.ONREDBossSystem
+        ? window.ONREDBossSystem.getConfig().victoryBonusScore
+        : 5000;
+    const finalScore = Math.floor(scoreState.value + bonus);
+
+    scoreState.value = finalScore;
+
+    saveBestScore(finalScore);
+    refreshBestScoreDisplays();
+
+    if (finalScoreLabel) {
+        finalScoreLabel.textContent = formatScore(finalScore);
+    }
+
+    gameState = GAME_STATE.VICTORY;
+
+    if (victoryScreen) {
+        victoryScreen.classList.add("active");
+        victoryScreen.setAttribute("aria-hidden", "false");
+    }
+}
+
 // ==========================================
 // SISTEMA DE COLISÃO E DANO
 // ==========================================
@@ -827,6 +870,35 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
     constrainPlayerToArena();
 
+    // BOSS FINAL DA FASE 1
+
+    let bossPhaseNow = bossPhase;
+
+    if (window.ONREDBossSystem) {
+
+        const previousBossPhase = bossPhase;
+
+        bossPhase = window.ONREDBossSystem.update(
+            deltaTime,
+            canvas,
+            player,
+            window.ONREDHealthSystem,
+            window.ONREDCollisionSystem
+        );
+
+        if (window.ONREDHealthSystem && window.ONREDHealthSystem.getState().gameOver) {
+            triggerGameOver();
+        }
+
+        if (previousBossPhase === "DEFEATED" && bossPhase === "IDLE") {
+            triggerVictory();
+        }
+
+        bossPhaseNow = bossPhase;
+    }
+
+    if (bossPhaseNow === "IDLE") {
+
     // SISTEMAS DO JOGO
 
     updatePerfectObstacles(deltaTime, timerDeltaTime);
@@ -849,7 +921,25 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
     const scoreMultiplier = perfectTimingRuntime.effect === "score_up"
         ? perfectTimingConfig.scoreMultiplier : 1;
-    scoreState.value += deltaTime * scoreState.pointsPerSecond * scoreMultiplier;
+
+    if (scoreFreezeTimer > 0) {
+        scoreFreezeTimer -= deltaTime;
+    }
+
+    if (scoreFreezeTimer <= 0) {
+        scoreState.value += deltaTime * scoreState.pointsPerSecond * scoreMultiplier;
+    }
+
+    // DISPARO DO BOSS FINAL (FASE 1) — gatilho por pontuação.
+
+    if (
+        window.ONREDBossSystem &&
+        window.ONREDBossSystem.getState().phase === "IDLE" &&
+        window.ONREDBossSystem.shouldStart(scoreState.value)
+    ) {
+        window.ONREDBossSystem.start(canvas, player);
+        scoreFreezeTimer = window.ONREDBossSystem.getConfig().warningDuration;
+    }
 
     // SISTEMA DE COLISÃO
 
@@ -900,6 +990,10 @@ mergeResults.forEach(result => {
 });
 
     }
+} else {
+    // Durante a luta o Boss assume a arena: spawns, score e combate normal pausados.
+    updatePerfectButton(deltaTime, timerDeltaTime);
+}
 }
 
 // ==========================================
@@ -1168,6 +1262,10 @@ function draw() {
         ONREDMergeSystem.draw(ctx);
     }
 
+    if (window.ONREDBossSystem && bossPhase !== "IDLE") {
+        window.ONREDBossSystem.draw(ctx, canvas);
+    }
+
     drawPlayer();
 
     if (window.ONREDCollisionSystem) {
@@ -1182,6 +1280,10 @@ function draw() {
     drawPerfectButton();
 
     drawScore();
+
+    if (window.ONREDBossSystem && bossPhase === "FIGHT") {
+        window.ONREDBossSystem.drawHUD(ctx, canvas);
+    }
 
     if (window.ONREDHealthUI) {
         ONREDHealthUI.draw(ctx, canvas);
@@ -1206,6 +1308,21 @@ function drawScore() {
             canvas.width / 2,
             18
         );
+
+        // BARRA DE APRESENTAÇÃO DO BOSS FINAL (FASE 1) — visível a partir de 5.000, pisca em 18.000.
+        if (window.ONREDBossSystem) {
+            const appearanceFrom = 5000;
+            const blinkAt = 18000;
+            const ratio = Math.min(1, scoreState.value / window.ONREDBossSystem.getConfig().triggerScore);
+            if (scoreState.value >= appearanceFrom) {
+                ctx.globalAlpha = scoreState.value >= blinkAt
+                    ? (Math.sin(Date.now() / 250) > 0 ? 0.95 : 0.15)
+                    : 0.95;
+                ctx.fillStyle = "#168BFF";
+                ctx.fillRect(0, 6, canvas.width * ratio, 2);
+                ctx.globalAlpha = 1;
+            }
+        }
     }
 
     if (perfectTimingRuntime.feedbackTimer > 0) {
@@ -1309,6 +1426,13 @@ function resetGame() {
         ONREDPingPong.reset(canvas, player);
     }
 
+    if (window.ONREDBossSystem) {
+        window.ONREDBossSystem.reset();
+    }
+
+    bossPhase = "IDLE";
+    scoreFreezeTimer = 0;
+
     lastFrameTime = 0;
 }
 
@@ -1351,7 +1475,7 @@ document.addEventListener("onred:start", function () {
 
 function restartONREDGame() {
 
-    if (gameState !== GAME_STATE.GAME_OVER) return;
+    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY) return;
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
@@ -1359,6 +1483,11 @@ function restartONREDGame() {
     if (gameOverScreen) {
         gameOverScreen.classList.remove("active");
         gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (victoryScreen) {
+        victoryScreen.classList.remove("active");
+        victoryScreen.setAttribute("aria-hidden", "true");
     }
 
     if (mainMenu) {
@@ -1379,10 +1508,20 @@ function restartONREDGame() {
 
 function returnToMainMenu() {
 
-    if (gameState !== GAME_STATE.GAME_OVER) return;
+    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY) return;
 
     gameState = GAME_STATE.MENU;
     gameStarted = false;
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (victoryScreen) {
+        victoryScreen.classList.remove("active");
+        victoryScreen.setAttribute("aria-hidden", "true");
+    }
 
     resetJoystick();
 
@@ -1420,6 +1559,14 @@ if (gameOverMenuButton) {
     gameOverMenuButton.addEventListener("click", returnToMainMenu);
 }
 
+if (victoryRetryButton) {
+    victoryRetryButton.addEventListener("click", restartONREDGame);
+}
+
+if (victoryMenuButton) {
+    victoryMenuButton.addEventListener("click", returnToMainMenu);
+}
+
 // ==========================================
 // LOOP PRINCIPAL
 // ==========================================
@@ -1440,6 +1587,9 @@ function gameLoop(timestamp) {
 
     if (gameState === GAME_STATE.PLAYING) {
         update(deltaTime, elapsedTime);
+        draw();
+    } else if (gameState === GAME_STATE.VICTORY) {
+        // Mantém o último frame desenhado até o overlay de vitória.
         draw();
     }
 
