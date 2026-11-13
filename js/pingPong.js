@@ -221,6 +221,7 @@
         if (wasElectric) {
             electrifyPlayer();
             endOverload();
+            setBallSpeed(CONFIG.speed);
         } else {
             overloadHits = 0;
             setBallSpeed(CONFIG.speed);
