@@ -3,6 +3,7 @@ name: Deploy ON RED to GitHub Pages
 on:
   push:
     branches:
+      - main
       - feature/perfect-timing-system
   workflow_dispatch:
 
