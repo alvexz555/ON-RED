@@ -269,13 +269,13 @@
         return resolved;
     }
 
-    function resolvePingPongCollision(ball) {
+    function resolvePingPongCollision(ball, electric = false) {
         if (!ball) return false;
-        let collided = false;
         for (const hex of hexagons) {
             const contact = circlePolygonContact(ball, vertices(hex));
             if (!contact) continue;
 
+            // Separa a bola da superfície antes de refletir sua velocidade.
             ball.x += contact.nx * (contact.penetration + 0.5);
             ball.y += contact.ny * (contact.penetration + 0.5);
 
@@ -285,11 +285,12 @@
                 ball.vy -= 2 * velocityAlongNormal * contact.ny;
             }
 
-            damage(hex, CONFIG.pingPongDamage);
-            collided = true;
-            break;
+            // Durante a sobrecarga, o impacto elétrico destrói o hexágono
+            // imediatamente, mas preserva o rebote e a trajetória da bola.
+            damage(hex, electric ? hex.health : CONFIG.pingPongDamage);
+            return true;
         }
-        return collided;
+        return false;
     }
 
     function isCirclePositionClear(circle) {
