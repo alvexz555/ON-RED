@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/perfect-timing-system
+      - feature/electric-ping-pong
       - fix/hexagon-pingpong-balance-2026-11-13
   pull_request:
     branches:
