@@ -151,3 +151,30 @@ test("electric Ping Pong collision instantly destroys a hexagon and preserves bo
     assert.equal(hex.getState().count, 0);
     assert.ok(ball.vx < 0, "a bola deve preservar o rebote ao destruir o hexágono");
 });
+
+test("hexagon generation keeps replenishing after destruction without exceeding simultaneous cap", () => {
+    reset();
+    const farPlayer = { x: 80, y: 80, radius: 15 };
+    const created = [];
+    for (let i = 0; i < 5; i++) {
+        const item = hex.spawn(arena, farPlayer, [], 34);
+        assert.ok(item);
+        created.push(item);
+    }
+    assert.equal(hex.getState().count, 5);
+
+    for (const item of created) hex.damage(item, item.health);
+    assert.equal(hex.getState().count, 0);
+
+    hex.update(14, arena, farPlayer, [], 34, null);
+    assert.equal(hex.getState().count, 1);
+
+    for (let cycle = 0; cycle < 4; cycle++) {
+        const current = hex.getHexagons()[0];
+        assert.ok(current);
+        hex.damage(current, current.health);
+        hex.update(14, arena, farPlayer, [], 34, null);
+    }
+    assert.equal(hex.getState().count, 1);
+    assert.ok(hex.getState().hexagons[0].id > created[4].id);
+});
