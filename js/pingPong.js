@@ -229,13 +229,10 @@
         // Reduz temporariamente a influência dos controles do jogador.
         controlSlowTimer = CONFIG.controlRecoveryDuration;
 
-        // Compartilha a janela global de invulnerabilidade do jogo.
-        const registered = collisionSystem
-            ? collisionSystem.registerCollision()
-            : true;
-
-        if (registered && healthSystem) {
-            const damage = collisionSystem
+        // Ping Pong causa dano sem ativar a invulnerabilidade global.
+        // O knockback e a recuperação de controle não protegem contra outros perigos.
+        if (healthSystem) {
+            const damage = collisionSystem && typeof collisionSystem.getState === "function"
                 ? collisionSystem.getState().damage
                 : 25;
             const result = healthSystem.applyDamage(damage);
