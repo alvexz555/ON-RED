@@ -28,7 +28,7 @@ const ONREDMenu = (() => {
         let score = 0;
 
         try {
-            score = Number(localStorage.getItem("onRedBestScore") || 0);
+            score = Number(localStorage.getItem("onRedBestScore") || 0) || 0;
         } catch (error) {
             console.warn("[ON RED] Erro ao carregar recorde:", error);
         }
