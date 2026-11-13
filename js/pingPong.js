@@ -9,6 +9,7 @@
     const CONFIG = {
         radius: 12,
         speed: 380,
+        maxSpeed: 1200,
         spawnInterval: 10,
         spawnMargin: 32,
         minPlayerDistance: 130,
@@ -100,8 +101,9 @@
     function setBallSpeed(speed) {
         if (!ball) return;
         const magnitude = Math.hypot(ball.vx, ball.vy) || 1;
-        ball.vx = ball.vx / magnitude * speed;
-        ball.vy = ball.vy / magnitude * speed;
+        const cappedSpeed = Math.min(speed, CONFIG.maxSpeed);
+        ball.vx = ball.vx / magnitude * cappedSpeed;
+        ball.vy = ball.vy / magnitude * cappedSpeed;
     }
 
     function startOverload() {
@@ -291,18 +293,19 @@
         bounceFromWalls(arena);
     }
 
-    function drawElectricArc(ctx, x, y, radius, alpha = 1) {
+    function drawElectricArc(ctx, x, y, radius, alpha = 1, phase = 0) {
         ctx.save();
         ctx.globalAlpha = alpha;
         ctx.strokeStyle = "#8CEBFF";
         ctx.lineWidth = 2;
         ctx.shadowColor = "#37CFFF";
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 14;
         ctx.beginPath();
-        const segments = 8;
+        const segments = 12;
         for (let i = 0; i <= segments; i++) {
-            const angle = (Math.PI * 2 * i) / segments;
-            const r = radius * (i % 2 === 0 ? 1 : 0.76);
+            const angle = phase + (Math.PI * 2 * i) / segments;
+            const jitter = Math.sin(phase * 2.4 + i * 2.1) * 0.12;
+            const r = radius * (i % 2 === 0 ? 1 : 0.72 + jitter);
             const px = x + Math.cos(angle) * r;
             const py = y + Math.sin(angle) * r;
             if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
@@ -312,32 +315,61 @@
         ctx.restore();
     }
 
+    function drawElectricAura(ctx, x, y, radius, phase, intensity = 1) {
+        ctx.save();
+        ctx.globalAlpha = intensity;
+        ctx.strokeStyle = "#35CFFF";
+        ctx.lineWidth = 2;
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 22;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + Math.sin(phase * 2) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        drawElectricArc(ctx, x, y, radius + 5, 0.95 * intensity, phase);
+        drawElectricArc(ctx, x, y, radius + 10, 0.55 * intensity, -phase * 1.3);
+    }
+
     function draw(ctx, player) {
         if (!ctx) return;
 
+        const phase = Date.now() / 95;
         if (electrifiedTimer > 0 && player) {
-            const pulse = 0.75 + Math.sin(Date.now() / 70) * 0.2;
-            drawElectricArc(ctx, player.x, player.y, player.radius + 9, pulse);
-            drawElectricArc(ctx, player.x, player.y, player.radius + 16, pulse * 0.55);
+            const pulse = 0.72 + Math.sin(phase) * 0.22;
+            drawElectricAura(ctx, player.x, player.y, player.radius + 7, phase, pulse);
+
+            // Pequenos clarões brancos aparecem nas pausas de atordoamento.
+            if (stunTimer > 0) {
+                ctx.save();
+                ctx.globalAlpha = 0.45 + Math.sin(phase * 2.8) * 0.2;
+                ctx.strokeStyle = "#FFFFFF";
+                ctx.lineWidth = 2;
+                ctx.shadowColor = "#8CEBFF";
+                ctx.shadowBlur = 18;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.radius + 3, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
         }
 
         if (!ball) return;
         ctx.save();
         if (ball.electric) {
+            const pulse = 0.75 + Math.sin(phase * 1.4) * 0.2;
+            drawElectricAura(ctx, ball.x, ball.y, ball.radius + 5, phase, pulse);
             ctx.shadowColor = "#45DFFF";
-            ctx.shadowBlur = 24;
-            ctx.strokeStyle = "#8CEBFF";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius + 5, 0, Math.PI * 2);
-            ctx.stroke();
-            drawElectricArc(ctx, ball.x, ball.y, ball.radius + 7, 0.9);
+            ctx.shadowBlur = 28;
+        } else {
+            ctx.shadowColor = "#FFFFFF";
+            ctx.shadowBlur = 18;
         }
+
+        // A esfera permanece branca; a eletricidade azul é uma camada externa.
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
         ctx.fillStyle = "#FFFFFF";
-        ctx.shadowColor = ball.electric ? "#45DFFF" : "#FFFFFF";
-        ctx.shadowBlur = ball.electric ? 24 : 18;
         ctx.fill();
         ctx.shadowBlur = 0;
         ctx.beginPath();
