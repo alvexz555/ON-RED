@@ -141,3 +141,13 @@ test("destroyed hexagons are excluded from collision and drawing state", () => {
     assert.equal(hex.getHexagons().includes(item),false);
     assert.equal(hex.resolvePingPongCollision({x:item.x,y:item.y,vx:0,vy:0,radius:12}),false);
 });
+
+test("electric Ping Pong collision instantly destroys a hexagon and preserves bounce", () => {
+    reset();
+    const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
+    const ball = {x:item.x-item.radius-5,y:item.y,vx:100,vy:0,radius:12};
+    assert.equal(hex.resolvePingPongCollision(ball, true), true);
+    assert.equal(item.destroyed, true);
+    assert.equal(hex.getState().count, 0);
+    assert.ok(ball.vx < 0, "a bola deve preservar o rebote ao destruir o hexágono");
+});
