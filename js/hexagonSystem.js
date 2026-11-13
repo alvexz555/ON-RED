@@ -8,6 +8,7 @@
 
     const CONFIG = {
         radius: 30,
+        // Limite de objetos simultâneos, não de gerações ao longo da partida.
         maxHexagons: 5,
         spawnInterval: 14,
         spawnAttempts: 60,
@@ -211,6 +212,8 @@
     function update(deltaTime, arena, player, obstacles, obstacleSize, pingPongState) {
         if (!Number.isFinite(deltaTime) || deltaTime < 0 || !arena) return;
         spawnTimer += deltaTime;
+        // A geração é contínua durante a partida: hexágonos destruídos liberam
+        // vagas para novas unidades, respeitando apenas o limite simultâneo.
         if (spawnTimer >= CONFIG.spawnInterval && hexagons.length < CONFIG.maxHexagons) {
             const created = spawn(arena, player, obstacles, obstacleSize, pingPongState);
             if (created) spawnTimer = 0;

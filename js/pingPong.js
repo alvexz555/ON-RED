@@ -18,7 +18,6 @@
         controlRecoveryDuration: 1,
         controlMinMultiplier: 0.2,
         collisionSpeedMultiplier: 1.08,
-        maxSpeed: 720,
         overloadHitCount: 5,
         overloadDuration: 5,
         electrifiedDuration: 3,
@@ -113,9 +112,10 @@
 
     function registerValidImpact() {
         if (!ball) return;
+        // Cada impacto válido acelera a bola, inclusive durante a sobrecarga.
+        setBallSpeed(currentSpeed() * CONFIG.collisionSpeedMultiplier);
         if (!ball.electric) {
             overloadHits++;
-            setBallSpeed(Math.min(CONFIG.maxSpeed, currentSpeed() * CONFIG.collisionSpeedMultiplier));
             if (overloadHits >= CONFIG.overloadHitCount) startOverload();
         }
     }
@@ -124,7 +124,8 @@
         if (ball) ball.electric = false;
         overloadHits = 0;
         overloadTimer = 0;
-        if (ball) setBallSpeed(CONFIG.speed);
+        // O fim da sobrecarga remove apenas a eletricidade.
+        // A velocidade acumulada só é restaurada no contato com o jogador.
     }
 
     function spawn(arena, player, obstacles, obstacleSize, hexSystem) {
@@ -220,10 +221,10 @@
         if (wasElectric) {
             electrifyPlayer();
             endOverload();
-        } else {
-            // Atingir o jogador restaura a velocidade base, conforme o contrato do Ping Pong.
             setBallSpeed(CONFIG.speed);
+        } else {
             overloadHits = 0;
+            setBallSpeed(CONFIG.speed);
         }
 
         if (healthSystem) {
@@ -374,10 +375,7 @@
             if (Object.prototype.hasOwnProperty.call(options, key) &&
                 Number.isFinite(options[key]) && options[key] > 0) CONFIG[key] = options[key];
         }
-        if (ball) {
-            ball.radius = CONFIG.radius;
-            setBallSpeed(Math.min(CONFIG.maxSpeed, currentSpeed()));
-        }
+        if (ball) ball.radius = CONFIG.radius;
         return getConfig();
     }
 
