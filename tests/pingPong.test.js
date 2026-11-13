@@ -138,7 +138,7 @@ test("electric stun temporarily blocks movement and expires automatically", () =
     assert.equal(game.pingPong.getControlMultiplier(), 1);
 });
 
-test("Ping Pong accelerates on every valid impact, including during overload, with no speed cap", () => {
+test("Ping Pong accelerates during overload but never exceeds the 1200 speed cap", () => {
     const game = createGame();
     const arena = { width: 5000, height: 5000 };
     const player = { x: 4900, y: 4900, radius: 15 };
@@ -162,6 +162,14 @@ test("Ping Pong accelerates on every valid impact, including during overload, wi
         game.pingPong.getState().ball.vx, game.pingPong.getState().ball.vy
     );
     assert.ok(speedDuringOverload > speedAtOverload);
+
+    for (let i = 0; i < 100; i++) {
+        game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    }
+    const cappedState = game.pingPong.getState();
+    const cappedSpeed = Math.hypot(cappedState.ball.vx, cappedState.ball.vy);
+    assert.equal(game.pingPong.getConfig().maxSpeed, 1200);
+    assert.ok(cappedSpeed <= 1200.001, `expected speed <= 1200, received ${cappedSpeed}`);
 });
 
 test("overload expiration removes electricity but preserves accumulated speed", () => {
