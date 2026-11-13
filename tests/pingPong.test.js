@@ -137,3 +137,73 @@ test("electric stun temporarily blocks movement and expires automatically", () =
     assert.equal(game.pingPong.getState().electrifiedTimer, 0);
     assert.equal(game.pingPong.getControlMultiplier(), 1);
 });
+
+test("Ping Pong accelerates on every valid impact, including during overload, with no speed cap", () => {
+    const game = createGame();
+    const arena = { width: 5000, height: 5000 };
+    const player = { x: 4900, y: 4900, radius: 15 };
+    const hexMock = {
+        resolvePingPongCollision() { return true; },
+        isCirclePositionClear() { return true; }
+    };
+    game.pingPong.spawn(arena, player, [], 34, hexMock);
+
+    for (let i = 0; i < 5; i++) {
+        game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    }
+    const speedAtOverload = Math.hypot(
+        game.pingPong.getState().ball.vx, game.pingPong.getState().ball.vy
+    );
+    assert.ok(speedAtOverload > 380);
+    assert.equal(game.pingPong.getState().overloaded, true);
+
+    game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    const speedDuringOverload = Math.hypot(
+        game.pingPong.getState().ball.vx, game.pingPong.getState().ball.vy
+    );
+    assert.ok(speedDuringOverload > speedAtOverload);
+});
+
+test("overload expiration removes electricity but preserves accumulated speed", () => {
+    const game = createGame();
+    const arena = { width: 5000, height: 5000 };
+    const player = { x: 4900, y: 4900, radius: 15 };
+    const hexMock = {
+        resolvePingPongCollision() { return true; },
+        isCirclePositionClear() { return true; }
+    };
+    game.pingPong.spawn(arena, player, [], 34, hexMock);
+    for (let i = 0; i < 5; i++) {
+        game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    }
+    const speedBeforeExpiry = Math.hypot(
+        game.pingPong.getState().ball.vx, game.pingPong.getState().ball.vy
+    );
+
+    game.pingPong.update(5, player, arena, game.health, game.collision, [], 34, null);
+    const state = game.pingPong.getState();
+    assert.equal(state.overloaded, false);
+    assert.ok(Math.abs(Math.hypot(state.ball.vx, state.ball.vy) - speedBeforeExpiry) < 0.001);
+    assert.equal(state.impactCount, 0);
+});
+
+test("Ping Pong resets to base speed only after touching the player", () => {
+    const game = createGame();
+    const arena = { width: 5000, height: 5000 };
+    const player = { x: 4900, y: 4900, radius: 15 };
+    const hexMock = {
+        resolvePingPongCollision() { return true; },
+        isCirclePositionClear() { return true; }
+    };
+    game.pingPong.spawn(arena, player, [], 34, hexMock);
+    for (let i = 0; i < 7; i++) {
+        game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, hexMock);
+    }
+    const ball = game.pingPong.getState().ball;
+    player.x = ball.x;
+    player.y = ball.y;
+    game.pingPong.update(0, player, arena, game.health, game.collision, [], 34, null);
+    const state = game.pingPong.getState();
+    assert.ok(Math.abs(Math.hypot(state.ball.vx, state.ball.vy) - 380) < 0.001);
+    assert.equal(state.overloaded, false);
+});
