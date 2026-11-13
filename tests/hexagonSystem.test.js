@@ -100,7 +100,7 @@ test("square obstacle is separated from hexagon", () => {
 test("Ping Pong damages hexagon and reflects from its surface", () => {
     reset();
     const item = hex.spawn(arena, {x:100,y:100,radius:15}, [], 34);
-    const ball = {x:item.x-item.radius-11,y:item.y,vx:100,vy:0,radius:12};
+    const ball = {x:item.x-item.radius-5,y:item.y,vx:100,vy:0,radius:12};
     assert.equal(hex.resolvePingPongCollision(ball),true);
     assert.equal(item.health,2);
     assert.ok(ball.vx < 0, "a bola deve rebater para longe do hexágono");

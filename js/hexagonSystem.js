@@ -124,7 +124,7 @@
         const axes = polygonAxes(a).concat(polygonAxes(b));
         for (const axis of axes) {
             const pa = project(a, axis), pb = project(b, axis);
-            const overlap = Math.min(pa.max, pb.max) - Math.max(pa.min, pb.min);
+            const overlap = Math.min(pa.max - pb.min, pb.max - pa.min);
             if (overlap <= 0) return null;
             if (overlap < smallestOverlap) {
                 smallestOverlap = overlap;
