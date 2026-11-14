@@ -6,9 +6,10 @@
  * Esferas vermelhas coletáveis dentro da arena.
  *
  * Regra do Merge:
- * - HP abaixo de 100%: recupera HP (nunca passa de 100%).
- * - HP em 100%: concede uma vida extra.
+ * - Recupera HP (nunca passa de 100%).
+ * - Com HP cheio, não concede vida extra nem pontuação.
  *
+ * Vidas extras são exclusivas dos quadrados do Perfect Timing.
  * A esfera é removida no momento da coleta, impedindo
  * que a mesma esfera seja ativada mais de uma vez.
  */
@@ -143,36 +144,24 @@
 
         const state = health.getState();
 
-        // HP ABAIXO DE 100%: RECUPERA HP.
-        if (state.hp < state.maxHP) {
-            const result = health.heal(CONFIG.healAmount);
-
+        // MERGE SOMENTE RECUPERA HP. Nunca concede vidas extras.
+        if (state.hp >= state.maxHP) {
             return {
-                type: "heal",
-                applied: result.applied,
-                healed: result.healed || 0,
-                hp: result.state.hp,
-                maxHP: result.state.maxHP
+                type: "no_effect",
+                applied: false,
+                hp: state.hp,
+                maxHP: state.maxHP
             };
         }
 
-        // HP EM 100%: TENTA CONCEDER VIDA EXTRA.
-        const result = health.addExtraLife();
-
-        // LIMITE DE 5 VIDAS ATINGIDO: CONVERTE A ESFERA EM PONTOS.
-        if (result.reason === "life_limit_reached") {
-            return {
-                type: "bonus_score",
-                applied: true,
-                points: CONFIG.bonusScorePerOrb
-            };
-        }
+        const result = health.heal(CONFIG.healAmount);
 
         return {
-            type: "extra_life",
+            type: "heal",
             applied: result.applied,
-            lives: result.state.lives,
-            maxLives: result.state.maxLives
+            healed: result.healed || 0,
+            hp: result.state.hp,
+            maxHP: result.state.maxHP
         };
     }
 
