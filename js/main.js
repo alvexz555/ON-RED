@@ -1474,13 +1474,16 @@ function resetEndlessProgression() {
     endlessProgression.nextBossScore = endlessProgression.baseTriggerScore;
     obstacleConfig.speed = obstacleBaseConfig.speed;
     obstacleConfig.spawnInterval = obstacleBaseConfig.spawnInterval;
-    if (window.ONREDBossSystem) window.ONREDBossSystem.configure({
-        triggerScore: endlessProgression.baseTriggerScore,
-        bossHp: bossBaseConfig.bossHp,
-        moveSpeed: bossBaseConfig.moveSpeed,
-        ray: { interval: bossBaseConfig.ray.interval },
-        pong: { white: { interval: bossBaseConfig.pong.white.interval }, electric: { interval: bossBaseConfig.pong.electric.interval } }
-    });
+    if (window.ONREDBossSystem) {
+        window.ONREDBossSystem.configure({
+            triggerScore: endlessProgression.baseTriggerScore,
+            bossHp: bossBaseConfig.bossHp,
+            moveSpeed: bossBaseConfig.moveSpeed,
+            ray: { interval: bossBaseConfig.ray.interval },
+            pong: { white: { interval: bossBaseConfig.pong.white.interval }, electric: { interval: bossBaseConfig.pong.electric.interval } }
+        });
+        window.ONREDBossSystem.reset();
+    }
 }
 
 function updateReviveOffer() {
@@ -1506,7 +1509,6 @@ function prepareNextEndlessCycle() {
     if (window.ONREDBossSystem) {
         const n = endlessProgression.cycle - 1;
         const intervalScale = Math.max(0.62, 1 - n * 0.045);
-        window.ONREDBossSystem.reset();
         window.ONREDBossSystem.configure({
             triggerScore: endlessProgression.nextBossScore,
             bossHp: Math.round(bossBaseConfig.bossHp * (1 + n * 0.22)),
@@ -1514,6 +1516,7 @@ function prepareNextEndlessCycle() {
             ray: { interval: Math.max(3.5, bossBaseConfig.ray.interval * intervalScale) },
             pong: { white: { interval: Math.max(1.6, bossBaseConfig.pong.white.interval * intervalScale) }, electric: { interval: Math.max(2.8, bossBaseConfig.pong.electric.interval * intervalScale) } }
         });
+        window.ONREDBossSystem.reset();
     }
     perfectObstacles.length = 0;
     spawnTimer = 0;
