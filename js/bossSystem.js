@@ -27,16 +27,18 @@
             firstIn: 5.0,
             interval: 7.0,
             telegraphDuration: 1.2,
-            activeDuration: 0.22,
-            width: 16,
-            radius: 180,
+            activeDuration: 0.16,
+            radius: 105,
+            sequenceCount: 3,
+            sequenceSpacing: 150,
+            sequenceDelay: 0.55,
             damage: 25
         },
         pong: {
             white: {
                 firstIn: 2.0,
                 interval: 3.4,
-                speed: 250,
+                speed: 380,
                 radius: 12,
                 damage: 25,
                 reboundSpeed: 420,
@@ -45,7 +47,7 @@
             electric: {
                 interval: 6.8,
                 projectiles: 2,
-                speed: 300,
+                speed: 380,
                 angleStep: Math.PI / 20,
                 damage: 25
             }
@@ -130,6 +132,7 @@
     let rayTimer = CONFIG.ray.firstIn;
     let electricTimer = CONFIG.pong.electric.interval;
     let rayVolleyIndex = 0;
+    let nextAreaPattern = "single";
     // Um Boss derrotado não volta a aparecer na mesma partida;
     // só o reset de partida limpa esta marcação.
     let conquered = false;
@@ -160,6 +163,7 @@
         rayTimer = CONFIG.ray.firstIn;
         electricTimer = CONFIG.pong.electric.interval;
         rayVolleyIndex = 0;
+        nextAreaPattern = "single";
 
         return getState();
     }
@@ -289,22 +293,37 @@
             damage: CONFIG.pong.white.damage,
             reboundSpeed: CONFIG.pong.white.reboundSpeed,
             windowDistance: CONFIG.pong.white.windowDistance,
-            consumed: false
+            consumed: false,
+            impactCount: 0,
+            electric: false
         };
     }
 
-    function fireRay() {
-        weapon = {
-            type: "ray",
-            kind: "ray",
-            state: "TELEGRAPH",
-            timer: CONFIG.ray.telegraphDuration,
-            radius: CONFIG.ray.radius,
-            width: CONFIG.ray.width,
-            damage: CONFIG.ray.damage,
-            x: boss.x,
-            y: boss.y
-        };
+    function fireRay(player, arena) {
+        const pattern = nextAreaPattern;
+        nextAreaPattern = nextAreaPattern === "single" ? "sequence" : "single";
+        const count = pattern === "single" ? 1 : CONFIG.ray.sequenceCount;
+        const sequenceHalfSpan = pattern === "sequence" ? ((count - 1) / 2) * CONFIG.ray.sequenceSpacing : 0;
+        const centerX = clamp(
+            player ? player.x : arena.width / 2,
+            CONFIG.ray.radius + sequenceHalfSpan,
+            arena.width - CONFIG.ray.radius - sequenceHalfSpan
+        );
+        const centerY = clamp(player ? player.y : arena.height / 2, CONFIG.ray.radius, arena.height - CONFIG.ray.radius);
+        const blasts = [];
+        for (let i = 0; i < count; i++) {
+            const offset = pattern === "single" ? 0 : (i - (count - 1) / 2) * CONFIG.ray.sequenceSpacing;
+            blasts.push({
+                x: clamp(centerX + offset, CONFIG.ray.radius, arena.width - CONFIG.ray.radius),
+                y: centerY,
+                radius: CONFIG.ray.radius,
+                damage: CONFIG.ray.damage,
+                state: "TELEGRAPH",
+                timer: CONFIG.ray.telegraphDuration + i * (pattern === "sequence" ? CONFIG.ray.sequenceDelay : 0),
+                activeTimer: CONFIG.ray.activeDuration
+            });
+        }
+        weapon = { type: "ray", kind: "area", state: "TELEGRAPH", pattern, blasts };
     }
 
     function fireElectric(player) {
@@ -321,7 +340,9 @@
                 vx: Math.cos(angle) * CONFIG.pong.electric.speed,
                 vy: Math.sin(angle) * CONFIG.pong.electric.speed,
                 radius: CONFIG.pong.white.radius,
-                damage: CONFIG.pong.electric.damage
+                damage: CONFIG.pong.electric.damage,
+                impactCount: 0,
+                electric: true
             });
         }
         weapon = {
@@ -346,30 +367,26 @@
         return Math.hypot(point.x - closestX, point.y - closestY);
     }
 
-    function updateRay(deltaTime, arena, player, health, collision) {
-        if (weapon.state === "TELEGRAPH") {
-            weapon.timer -= deltaTime;
-            if (weapon.timer <= 0) {
-                weapon.state = "ACTIVE";
-                weapon.timer = CONFIG.ray.activeDuration;
+    function updateRay(deltaTime, player, health, collision) {
+        if (!weapon || !Array.isArray(weapon.blasts)) return;
+        for (const blast of weapon.blasts) {
+            if (blast.state === "DONE") continue;
+            if (blast.state === "TELEGRAPH") {
+                blast.timer -= deltaTime;
+                if (blast.timer <= 0) {
+                    blast.state = "ACTIVE";
+                    const distance = Math.hypot(player.x - blast.x, player.y - blast.y);
+                    if (distance <= blast.radius + (player.radius || 0) &&
+                        collision && collision.registerCollision()) {
+                        health.applyDamage(blast.damage);
+                    }
+                }
+            } else if (blast.state === "ACTIVE") {
+                blast.activeTimer -= deltaTime;
+                if (blast.activeTimer <= 0) blast.state = "DONE";
             }
-            return;
         }
-
-        if (weapon.state !== "ACTIVE") return;
-
-        weapon.timer -= deltaTime;
-        const distanceFromCenter = Math.hypot(player.x - weapon.x, player.y - weapon.y);
-        const ringHit = Math.abs(distanceFromCenter - weapon.radius) <=
-            (player.radius || 0) + weapon.width / 2;
-
-        if (ringHit && collision && collision.registerCollision()) {
-            health.applyDamage(weapon.damage);
-        }
-
-        if (weapon.timer <= 0 || ringHit) {
-            weapon = null;
-        }
+        if (weapon.blasts.every(blast => blast.state === "DONE")) weapon = null;
     }
 
     function updateWhite(deltaTime, player, health, collision, arena) {
@@ -433,6 +450,19 @@
             projectile.y = maxY;
             if (projectile.vy > 0) { projectile.vy = -Math.abs(projectile.vy); bounced = true; }
         }
+        if (bounced) {
+            projectile.impactCount = (projectile.impactCount || 0) + 1;
+            const speed = Math.hypot(projectile.vx, projectile.vy);
+            if (!projectile.electric && projectile.impactCount >= 20) {
+                projectile.electric = true;
+                projectile.impactCount = 20;
+            }
+            if (speed > 0 && projectile.impactCount <= 20) {
+                const nextSpeed = Math.min(speed * 1.08, 1200);
+                projectile.vx = projectile.vx / speed * nextSpeed;
+                projectile.vy = projectile.vy / speed * nextSpeed;
+            }
+        }
         return bounced;
     }
 
@@ -473,13 +503,13 @@
             electricTimer -= deltaTime;
 
             if (whiteTimer <= 0) { whiteTimer = CONFIG.pong.white.interval; fireWhite(player); return; }
-            if (rayTimer <= 0) { rayTimer = CONFIG.ray.interval; fireRay(player); return; }
+            if (rayTimer <= 0) { rayTimer = CONFIG.ray.interval; fireRay(player, arena); return; }
             if (electricTimer <= 0) { electricTimer = CONFIG.pong.electric.interval; fireElectric(player); return; }
             return;
         }
 
         if (weapon.type === "ray") {
-            updateRay(deltaTime, arena, player, health, collision);
+            updateRay(deltaTime, player, health, collision);
         } else if (weapon.type === "white") {
             updateWhite(deltaTime, player, health, collision, arena);
         } else if (weapon.type === "electric") {
@@ -557,27 +587,39 @@
 
     function drawWeapon(ctx) {
         if (weapon.type === "ray") {
-            ctx.save();
-            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.38 : 0.9;
-            ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = weapon.width;
-            ctx.shadowColor = "#168BFF";
-            ctx.shadowBlur = 16;
-            ctx.beginPath();
-            ctx.arc(weapon.x, weapon.y, weapon.radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
+            for (const blast of weapon.blasts || []) {
+                if (blast.state === "DONE") continue;
+                ctx.save();
+                const active = blast.state === "ACTIVE";
+                ctx.globalAlpha = active ? 0.85 : 0.42;
+                ctx.fillStyle = active ? "#FF303F" : "#FF5964";
+                ctx.strokeStyle = "#FF303F";
+                ctx.lineWidth = active ? 4 : 2;
+                ctx.shadowColor = "#FF303F";
+                ctx.shadowBlur = active ? 24 : 10;
+                ctx.beginPath();
+                ctx.arc(blast.x, blast.y, blast.radius, 0, Math.PI * 2);
+                if (active) ctx.fill(); else ctx.stroke();
+                ctx.restore();
+            }
             return;
         }
 
         if (weapon.type === "white") {
             ctx.save();
-            ctx.shadowColor = "#FFFFFF";
-            ctx.shadowBlur = 18;
+            ctx.shadowColor = weapon.electric ? "#35CFFF" : "#FFFFFF";
+            ctx.shadowBlur = weapon.electric ? 26 : 18;
             ctx.beginPath();
             ctx.arc(weapon.x, weapon.y, weapon.radius, 0, Math.PI * 2);
             ctx.fillStyle = "#FFFFFF";
             ctx.fill();
+            if (weapon.electric) {
+                ctx.strokeStyle = "#35CFFF";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(weapon.x, weapon.y, weapon.radius + 7, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.shadowBlur = 0;
             ctx.restore();
             return;
@@ -588,11 +630,16 @@
                 if (projectile.state !== "ACTIVE") continue;
                 ctx.save();
                 ctx.shadowColor = "#8CEBFF";
-                ctx.shadowBlur = 18;
+                ctx.shadowBlur = 24;
                 ctx.beginPath();
                 ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
                 ctx.fillStyle = "#FFFFFF";
                 ctx.fill();
+                ctx.strokeStyle = "#35CFFF";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, projectile.radius + 7, 0, Math.PI * 2);
+                ctx.stroke();
                 ctx.shadowBlur = 0;
                 ctx.restore();
             }

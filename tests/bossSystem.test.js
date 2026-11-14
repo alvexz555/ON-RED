@@ -271,44 +271,50 @@ test("boss at zero hp does not accept new damage", () => {
     assert.equal(result.applied, false);
 });
 
-test("circular area attack telegraphs a ring and deals damage only in its active window", () => {
+test("single circular blast warns first and damages the entire marked area", () => {
     boss.configure({ ray: { firstIn: 0.01 }, pong: { white: { firstIn: 2.0, interval: 3.4 } } });
     const game = startFight();
     const weapon = advanceUntilWeapon(game, "ray");
     assert.ok(weapon);
-    assert.equal(weapon.type, "ray");
-    assert.equal(weapon.state, "TELEGRAPH");
-    assert.ok(weapon.radius > 0);
+    assert.equal(weapon.pattern, "single");
+    assert.equal(weapon.blasts.length, 1);
+    const blast = weapon.blasts[0];
+    assert.equal(blast.state, "TELEGRAPH");
     game.damageCalls.length = 0;
 
-    boss.update(0.5, arena, player, game.health, game.collision);
-    assert.equal(game.damageCalls.length, 0);
-    assert.equal(boss.getState().weapon.state, "TELEGRAPH");
-
-    boss.update(weapon.timer + 0.01, arena, player, game.health, game.collision);
-    const activeWeapon = boss.getState().weapon;
-    assert.equal(activeWeapon.state, "ACTIVE");
-
-    player.x = activeWeapon.x + activeWeapon.radius;
-    player.y = activeWeapon.y;
-    boss.update(0.01, arena, player, game.health, game.collision);
+    player.x = blast.x + blast.radius - 2;
+    player.y = blast.y;
+    boss.update(blast.timer + 0.01, arena, player, game.health, game.collision);
     assert.deepEqual(game.damageCalls, [25]);
+    assert.equal(boss.getState().weapon.blasts[0].state, "ACTIVE");
 });
 
-test("circular area attack keeps its radius stable throughout the telegraph", () => {
-    boss.configure({ ray: { firstIn: 0.01 }, pong: { white: { firstIn: 2.0, interval: 3.4 } } });
+test("area attacks alternate deterministically between one blast and a three-blast sequence", () => {
+    boss.configure({ ray: { firstIn: 0.01, interval: 0.01 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight();
-    const weapon = advanceUntilWeapon(game, "ray");
-    assert.ok(weapon);
-    const telegraphRadius = weapon.radius;
+    player.x = 450;
+    player.y = 350;
+    const first = advanceUntilWeapon(game, "ray");
+    assert.equal(first.pattern, "single");
+    assert.equal(first.blasts.length, 1);
 
-    boss.update(weapon.timer / 2, arena, player, game.health, game.collision);
-    assert.equal(boss.getState().weapon.state, "TELEGRAPH");
-    assert.equal(boss.getState().weapon.radius, telegraphRadius);
-    assert.equal(boss.getConfig().ray.radius, telegraphRadius);
+    // Aguarda a primeira zona terminar e o próximo ataque de área ser disparado.
+    let guard = 0;
+    while (boss.getState().weapon && guard++ < 100) boss.update(0.1, arena, player, game.health, game.collision);
+    guard = 0;
+    while ((!boss.getState().weapon || boss.getState().weapon.type !== "ray") && guard++ < 100) {
+        boss.update(0.1, arena, player, game.health, game.collision);
+    }
+    const second = boss.getState().weapon;
+    assert.equal(second.type, "ray");
+    assert.equal(second.pattern, "sequence");
+    assert.equal(second.blasts.length, 3);
+    assert.ok(second.blasts[0].x < second.blasts[1].x);
+    assert.ok(second.blasts[1].x < second.blasts[2].x);
 });
 
 test("white boss Pong ricochets from arena walls without leaving the arena", () => {
+    boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     const weapon = advanceUntilWeapon(game, "white");
     assert.ok(weapon);
@@ -392,6 +398,7 @@ test("idle boss game does not apply damage and does not parry", () => {
 
 
 test("a defeated boss cannot be triggered again in the same match", () => {
+    boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { electric: { interval: 100 } } });
     // HP reduzido: uma única rebatida derrota o Boss.
     assert.equal(boss.configure({ bossHp: 100 }).bossHp, 100);
     const game = startFight(["white"]);
@@ -432,7 +439,7 @@ test("a defeated boss cannot be triggered again in the same match", () => {
 
 
 test("a parried projectile that misses cannot parry again and hits once", () => {
-    boss.configure({ bossHp: 300 });
+    boss.configure({ bossHp: 300, ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 3.4 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     const weapon = advanceUntilWeapon(game, "white");
     assert.ok(weapon);
@@ -451,34 +458,30 @@ test("a parried projectile that misses cannot parry again and hits once", () => 
     assert.deepEqual(game.damageCalls, []);
 });
 
-test("a lost white pong is discarded off-arena and the boss attacks again", () => {
+test("white Boss Pong keeps ricocheting inside the arena instead of disappearing", () => {
+    boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
-    const weapon = advanceUntilWeapon(game, "white");
-    assert.ok(weapon);
+    assert.ok(advanceUntilWeapon(game, "white"));
+    // O projétil já foi lançado na direção anterior; afasta o jogador para observar os ricochetes.
+    player.x = 800;
+    player.y = 650;
 
-    // Deixa o pong atravessar a arena sem rebatida e sem tocar o jogador.
-    let guard = 0;
-    while (boss.getState().weapon && guard++ < 400) {
-        player.x = 100;
-        player.y = 650;
+    let observedBounce = false;
+    let previousVelocity = null;
+    for (let i = 0; i < 400; i++) {
+        const before = boss.getState().weapon;
+        if (before && before.type === "white") previousVelocity = { vx: before.vx, vy: before.vy };
         boss.update(0.1, arena, player, game.health, game.collision);
+        const current = boss.getState().weapon;
+        if (!current || current.type !== "white") break;
+        assert.ok(current.x >= current.radius && current.x <= arena.width - current.radius);
+        assert.ok(current.y >= current.radius && current.y <= arena.height - current.radius);
+        if (previousVelocity &&
+            (Math.sign(current.vx) !== Math.sign(previousVelocity.vx) ||
+             Math.sign(current.vy) !== Math.sign(previousVelocity.vy))) observedBounce = true;
     }
-    assert.equal(boss.getState().weapon, null);
-
-    // O Boss volta a atacar: um novo pong branco surge dentro do intervalo.
-    guard = 0;
-    let nextWeapon = null;
-    while (guard++ < 400) {
-        player.x = 100;
-        player.y = 650;
-        boss.update(0.1, arena, player, game.health, game.collision);
-        const state = boss.getState();
-        if (state.weapon && state.weapon.type === "white" && state.weapon.state === "ACTIVE") {
-            nextWeapon = state.weapon;
-            break;
-        }
-    }
-    assert.ok(nextWeapon);
+    assert.equal(observedBounce, true);
+    assert.equal(boss.getState().weapon.type, "white");
 });
 
 test("difficulty selection changes only boss combat knobs and survives reset", () => {

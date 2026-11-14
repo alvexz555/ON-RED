@@ -8,6 +8,7 @@ on:
       - feature/electric-ping-pong
       - fix/hexagon-pingpong-balance-2026-11-13
       - feature/boss-battle-complete
+      - fix/boss-area-and-pong-inheritance
   pull_request:
     branches:
       - main
