@@ -40,7 +40,7 @@
                 speed: 250,
                 radius: 12,
                 damage: 25,
-                rebounceSpeed: 420,
+                reboundSpeed: 420,
                 windowDistance: 105
             },
             electric: {
@@ -250,6 +250,9 @@
         boss.amplitudeX = Math.min(width * CONFIG.patrolAmplitudeRatio, boss.size * 2);
         boss.baseX = width / 2;
         boss.baseY = height * CONFIG.patrolYRatio;
+        // O Boss já aparece na posição correta durante WARNING.
+        boss.x = boss.baseX;
+        boss.y = boss.baseY;
         boss.hp = boss.maxHP;
         boss.defeated = false;
         boss.patrolPhase = 0;
@@ -365,8 +368,9 @@
             }
 
             if (rayHit) {
-                collision.registerCollision();
-                health.applyDamage(CONFIG.ray.damage);
+                if (collision.registerCollision()) {
+                    health.applyDamage(CONFIG.ray.damage);
+                }
             }
         }
     }
@@ -399,8 +403,9 @@
         if (collision && collision.checkCollisions(player, [weapon], weapon.radius)) {
             const damage = weapon.damage;
             weapon = null;
-            collision.registerCollision();
-            health.applyDamage(damage);
+            if (collision.registerCollision()) {
+                health.applyDamage(damage);
+            }
             return;
         }
 
@@ -430,8 +435,9 @@
                 collision.checkCollisions(player, [projectile], projectile.radius * 2)
             ) {
                 projectile.state = "CONSUMED";
-                collision.registerCollision();
-                health.applyDamage(projectile.damage);
+                if (collision.registerCollision()) {
+                    health.applyDamage(projectile.damage);
+                }
             }
         }
 
@@ -468,8 +474,9 @@
 
         const bossBody = { x: boss.x, y: boss.y, state: "ACTIVE", kind: "boss" };
         if (collision && collision.checkCollisions(player, [bossBody], boss.size)) {
-            collision.registerCollision();
-            health.applyDamage(collision.getState().damage);
+            if (collision.registerCollision()) {
+                health.applyDamage(collision.getState().damage);
+            }
         }
     }
 
@@ -627,7 +634,7 @@
         ctx.textBaseline = "bottom";
         ctx.fillText("BOSS", canvas.width / 2, y - 8);
         ctx.textBaseline = "top";
-        ctx.fillText(Math.ceil(boss.hp) + "%", canvas.width / 2, y + height + 10);
+        ctx.fillText(Math.ceil(boss.hp) + " / " + Math.ceil(boss.maxHP), canvas.width / 2, y + height + 10);
         ctx.restore();
     }
 
