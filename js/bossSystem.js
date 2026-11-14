@@ -27,9 +27,11 @@
             firstIn: 5.0,
             interval: 7.0,
             telegraphDuration: 1.2,
-            activeDuration: 0.22,
-            width: 16,
-            radius: 180,
+            activeDuration: 0.16,
+            radius: 105,
+            sequenceCount: 3,
+            sequenceSpacing: 150,
+            sequenceDelay: 0.55,
             damage: 25
         },
         pong: {
@@ -130,6 +132,7 @@
     let rayTimer = CONFIG.ray.firstIn;
     let electricTimer = CONFIG.pong.electric.interval;
     let rayVolleyIndex = 0;
+    let nextAreaPattern = "single";
     // Um Boss derrotado não volta a aparecer na mesma partida;
     // só o reset de partida limpa esta marcação.
     let conquered = false;
@@ -160,6 +163,7 @@
         rayTimer = CONFIG.ray.firstIn;
         electricTimer = CONFIG.pong.electric.interval;
         rayVolleyIndex = 0;
+        nextAreaPattern = "single";
 
         return getState();
     }
@@ -293,18 +297,26 @@
         };
     }
 
-    function fireRay() {
-        weapon = {
-            type: "ray",
-            kind: "ray",
-            state: "TELEGRAPH",
-            timer: CONFIG.ray.telegraphDuration,
-            radius: CONFIG.ray.radius,
-            width: CONFIG.ray.width,
-            damage: CONFIG.ray.damage,
-            x: boss.x,
-            y: boss.y
-        };
+    function fireRay(player, arena) {
+        const pattern = nextAreaPattern;
+        nextAreaPattern = nextAreaPattern === "single" ? "sequence" : "single";
+        const count = pattern === "single" ? 1 : CONFIG.ray.sequenceCount;
+        const centerX = clamp(player ? player.x : arena.width / 2, CONFIG.ray.radius, arena.width - CONFIG.ray.radius);
+        const centerY = clamp(player ? player.y : arena.height / 2, CONFIG.ray.radius, arena.height - CONFIG.ray.radius);
+        const blasts = [];
+        for (let i = 0; i < count; i++) {
+            const offset = pattern === "single" ? 0 : (i - (count - 1) / 2) * CONFIG.ray.sequenceSpacing;
+            blasts.push({
+                x: clamp(centerX + offset, CONFIG.ray.radius, arena.width - CONFIG.ray.radius),
+                y: centerY,
+                radius: CONFIG.ray.radius,
+                damage: CONFIG.ray.damage,
+                state: "TELEGRAPH",
+                timer: CONFIG.ray.telegraphDuration + i * (pattern === "sequence" ? CONFIG.ray.sequenceDelay : 0),
+                activeTimer: CONFIG.ray.activeDuration
+            });
+        }
+        weapon = { type: "ray", kind: "area", state: "TELEGRAPH", pattern, blasts };
     }
 
     function fireElectric(player) {
@@ -346,30 +358,26 @@
         return Math.hypot(point.x - closestX, point.y - closestY);
     }
 
-    function updateRay(deltaTime, arena, player, health, collision) {
-        if (weapon.state === "TELEGRAPH") {
-            weapon.timer -= deltaTime;
-            if (weapon.timer <= 0) {
-                weapon.state = "ACTIVE";
-                weapon.timer = CONFIG.ray.activeDuration;
+    function updateRay(deltaTime, player, health, collision) {
+        if (!weapon || !Array.isArray(weapon.blasts)) return;
+        for (const blast of weapon.blasts) {
+            if (blast.state === "DONE") continue;
+            if (blast.state === "TELEGRAPH") {
+                blast.timer -= deltaTime;
+                if (blast.timer <= 0) {
+                    blast.state = "ACTIVE";
+                    const distance = Math.hypot(player.x - blast.x, player.y - blast.y);
+                    if (distance <= blast.radius + (player.radius || 0) &&
+                        collision && collision.registerCollision()) {
+                        health.applyDamage(blast.damage);
+                    }
+                }
+            } else if (blast.state === "ACTIVE") {
+                blast.activeTimer -= deltaTime;
+                if (blast.activeTimer <= 0) blast.state = "DONE";
             }
-            return;
         }
-
-        if (weapon.state !== "ACTIVE") return;
-
-        weapon.timer -= deltaTime;
-        const distanceFromCenter = Math.hypot(player.x - weapon.x, player.y - weapon.y);
-        const ringHit = Math.abs(distanceFromCenter - weapon.radius) <=
-            (player.radius || 0) + weapon.width / 2;
-
-        if (ringHit && collision && collision.registerCollision()) {
-            health.applyDamage(weapon.damage);
-        }
-
-        if (weapon.timer <= 0 || ringHit) {
-            weapon = null;
-        }
+        if (weapon.blasts.every(blast => blast.state === "DONE")) weapon = null;
     }
 
     function updateWhite(deltaTime, player, health, collision, arena) {
@@ -479,7 +487,7 @@
         }
 
         if (weapon.type === "ray") {
-            updateRay(deltaTime, arena, player, health, collision);
+            updateRay(deltaTime, player, health, collision);
         } else if (weapon.type === "white") {
             updateWhite(deltaTime, player, health, collision, arena);
         } else if (weapon.type === "electric") {
@@ -557,16 +565,21 @@
 
     function drawWeapon(ctx) {
         if (weapon.type === "ray") {
-            ctx.save();
-            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.38 : 0.9;
-            ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = weapon.width;
-            ctx.shadowColor = "#168BFF";
-            ctx.shadowBlur = 16;
-            ctx.beginPath();
-            ctx.arc(weapon.x, weapon.y, weapon.radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.restore();
+            for (const blast of weapon.blasts || []) {
+                if (blast.state === "DONE") continue;
+                ctx.save();
+                const active = blast.state === "ACTIVE";
+                ctx.globalAlpha = active ? 0.85 : 0.42;
+                ctx.fillStyle = active ? "#FF303F" : "#FF5964";
+                ctx.strokeStyle = "#FF303F";
+                ctx.lineWidth = active ? 4 : 2;
+                ctx.shadowColor = "#FF303F";
+                ctx.shadowBlur = active ? 24 : 10;
+                ctx.beginPath();
+                ctx.arc(blast.x, blast.y, blast.radius, 0, Math.PI * 2);
+                if (active) ctx.fill(); else ctx.stroke();
+                ctx.restore();
+            }
             return;
         }
 
