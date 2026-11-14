@@ -377,3 +377,114 @@ button {
 
     box-shadow: 0 0 10px rgba(88, 191, 255, 0.35);
 }
+
+
+/* ==========================================
+   PAUSE SCREEN
+========================================== */
+.pause-button {
+    position: fixed;
+    top: max(16px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    z-index: 30;
+    width: 44px;
+    height: 44px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    border: 1px solid rgba(88, 191, 255, 0.55);
+    border-radius: 8px;
+    background: rgba(8, 17, 29, 0.88);
+    box-shadow: 0 0 16px rgba(22, 139, 255, 0.16);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+.pause-button span {
+    width: 4px;
+    height: 16px;
+    border-radius: 2px;
+    background: #FFFFFF;
+}
+body:has(#mainMenu.hidden) .pause-button {
+    display: flex;
+}
+body:has(.game-over-screen.active) .pause-button,
+body:has(#pauseScreen.active) .pause-button {
+    display: none;
+}
+.pause-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+        radial-gradient(circle at center, rgba(18, 75, 120, 0.2), transparent 60%),
+        rgba(3, 6, 13, 0.96);
+    color: #FFFFFF;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.pause-screen.active { display: flex; }
+.pause-content {
+    width: 100%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    text-align: center;
+}
+.pause-logo {
+    color: #FFFFFF;
+    font-size: 36px;
+    font-weight: 900;
+    letter-spacing: 3px;
+}
+.pause-logo span { color: #FF3948; }
+.pause-label {
+    color: #58BFFF;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 4px;
+}
+.pause-divider {
+    width: 54px;
+    height: 2px;
+    margin: 10px 0;
+    background: #168BFF;
+    box-shadow: 0 0 12px rgba(22, 139, 255, 0.65);
+}
+.pause-action {
+    width: 100%;
+    min-height: 52px;
+    border: 1px solid #263447;
+    border-radius: 7px;
+    background: #111925;
+    color: #DCE3ED;
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    touch-action: manipulation;
+}
+.pause-action:active { transform: scale(0.98); }
+.pause-resume {
+    border-color: #168BFF;
+    background: #123D60;
+    color: #FFFFFF;
+}
+.pause-menu { background: transparent; }
+.pause-hint {
+    margin-top: 8px;
+    color: #637187;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+@media (max-height: 520px) {
+    .pause-content { gap: 9px; }
+    .pause-action { min-height: 43px; }
+    .pause-logo { font-size: 29px; }
+}
