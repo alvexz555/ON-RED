@@ -19,8 +19,10 @@
     };
 
     let state = {};
+    let reviveProtectionTimer = 0;
 
     function reset() {
+        reviveProtectionTimer = 0;
         state = {
             lives: CONFIG.initialLives,
             maxLives: CONFIG.maxLives,
@@ -42,7 +44,32 @@
         damageListener = typeof listener === "function" ? listener : null;
     }
 
+    function update(deltaTime) {
+        if (typeof deltaTime !== "number" || !Number.isFinite(deltaTime) || deltaTime <= 0) return;
+        reviveProtectionTimer = Math.max(0, reviveProtectionTimer - deltaTime);
+    }
+
+    function grantReviveProtection(seconds = 2) {
+        if (typeof seconds !== "number" || !Number.isFinite(seconds) || seconds <= 0) return false;
+        reviveProtectionTimer = Math.max(reviveProtectionTimer, seconds);
+        return true;
+    }
+
+    function revive() {
+        if (!state.gameOver) {
+            return { applied: false, reason: "player_not_defeated", state: getState() };
+        }
+        state.lives = 1;
+        state.hp = Math.min(50, state.maxHP);
+        state.gameOver = false;
+        grantReviveProtection(2);
+        return { applied: true, livesGranted: 1, hpRestored: state.hp, state: getState() };
+    }
+
     function applyDamage(amount) {
+        if (reviveProtectionTimer > 0) {
+            return { applied: false, reason: "revive_protection", protected: true, state: getState() };
+        }
         if (state.gameOver) {
             return {
                 applied: false,
@@ -170,6 +197,9 @@
     window.ONREDHealthSystem = {
         reset,
         getState,
+        update,
+        revive,
+        grantReviveProtection,
         setDamageListener,
         applyDamage,
         heal,

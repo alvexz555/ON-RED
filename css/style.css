@@ -481,3 +481,56 @@ button {
     .pause-action { min-height: 43px; }
     .pause-logo { font-size: 29px; }
 }
+
+
+/* ==========================================
+   REVIVE SCREEN · ONE CONTINUATION PER RUN
+========================================== */
+.revive-offer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    padding: 13px;
+    border: 1px solid rgba(22, 139, 255, .4);
+    border-radius: 7px;
+    background: rgba(18, 61, 96, .22);
+}
+.revive-offer-label {
+    color: #58BFFF;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 2px;
+}
+.revive-offer p {
+    max-width: 290px;
+    color: #AAB4C3;
+    font-size: 10px;
+    line-height: 1.5;
+}
+.revive-button {
+    min-height: 48px;
+    color: #FFFFFF;
+    background: #123D60;
+    border-color: #168BFF;
+    box-shadow: 0 0 16px rgba(22, 139, 255, .18);
+}
+.revive-button:hover { background: #18527D; }
+.revive-unavailable {
+    color: #8796A9;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-align: center;
+}
+.revive-unavailable[hidden], .revive-button[hidden] { display: none !important; }
+@media (max-height: 650px) {
+    .revive-offer { padding: 9px; gap: 6px; }
+    .revive-button { min-height: 42px; }
+}
+
+@media (max-height: 700px) {
+    .game-over-screen { overflow-y: auto; align-items: flex-start; }
+    .game-over-content { margin: auto; gap: 18px; }
+}
