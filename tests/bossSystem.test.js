@@ -289,28 +289,45 @@ test("single circular blast warns first and damages the entire marked area", () 
     assert.equal(boss.getState().weapon.blasts[0].state, "ACTIVE");
 });
 
-test("area attacks alternate deterministically between one blast and a three-blast sequence", () => {
+test("area attacks repeat the mandatory A-C-A-C cycle throughout the Boss fight", () => {
     boss.configure({ ray: { firstIn: 0.01, interval: 0.01 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight();
     player.x = 450;
     player.y = 350;
-    const first = advanceUntilWeapon(game, "ray");
-    assert.equal(first.pattern, "single");
-    assert.equal(first.blasts.length, 1);
 
-    // Aguarda a primeira zona terminar e o próximo ataque de área ser disparado.
-    let guard = 0;
-    while (boss.getState().weapon && guard++ < 100) boss.update(0.1, arena, player, game.health, game.collision);
-    guard = 0;
-    while ((!boss.getState().weapon || boss.getState().weapon.type !== "ray") && guard++ < 100) {
-        boss.update(0.1, arena, player, game.health, game.collision);
+    const expected = [
+        { pattern: "single", count: 1 },
+        { pattern: "sequence", count: 3 },
+        { pattern: "single", count: 1 },
+        { pattern: "sequence", count: 3 }
+    ];
+
+    for (let index = 0; index < expected.length; index++) {
+        let weapon = boss.getState().weapon;
+        let guard = 0;
+        while ((!weapon || weapon.type !== "ray") && guard++ < 200) {
+            boss.update(0.05, arena, player, game.health, game.collision);
+            weapon = boss.getState().weapon;
+        }
+
+        assert.ok(weapon, `area attack ${index + 1} should be fired`);
+        assert.equal(weapon.pattern, expected[index].pattern);
+        assert.equal(weapon.blasts.length, expected[index].count);
+
+        if (weapon.pattern === "sequence") {
+            assert.ok(weapon.blasts[0].x < weapon.blasts[1].x);
+            assert.ok(weapon.blasts[1].x < weapon.blasts[2].x);
+            assert.ok(weapon.blasts[0].timer < weapon.blasts[1].timer);
+            assert.ok(weapon.blasts[1].timer < weapon.blasts[2].timer);
+        }
+
+        // Esvazia completamente as zonas antes de solicitar o próximo ataque.
+        guard = 0;
+        while (boss.getState().weapon && guard++ < 200) {
+            boss.update(0.1, arena, player, game.health, game.collision);
+        }
+        assert.equal(boss.getState().weapon, null);
     }
-    const second = boss.getState().weapon;
-    assert.equal(second.type, "ray");
-    assert.equal(second.pattern, "sequence");
-    assert.equal(second.blasts.length, 3);
-    assert.ok(second.blasts[0].x < second.blasts[1].x);
-    assert.ok(second.blasts[1].x < second.blasts[2].x);
 });
 
 test("white boss Pong ricochets from arena walls without leaving the arena", () => {
