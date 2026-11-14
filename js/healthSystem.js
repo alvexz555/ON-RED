@@ -36,6 +36,12 @@
         return { ...state };
     }
 
+    let damageListener = null;
+
+    function setDamageListener(listener) {
+        damageListener = typeof listener === "function" ? listener : null;
+    }
+
     function applyDamage(amount) {
         if (state.gameOver) {
             return {
@@ -75,13 +81,27 @@
             }
         }
 
-        return {
+        const result = {
             applied: damageApplied > 0,
             damage: damageApplied,
             lifeLost,
             gameOver: state.gameOver,
             state: getState()
         };
+
+        if (result.applied && damageListener) {
+            try {
+                damageListener({
+                    damage: result.damage,
+                    lifeLost: result.lifeLost,
+                    state: result.state
+                });
+            } catch (error) {
+                console.error("[ON RED] Damage listener failed:", error);
+            }
+        }
+
+        return result;
     }
 
     function heal(amount) {
@@ -150,6 +170,7 @@
     window.ONREDHealthSystem = {
         reset,
         getState,
+        setDamageListener,
         applyDamage,
         heal,
         addExtraLife
