@@ -939,7 +939,7 @@
             phaseTimer,
             fightTimer,
             boss: { ...boss },
-            weapon: weaponCopy || electricWeaponCopy,
+            weapon: weaponCopy,
             electricWeapon: electricWeaponCopy,
             electricTrails: electricTrails.map(trail => ({ ...trail })),
             electrifiedTimer,
