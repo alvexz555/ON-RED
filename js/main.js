@@ -34,6 +34,8 @@ const retryButton = document.getElementById("retryButton");
 const gameOverMenuButton = document.getElementById("gameOverMenuButton");
 const finalScoreLabel = document.getElementById("finalScore");
 const bestScoreGameOverLabel = document.getElementById("bestScoreGameOver");
+const victoryFinalScoreLabel = document.getElementById("victoryFinalScore");
+const victoryBestScoreLabel = document.getElementById("victoryBestScore");
 const menuBestScoreLabel = document.getElementById("bestScore");
 const victoryScreen = document.getElementById("victoryScreen");
 const victoryRetryButton = document.getElementById("victoryRetryButton");
@@ -90,6 +92,11 @@ function refreshBestScoreDisplays() {
 
     if (bestScoreGameOverLabel) {
         bestScoreGameOverLabel.textContent =
+            formatScore(scoreState.best);
+    }
+
+    if (victoryBestScoreLabel) {
+        victoryBestScoreLabel.textContent =
             formatScore(scoreState.best);
     }
 
@@ -761,8 +768,8 @@ function triggerVictory() {
     saveBestScore(finalScore);
     refreshBestScoreDisplays();
 
-    if (finalScoreLabel) {
-        finalScoreLabel.textContent = formatScore(finalScore);
+    if (victoryFinalScoreLabel) {
+        victoryFinalScoreLabel.textContent = formatScore(finalScore);
     }
 
     gameState = GAME_STATE.VICTORY;
@@ -884,7 +891,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
             player,
             window.ONREDHealthSystem,
             window.ONREDCollisionSystem
-        );
+        ).phase;
 
         if (window.ONREDHealthSystem && window.ONREDHealthSystem.getState().gameOver) {
             triggerGameOver();
@@ -899,7 +906,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
     if (bossPhaseNow === "IDLE") {
 
-    // SISTEMAS DO JOGO
+    // SISTEMAS DO JOGO (pausados durante a luta do Boss)
 
     updatePerfectObstacles(deltaTime, timerDeltaTime);
 
@@ -914,10 +921,15 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         );
         constrainPlayerToArena();
     }
+    }
+
+    // BOTÃO DE PERFECT TIMING SEMPRE ATUALIZADO: a rebatida do Boss
+    // depende da recarga do cooldown, inclusive durante a luta.
 
     updatePerfectButton(deltaTime, timerDeltaTime);
 
-    // SCORE POR SOBREVIVÊNCIA
+    // SCORE POR SOBREVIVÊNCIA (freeze só na transição de aviso;
+    // a pontuação continua correndo durante a batalha)
 
     const scoreMultiplier = perfectTimingRuntime.effect === "score_up"
         ? perfectTimingConfig.scoreMultiplier : 1;
@@ -941,7 +953,8 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         scoreFreezeTimer = window.ONREDBossSystem.getConfig().warningDuration;
     }
 
-    // SISTEMA DE COLISÃO
+    // SISTEMA DE COLISÃO SEMPRE ATUALIZADO: a janela de invulnerabilidade
+    // precisa expirar também durante a luta do Boss.
 
     if (window.ONREDCollisionSystem) {
 
@@ -950,7 +963,9 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         handlePlayerCollision();
     }
 
-    // INIMIGO PING PONG
+    if (bossPhaseNow === "IDLE") {
+
+    // INIMIGO PING PONG (pausado durante a luta: o Boss assume os Pongs)
     if (window.ONREDPingPong) {
         ONREDPingPong.update(
             deltaTime,
@@ -964,11 +979,11 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         );
     }
 
-        // SISTEMA MERGE (ESFERAS VERMELHAS)
+        // SISTEMA MERGE (ESFERAS VERMELHAS) (pausado durante a luta)
 
     if (window.ONREDMergeSystem) {
 
-       
+        
 const mergeResults = ONREDMergeSystem.update(
     deltaTime,
     player,
@@ -990,9 +1005,6 @@ mergeResults.forEach(result => {
 });
 
     }
-} else {
-    // Durante a luta o Boss assume a arena: spawns, score e combate normal pausados.
-    updatePerfectButton(deltaTime, timerDeltaTime);
 }
 }
 
@@ -1532,6 +1544,13 @@ function returnToMainMenu() {
     if (window.ONREDPingPong) {
         ONREDPingPong.reset(canvas, player);
     }
+
+    if (window.ONREDBossSystem) {
+        window.ONREDBossSystem.reset();
+    }
+
+    bossPhase = "IDLE";
+    scoreFreezeTimer = 0;
 
     if (gameOverScreen) {
         gameOverScreen.classList.remove("active");

@@ -75,6 +75,9 @@
     let rayTimer = CONFIG.ray.firstIn;
     let electricTimer = CONFIG.pong.electric.interval;
     let rayVolleyIndex = 0;
+    // Um Boss derrotado não volta a aparecer na mesma partida;
+    // só o reset de partida limpa esta marcação.
+    let conquered = false;
 
     function clamp(value, min, max) {
         return Math.max(min, Math.min(max, value));
@@ -84,6 +87,7 @@
         phase = "IDLE";
         phaseTimer = 0;
         fightTimer = 0;
+        conquered = false;
         boss = {
             x: 0,
             y: 0,
@@ -127,6 +131,7 @@
     }
 
     function shouldStart(scoreValue) {
+        if (conquered) return false;
         const value = Number(scoreValue);
         return Number.isFinite(value) && value >= CONFIG.triggerScore;
     }
@@ -177,7 +182,7 @@
     }
 
     function start(arena, player) {
-        if (phase !== "IDLE") return getState();
+        if (conquered || phase !== "IDLE") return getState();
 
         phase = "WARNING";
         phaseTimer = CONFIG.warningDuration;
@@ -426,6 +431,7 @@
             phase = "DEFEATED";
             phaseTimer = CONFIG.defeatDuration;
             boss.defeated = true;
+            conquered = true;
         }
 
         return { applied: true, damage: CONFIG.damagePerParry, hp: boss.hp, maxHP: boss.maxHP, defeated };

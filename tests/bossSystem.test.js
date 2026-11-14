@@ -336,3 +336,41 @@ test("idle boss game does not apply damage and does not parry", () => {
     assert.equal(result.applied, false);
     assert.equal(game.damageCalls.length, 0);
 });
+
+
+test("a defeated boss cannot be triggered again in the same match", () => {
+    // HP reduzido: uma única rebatida derrota o Boss.
+    assert.equal(boss.configure({ bossHp: 100 }).bossHp, 100);
+    const game = startFight(["white"]);
+    let parried = false;
+    let guard = 0;
+    while (!parried && guard++ < 400) {
+        const weapon = boss.getState().weapon;
+        if (weapon && weapon.type === "white" && weapon.state === "ACTIVE") {
+            const speed = Math.hypot(weapon.vx, weapon.vy) || 1;
+            // Posiciona o jogador um pouco à frente do projétil: a rebatida
+            // exige proximidade E projétil se aproximando.
+            player.x = weapon.x + (weapon.vx / speed) * 60;
+            player.y = weapon.y + (weapon.vy / speed) * 60;
+            const result = boss.tryParry(player);
+            if (result.applied) parried = true;
+        } else {
+            player.x = 100;
+            player.y = 650;
+        }
+        boss.update(0.1, arena, player, game.health, game.collision);
+    }
+    assert.equal(parried, true);
+    // Espera DEFEATED -> IDLE.
+    guard = 0;
+    while (boss.getState().phase !== "IDLE" && guard++ < 50) {
+        boss.update(0.1, arena, player, game.health, game.collision);
+    }
+    assert.equal(boss.getState().phase, "IDLE");
+    // Mesmo acima do gatilho, o Boss não retorna na mesma partida.
+    assert.equal(boss.shouldStart(boss.getConfig().triggerScore + 10000), false);
+    assert.equal(boss.start(arena, player).phase, "IDLE");
+    // O reset de partida libera um novo confronto.
+    boss.reset();
+    assert.equal(boss.shouldStart(boss.getConfig().triggerScore), true);
+});
