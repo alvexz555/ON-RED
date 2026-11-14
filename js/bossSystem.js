@@ -55,6 +55,62 @@
 
     const RAY_SPEED = 300;
 
+    // Seleção de dificuldade da Fase 1 (requisito da ordem original).
+    // NORMAL reproduz exatamente os valores aprovados; EASY e HARD são
+    // propostas configuráveis, sujeitas a ajuste antes de se tornarem
+    // definitivas.
+    const DIFFICULTY_PRESETS = {
+        EASY: {
+            bossHp: 600,
+            moveSpeed: 36,
+            ray: { interval: 9.0 },
+            pong: { white: { interval: 4.2 }, electric: { interval: 8.5 } }
+        },
+        NORMAL: {},
+        HARD: {
+            bossHp: 1400,
+            moveSpeed: 58,
+            ray: { interval: 5.5 },
+            pong: { white: { interval: 2.8 }, electric: { interval: 5.2 } }
+        }
+    };
+
+    function applyDifficultyPreset(name) {
+        const preset = DIFFICULTY_PRESETS[name];
+        if (!preset) return;
+        configure({
+            bossHp: preset.bossHp,
+            moveSpeed: preset.moveSpeed,
+            ray: preset.ray,
+            pong: preset.pong
+        });
+    }
+
+    let difficulty = "NORMAL";
+
+    // Instantâneo dos valores de fábrica para o preset NORMAL restaurar.
+    const BASELINE = JSON.parse(JSON.stringify({
+        bossHp: CONFIG.bossHp,
+        moveSpeed: CONFIG.moveSpeed,
+        ray: CONFIG.ray,
+        pong: CONFIG.pong
+    }));
+
+    function setDifficulty(name) {
+        if (!name || !DIFFICULTY_PRESETS[name]) return getDifficulty();
+        difficulty = name;
+        if (name === "NORMAL") {
+            configure(BASELINE);
+        } else {
+            applyDifficultyPreset(name);
+        }
+        return getDifficulty();
+    }
+
+    function getDifficulty() {
+        return { difficulty, presets: Object.keys(DIFFICULTY_PRESETS) };
+    }
+
     let phase = "IDLE";
     let phaseTimer = 0;
     let fightTimer = 0;
@@ -229,7 +285,7 @@
             vy: Math.sin(angle) * speed,
             radius: CONFIG.pong.white.radius,
             damage: CONFIG.pong.white.damage,
-            rebounceSpeed: CONFIG.pong.white.reboundSpeed,
+            rebounceSpeed: CONFIG.pong.white.rebounceSpeed,
             windowDistance: CONFIG.pong.white.windowDistance,
             consumed: false
         };
@@ -315,8 +371,28 @@
         }
     }
 
-    function updateWhite(deltaTime, player, health, collision) {
+    function updateWhite(deltaTime, player, health, collision, arena) {
+        if (weapon.state === "RETURNING") {
+            // Rebatida: o projétil retorna contra o Boss (persegue o corpo atual).
+            const dx = boss.x - weapon.x;
+            const dy = boss.y - weapon.y;
+            const distance = Math.hypot(dx, dy) || 1;
+            const speed = weapon.rebounceSpeed || CONFIG.pong.white.rebounceSpeed;
+            weapon.vx = (dx / distance) * speed;
+            weapon.vy = (dy / distance) * speed;
+            weapon.x += weapon.vx * deltaTime;
+            weapon.y += weapon.vy * deltaTime;
+
+            if (distance <= boss.size / 2 + weapon.radius) {
+                const impact = applyBossDamage(CONFIG.damagePerParry);
+                weapon = null;
+                return impact;
+            }
+            return null;
+        }
+
         if (weapon.state !== "ACTIVE") return;
+
         weapon.x += weapon.vx * deltaTime;
         weapon.y += weapon.vy * deltaTime;
 
@@ -325,6 +401,20 @@
             weapon = null;
             collision.registerCollision();
             health.applyDamage(damage);
+            return;
+        }
+
+        // Pong perdido sai da arena: descartado para o Boss voltar a atacar.
+        if (
+            arena &&
+            Number.isFinite(arena.width) &&
+            Number.isFinite(arena.height) &&
+            (weapon.x < -weapon.radius * 2 ||
+                weapon.x > arena.width + weapon.radius * 2 ||
+                weapon.y < -weapon.radius * 2 ||
+                weapon.y > arena.height + weapon.radius * 2)
+        ) {
+            weapon = null;
         }
     }
 
@@ -350,7 +440,7 @@
         }
     }
 
-    function updateCombat(deltaTime, player, health, collision) {
+    function updateCombat(deltaTime, arena, player, health, collision) {
         if (phase !== "FIGHT") return;
 
         if (weapon && weapon.state === "CONSUMED") {
@@ -371,7 +461,7 @@
         if (weapon.type === "ray") {
             updateRay(deltaTime, player, health, collision);
         } else if (weapon.type === "white") {
-            updateWhite(deltaTime, player, health, collision);
+            updateWhite(deltaTime, player, health, collision, arena);
         } else if (weapon.type === "electric") {
             updateElectric(deltaTime, player, health, collision);
         }
@@ -406,7 +496,7 @@
 
         fightTimer += deltaTime;
         updateBossMovement(deltaTime, arena);
-        updateCombat(deltaTime, player, health, collision);
+        updateCombat(deltaTime, arena, player, health, collision);
 
         return getState();
     }
@@ -424,8 +514,16 @@
         if (distance > weapon.windowDistance) return { applied: false, reason: "out_of_range" };
         if (!approaching) return { applied: false, reason: "not_approaching" };
 
-        weapon.state = "CONSUMED";
-        boss.hp = Math.max(0, boss.hp - CONFIG.damagePerParry);
+        weapon.state = "RETURNING";
+        weapon.parried = true;
+        // O projétil rebatido retorna contra o Boss (requisito da ordem original);
+        // o dano é registrado no impacto, uma única vez.
+
+        return { applied: true, returning: true, hp: boss.hp, maxHP: boss.maxHP, defeated: false };
+    }
+
+    function applyBossDamage(amount) {
+        boss.hp = Math.max(0, boss.hp - amount);
         const defeated = boss.hp <= 0;
         if (defeated) {
             phase = "DEFEATED";
@@ -433,8 +531,7 @@
             boss.defeated = true;
             conquered = true;
         }
-
-        return { applied: true, damage: CONFIG.damagePerParry, hp: boss.hp, maxHP: boss.maxHP, defeated };
+        return { damage: amount, hp: boss.hp, maxHP: boss.maxHP, defeated };
     }
 
     function drawWeapon(ctx) {
@@ -560,7 +657,9 @@
         getState,
         getConfig,
         shouldStart,
-        configure
+        configure,
+        setDifficulty,
+        getDifficulty
     };
 
     if (typeof module !== "undefined" && module.exports) {

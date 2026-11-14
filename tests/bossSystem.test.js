@@ -76,6 +76,15 @@ function parryTarget() {
     return player;
 }
 
+// Conduz o projétil rebatido até o impacto no Boss.
+function advanceToImpact(game, maxSteps = 600) {
+    let guard = 0;
+    while (boss.getState().weapon && guard++ < maxSteps) {
+        boss.update(0.05, arena, player, game.health, game.collision);
+    }
+    return !boss.getState().weapon;
+}
+
 test("boss trigger fires at 20000 and not before", () => {
     assert.equal(boss.getConfig().triggerScore, 20000);
     assert.equal(boss.shouldStart(19999), false);
@@ -115,9 +124,13 @@ test("parry accepted inside the window consumes the white projectile and hits th
     const result = boss.tryParry(parryTarget());
 
     assert.equal(result.applied, true);
-    assert.equal(result.damage, 100);
+    // A rebatida não tira HP na hora: o projétil retorna contra o Boss.
+    assert.equal(boss.getState().boss.hp, hpBefore);
+    assert.equal(boss.getState().weapon.state, "RETURNING");
+
+    assert.equal(advanceToImpact(game), true);
     assert.equal(boss.getState().boss.hp, hpBefore - 100);
-    assert.equal(boss.getState().weapon.state, "CONSUMED");
+    assert.equal(boss.getState().weapon, null);
 });
 
 test("parry rejected outside the window keeps the boss untouched", () => {
@@ -165,10 +178,15 @@ test("one parry deals exactly 100 damage and consumes the projectile once", () =
     const hpBefore = boss.getState().boss.hp;
     const result = boss.tryParry(parryTarget());
     assert.equal(result.applied, true);
-    assert.equal(boss.getState().boss.hp, hpBefore - 100);
-    assert.equal(boss.getState().weapon.state, "CONSUMED");
+    assert.equal(boss.getState().boss.hp, hpBefore);
+    assert.equal(boss.getState().weapon.state, "RETURNING");
 
-    const second = boss.tryParry(parryTarget());
+    assert.equal(advanceToImpact(game), true);
+    assert.equal(boss.getState().boss.hp, hpBefore - 100);
+    assert.equal(boss.getState().weapon, null);
+
+    // Sem projétil ativo: sem alvo para a rebatida.
+    const second = boss.tryParry({ x: player.x, y: player.y });
     assert.equal(second.applied, false);
 });
 
@@ -198,6 +216,7 @@ test("ten parries defeat the boss with exact hp and never negative", () => {
         const before = boss.getState().boss.hp;
         const result = boss.tryParry(parryTarget());
         assert.equal(result.applied, true);
+        assert.equal(advanceToImpact(game), true);
         assert.equal(boss.getState().boss.hp, before - 100);
         parries += 1;
     }
@@ -231,11 +250,13 @@ test("boss at zero hp does not accept new damage", () => {
         const state = boss.getState();
         if (!(state.weapon && state.weapon.type === "white" && state.weapon.state === "ACTIVE")) break;
         boss.tryParry(parryTarget());
+        assert.equal(advanceToImpact(game), true);
         parries += 1;
     }
 
     assert.equal(boss.getState().phase, "DEFEATED");
-    const result = boss.tryParry(parryTarget());
+    // Sem projétil ativo (HP zero): sem alvo para a rebatida.
+    const result = boss.tryParry({ x: player.x, y: player.y });
     assert.equal(result.applied, false);
 });
 
@@ -361,6 +382,8 @@ test("a defeated boss cannot be triggered again in the same match", () => {
         boss.update(0.1, arena, player, game.health, game.collision);
     }
     assert.equal(parried, true);
+    // O projétil rebatido precisa alcançar o Boss para a derrota.
+    assert.equal(advanceToImpact(game), true);
     // Espera DEFEATED -> IDLE.
     guard = 0;
     while (boss.getState().phase !== "IDLE" && guard++ < 50) {
@@ -373,4 +396,83 @@ test("a defeated boss cannot be triggered again in the same match", () => {
     // O reset de partida libera um novo confronto.
     boss.reset();
     assert.equal(boss.shouldStart(boss.getConfig().triggerScore), true);
+});
+
+
+test("a parried projectile that misses cannot parry again and hits once", () => {
+    boss.configure({ bossHp: 300 });
+    const game = startFight(["white"]);
+    const weapon = advanceUntilWeapon(game, "white");
+    assert.ok(weapon);
+
+    boss.tryParry(parryTarget());
+    const hpAfterParry = boss.getState().boss.hp;
+    assert.equal(advanceToImpact(game), true);
+
+    // O impacto aplica o dano exatamente uma vez: sem segunda passagem.
+    assert.equal(boss.getState().boss.hp, hpAfterParry - 100);
+    assert.equal(boss.getState().weapon, null);
+    game.damageCalls.length = 0;
+    for (let i = 0; i < 20; i++) {
+        boss.update(0.05, arena, player, game.health, game.collision);
+    }
+    assert.deepEqual(game.damageCalls, []);
+});
+
+test("a lost white pong is discarded off-arena and the boss attacks again", () => {
+    const game = startFight(["white"]);
+    const weapon = advanceUntilWeapon(game, "white");
+    assert.ok(weapon);
+
+    // Deixa o pong atravessar a arena sem rebatida e sem tocar o jogador.
+    let guard = 0;
+    while (boss.getState().weapon && guard++ < 400) {
+        player.x = 100;
+        player.y = 650;
+        boss.update(0.1, arena, player, game.health, game.collision);
+    }
+    assert.equal(boss.getState().weapon, null);
+
+    // O Boss volta a atacar: um novo pong branco surge dentro do intervalo.
+    guard = 0;
+    let nextWeapon = null;
+    while (guard++ < 400) {
+        player.x = 100;
+        player.y = 650;
+        boss.update(0.1, arena, player, game.health, game.collision);
+        const state = boss.getState();
+        if (state.weapon && state.weapon.type === "white" && state.weapon.state === "ACTIVE") {
+            nextWeapon = state.weapon;
+            break;
+        }
+    }
+    assert.ok(nextWeapon);
+});
+
+test("difficulty selection changes only boss combat knobs and survives reset", () => {
+    boss.configure({ bossHp: 1000, moveSpeed: 45 });
+    boss.setDifficulty("HARD");
+    let config = boss.getConfig();
+    assert.equal(config.bossHp, 1400);
+    assert.equal(config.moveSpeed, 58);
+    assert.equal(config.ray.interval, 5.5);
+    assert.equal(boss.getDifficulty().difficulty, "HARD");
+
+    boss.reset();
+    assert.equal(boss.getConfig().bossHp, 1400);
+    assert.equal(boss.getDifficulty().difficulty, "HARD");
+
+    boss.setDifficulty("NORMAL");
+    config = boss.getConfig();
+    assert.equal(config.bossHp, 1000);
+    assert.equal(config.moveSpeed, 45);
+    assert.equal(config.ray.interval, 7.0);
+    assert.equal(boss.getDifficulty().difficulty, "NORMAL");
+
+    boss.setDifficulty("EASY");
+    config = boss.getConfig();
+    assert.equal(config.bossHp, 600);
+    assert.equal(config.moveSpeed, 36);
+    assert.equal(config.ray.interval, 9.0);
+    boss.setDifficulty("NORMAL");
 });

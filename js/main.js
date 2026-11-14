@@ -40,6 +40,10 @@ const menuBestScoreLabel = document.getElementById("bestScore");
 const victoryScreen = document.getElementById("victoryScreen");
 const victoryRetryButton = document.getElementById("victoryRetryButton");
 const victoryMenuButton = document.getElementById("victoryMenuButton");
+const victoryDifficulty = document.getElementById("victoryDifficulty");
+
+// Dificuldade da Fase 1 selecionada após vencer o Boss (padrão NORMAL).
+let bossDifficulty = "NORMAL";
 
 // ==========================================
 // SCORE
@@ -202,7 +206,8 @@ function activatePerfectTiming() {
         if (parry.applied) {
             perfectButton.charge = 0;
             perfectButton.activationFlash = 0.25;
-            perfectTimingRuntime.feedback = "PERFECT! " + parry.damage + " HITS";
+            perfectTimingRuntime.feedback =
+                "PERFECT! " + boss.getConfig().damagePerParry + " HITS INBOUND";
             perfectTimingRuntime.feedbackTimer = 1.2;
             return true;
         }
@@ -1584,6 +1589,38 @@ if (victoryRetryButton) {
 
 if (victoryMenuButton) {
     victoryMenuButton.addEventListener("click", returnToMainMenu);
+}
+
+// SELEÇÃO DE DIFICULDADE DA FASE 1 (liberada após vencer o Boss).
+
+function applyBossDifficulty(name) {
+
+    bossDifficulty = name;
+
+    if (window.ONREDBossSystem && window.ONREDBossSystem.setDifficulty) {
+        window.ONREDBossSystem.setDifficulty(name);
+    }
+
+    if (victoryDifficulty) {
+        victoryDifficulty
+            .querySelectorAll(".difficulty-option")
+            .forEach(button => {
+                button.classList.toggle(
+                    "selected",
+                    button.getAttribute("data-difficulty") === name
+                );
+            });
+    }
+}
+
+if (victoryDifficulty) {
+    victoryDifficulty
+        .querySelectorAll(".difficulty-option")
+        .forEach(button => {
+            button.addEventListener("click", () => {
+                applyBossDifficulty(button.getAttribute("data-difficulty"));
+            });
+        });
 }
 
 // ==========================================
