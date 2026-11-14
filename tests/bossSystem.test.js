@@ -458,35 +458,29 @@ test("a parried projectile that misses cannot parry again and hits once", () => 
     assert.deepEqual(game.damageCalls, []);
 });
 
-test("a lost white pong is discarded off-arena and the boss attacks again", () => {
+test("white Boss Pong keeps ricocheting inside the arena instead of disappearing", () => {
     boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
-    const weapon = advanceUntilWeapon(game, "white");
-    assert.ok(weapon);
+    assert.ok(advanceUntilWeapon(game, "white"));
 
-    // Deixa o pong atravessar a arena sem rebatida e sem tocar o jogador.
-    let guard = 0;
-    while (boss.getState().weapon && guard++ < 400) {
+    let observedBounce = false;
+    let previousVelocity = null;
+    for (let i = 0; i < 400; i++) {
         player.x = 100;
         player.y = 650;
+        const before = boss.getState().weapon;
+        if (before && before.type === "white") previousVelocity = { vx: before.vx, vy: before.vy };
         boss.update(0.1, arena, player, game.health, game.collision);
+        const current = boss.getState().weapon;
+        if (!current || current.type !== "white") break;
+        assert.ok(current.x >= current.radius && current.x <= arena.width - current.radius);
+        assert.ok(current.y >= current.radius && current.y <= arena.height - current.radius);
+        if (previousVelocity &&
+            (Math.sign(current.vx) !== Math.sign(previousVelocity.vx) ||
+             Math.sign(current.vy) !== Math.sign(previousVelocity.vy))) observedBounce = true;
     }
-    assert.equal(boss.getState().weapon, null);
-
-    // O Boss volta a atacar: um novo pong branco surge dentro do intervalo.
-    guard = 0;
-    let nextWeapon = null;
-    while (guard++ < 400) {
-        player.x = 100;
-        player.y = 650;
-        boss.update(0.1, arena, player, game.health, game.collision);
-        const state = boss.getState();
-        if (state.weapon && state.weapon.type === "white" && state.weapon.state === "ACTIVE") {
-            nextWeapon = state.weapon;
-            break;
-        }
-    }
-    assert.ok(nextWeapon);
+    assert.equal(observedBounce, true);
+    assert.equal(boss.getState().weapon.type, "white");
 });
 
 test("difficulty selection changes only boss combat knobs and survives reset", () => {
