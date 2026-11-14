@@ -35,7 +35,12 @@ const reviveButton = document.getElementById("reviveButton");
 const reviveUnavailable = document.getElementById("reviveUnavailable");
 let revivesUsedThisRun = 0;
 let bossVictoryReachedThisRun = false;
-const endlessProgression = { cycle: 1, nextBossScore: 20000, baseTriggerScore: 20000 };
+const endlessProgression = {
+    cycle: 1,
+    nextBossScore: 20000,
+    baseTriggerScore: 20000,
+    cycleScoreInterval: 10000
+};
 const bossBaseConfig = window.ONREDBossSystem ? window.ONREDBossSystem.getConfig() : { bossHp: 1000, moveSpeed: 45, ray: { interval: 7 }, pong: { white: { interval: 3.4 }, electric: { interval: 6.8 } } };
 const gameOverMenuButton = document.getElementById("gameOverMenuButton");
 const finalScoreLabel = document.getElementById("finalScore");
@@ -816,6 +821,7 @@ function triggerGameOver() {
 
 function triggerVictory() {
 
+    const isFirstBossVictory = !bossVictoryReachedThisRun;
     const bonus = window.ONREDBossSystem
         ? window.ONREDBossSystem.getConfig().victoryBonusScore
         : 5000;
@@ -826,12 +832,23 @@ function triggerVictory() {
     saveBestScore(finalScore);
     refreshBestScoreDisplays();
 
+    bossVictoryReachedThisRun = true;
+    updateReviveOffer();
+
+    // A tela de vitória é uma apresentação única, após o primeiro Boss.
+    // Nos ciclos seguintes, a partida continua automaticamente.
+    if (!isFirstBossVictory) {
+        prepareNextEndlessCycle();
+        gameState = GAME_STATE.PLAYING;
+        gameStarted = true;
+        if (pauseButton) pauseButton.style.display = "flex";
+        lastFrameTime = 0;
+        return;
+    }
+
     if (victoryFinalScoreLabel) {
         victoryFinalScoreLabel.textContent = formatScore(finalScore);
     }
-
-    bossVictoryReachedThisRun = true;
-    updateReviveOffer();
 
     gameState = GAME_STATE.VICTORY;
     if (pauseButton) pauseButton.style.display = "none";
@@ -1502,7 +1519,8 @@ function updateReviveOffer() {
 
 function prepareNextEndlessCycle() {
     endlessProgression.cycle += 1;
-    endlessProgression.nextBossScore = Math.floor(scoreState.value + endlessProgression.baseTriggerScore * endlessProgression.cycle);
+    // A partir do segundo Boss, cada ciclo exige apenas mais 10.000 pontos.
+    endlessProgression.nextBossScore = Math.floor(scoreState.value + endlessProgression.cycleScoreInterval);
     const cycleScale = endlessProgression.cycle - 1;
     obstacleConfig.speed = obstacleBaseConfig.speed * (1 + cycleScale * 0.07);
     obstacleConfig.spawnInterval = Math.max(0.65, obstacleBaseConfig.spawnInterval * (1 - cycleScale * 0.035));
