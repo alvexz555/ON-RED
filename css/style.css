@@ -529,3 +529,8 @@ button {
     .revive-offer { padding: 9px; gap: 6px; }
     .revive-button { min-height: 42px; }
 }
+
+@media (max-height: 700px) {
+    .game-over-screen { overflow-y: auto; align-items: flex-start; }
+    .game-over-content { margin: auto; gap: 18px; }
+}
