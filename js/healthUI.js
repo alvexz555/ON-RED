@@ -258,7 +258,9 @@
         updateFeedback(state);
 
         const x = CONFIG.margin;
-        const y = CONFIG.margin;
+        // Mantém vidas e HP abaixo da pontuação central para evitar colisão
+        // em telas mobile estreitas, sem alterar o layout do score.
+        const y = CONFIG.margin + 42;
 
         ctx.save();
 
