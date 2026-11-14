@@ -615,3 +615,46 @@ test("electric Boss Pong accelerates by 20 percent on wall bounce and caps at 12
     }
     assert.equal(observedBounce, true);
 });
+
+
+test("electric Boss volley overlaps an area attack instead of waiting for it to finish", () => {
+    boss.configure({
+        ray: { firstIn: 0.01, interval: 100 },
+        pong: {
+            white: { firstIn: 100, interval: 100 },
+            electric: { interval: 0.01, lifetime: 8, speed: 380 }
+        }
+    });
+    const game = startFight(["ray", "electric"]);
+    boss.update(0.05, arena, player, game.health, game.collision);
+    const state = boss.getState();
+    assert.equal(state.weapon.type, "ray");
+    assert.equal(state.electricWeapon.type, "electric");
+    assert.equal(state.electricWeapon.projectiles.length, 2);
+});
+
+test("electric wall ricochets leave visible temporary damage trails", () => {
+    boss.configure({
+        ray: { firstIn: 100, interval: 100 },
+        pong: {
+            white: { firstIn: 100, interval: 100 },
+            electric: { interval: 0.01, lifetime: 8, speed: 600, wallSpeedMultiplier: 1.2 }
+        }
+    });
+    const game = startFight(["electric"]);
+    boss.update(0.05, arena, player, game.health, game.collision);
+    player.x = 800;
+    player.y = 650;
+
+    let observedTrail = false;
+    for (let i = 0; i < 80; i++) {
+        boss.update(0.05, arena, player, game.health, game.collision);
+        const state = boss.getState();
+        if (state.electricTrails.length > 0) {
+            observedTrail = true;
+            assert.ok(state.electricTrails.some(trail => trail.timer > 0));
+            break;
+        }
+    }
+    assert.equal(observedTrail, true);
+});
