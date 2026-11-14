@@ -178,14 +178,32 @@ const perfectButton = {
 
 const perfectWave = { duration: 0.4, timer: 0 };
 const perfectTimingConfig = {
-    scorePerElimination: 500, positiveChance: 0.7,
-    effectDuration: 5, playerSpeedBoost: 1.35, playerSpeedPenalty: 0.75,
-    obstacleSlowdown: 0.75, obstacleSpeedBoost: 1.25,
-    scoreMultiplier: 2, healAmount: 25
+    scorePerElimination: 500,
+    positiveChance: 0.7,
+    playerSpeedBoost: 1.4,
+    playerSpeedPenalty: 0.75,
+    obstacleSlowdown: 0.75,
+    obstacleSpeedBoost: 1.25,
+    effectDurations: {
+        low_visibility: 10,
+        obstacle_slow: 15,
+        speed_down: 10,
+        obstacle_fast: 5
+    }
 };
 const perfectTimingRuntime = {
     effect: null, effectTimer: 0, feedback: "", feedbackTimer: 0
 };
+
+if (window.ONREDHealthSystem &&
+    typeof window.ONREDHealthSystem.setDamageListener === "function") {
+    window.ONREDHealthSystem.setDamageListener(() => {
+        if (perfectTimingRuntime.effect === "speed_up") {
+            perfectTimingRuntime.effect = null;
+            perfectTimingRuntime.effectTimer = 0;
+        }
+    });
+}
 
 function updatePerfectButtonPosition() {
 
@@ -248,18 +266,30 @@ function applyPerfectTimingEffect() {
     const health = window.ONREDHealthSystem;
     const positive = Math.random() < perfectTimingConfig.positiveChance;
     const choices = positive
-        ? ["speed_up", "score_up", "heal", "obstacle_slow"]
+        ? ["speed_up", "extra_life", "obstacle_slow"]
         : ["speed_down", "obstacle_fast", "low_visibility"];
     const type = choices[Math.floor(Math.random() * choices.length)];
-    perfectTimingRuntime.effect = type;
-    perfectTimingRuntime.effectTimer = perfectTimingConfig.effectDuration;
 
     const labels = {
-        speed_up: "SPEED BOOST", score_up: "SCORE x2", heal: "HP RESTORED",
-        obstacle_slow: "OBSTACLES SLOWED", speed_down: "SPEED REDUCED",
-        obstacle_fast: "OBSTACLES FASTER", low_visibility: "LOW VISIBILITY"
+        speed_up: "SPEED BOOST +40%",
+        extra_life: "EXTRA LIFE",
+        obstacle_slow: "OBSTACLES SLOWED",
+        speed_down: "SPEED REDUCED",
+        obstacle_fast: "OBSTACLES FASTER",
+        low_visibility: "ENEMIES HARDER TO SEE"
     };
-    if (type === "heal" && health) health.heal(perfectTimingConfig.healAmount);
+
+    if (type === "extra_life") {
+        if (health) health.addExtraLife();
+        perfectTimingRuntime.effect = null;
+        perfectTimingRuntime.effectTimer = 0;
+    } else {
+        perfectTimingRuntime.effect = type;
+        perfectTimingRuntime.effectTimer = type === "speed_up"
+            ? 0
+            : perfectTimingConfig.effectDurations[type];
+    }
+
     perfectTimingRuntime.feedback = labels[type];
     perfectTimingRuntime.feedbackTimer = 1.5;
     return labels[type];
@@ -287,10 +317,11 @@ function completePerfectTiming(obstacle) {
     if (result.collectiveTriggered) {
         const state = health.getState();
         health.heal(state.maxHP - state.hp);
-        if (Math.random() < 0.2) health.addExtraLife();
+        health.addExtraLife();
+        health.addExtraLife();
         perfectTimingRuntime.effect = null;
         perfectTimingRuntime.effectTimer = 0;
-        perfectTimingRuntime.feedback = "5/5 ELIMINATED · HP RESTORED";
+        perfectTimingRuntime.feedback = "5/5 ELIMINATED · +2 EXTRA LIVES";
         perfectTimingRuntime.feedbackTimer = 2.5;
     } else {
         const effectLabel = applyPerfectTimingEffect();
@@ -449,8 +480,15 @@ function pointerUp(event) {
 function updatePerfectButton(deltaTime, timerDeltaTime = deltaTime) {
     // Relógios de habilidade usam tempo real; animações/física continuam limitadas pelo frame.
     perfectTimingRuntime.feedbackTimer = Math.max(0, perfectTimingRuntime.feedbackTimer - timerDeltaTime);
-    perfectTimingRuntime.effectTimer = Math.max(0, perfectTimingRuntime.effectTimer - timerDeltaTime);
-    if (perfectTimingRuntime.effectTimer <= 0) perfectTimingRuntime.effect = null;
+    if (perfectTimingRuntime.effectTimer > 0) {
+        perfectTimingRuntime.effectTimer = Math.max(
+            0,
+            perfectTimingRuntime.effectTimer - timerDeltaTime
+        );
+        if (perfectTimingRuntime.effectTimer <= 0) {
+            perfectTimingRuntime.effect = null;
+        }
+    }
 
     if (perfectButton.charge < 1) {
 
@@ -938,15 +976,12 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
     // SCORE POR SOBREVIVÊNCIA (freeze só na transição de aviso;
     // a pontuação continua correndo durante a batalha)
 
-    const scoreMultiplier = perfectTimingRuntime.effect === "score_up"
-        ? perfectTimingConfig.scoreMultiplier : 1;
-
     if (scoreFreezeTimer > 0) {
         scoreFreezeTimer -= deltaTime;
     }
 
     if (scoreFreezeTimer <= 0) {
-        scoreState.value += deltaTime * scoreState.pointsPerSecond * scoreMultiplier;
+        scoreState.value += deltaTime * scoreState.pointsPerSecond;
     }
 
     // DISPARO DO BOSS FINAL (FASE 1) — gatilho por pontuação.
@@ -1120,6 +1155,11 @@ function drawPlayer() {
 
 function drawPerfectObstacles() {
 
+    ctx.save();
+    if (perfectTimingRuntime.effect === "low_visibility") {
+        ctx.globalAlpha = 0.18;
+    }
+
     perfectObstacles.forEach(obstacle => {
         if (obstacle.state !== "ACTIVE") return;
         const half = obstacleConfig.size / 2;
@@ -1136,14 +1176,7 @@ function drawPerfectObstacles() {
         ctx.stroke();
     });
 
-    // Penalidade de visibilidade escurece a arena, mas mantém
-    // jogador e controles desenhados depois desta camada legíveis.
-    if (perfectTimingRuntime.effect === "low_visibility") {
-        ctx.save();
-        ctx.fillStyle = "rgba(3, 6, 13, 0.48)";
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.restore();
-    }
+    ctx.restore();
 }
 
 // ==========================================
