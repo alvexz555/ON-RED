@@ -462,12 +462,13 @@ test("white Boss Pong keeps ricocheting inside the arena instead of disappearing
     boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     assert.ok(advanceUntilWeapon(game, "white"));
+    // O projétil já foi lançado na direção anterior; afasta o jogador para observar os ricochetes.
+    player.x = 800;
+    player.y = 650;
 
     let observedBounce = false;
     let previousVelocity = null;
     for (let i = 0; i < 400; i++) {
-        player.x = 100;
-        player.y = 650;
         const before = boss.getState().weapon;
         if (before && before.type === "white") previousVelocity = { vx: before.vx, vy: before.vy };
         boss.update(0.1, arena, player, game.health, game.collision);
