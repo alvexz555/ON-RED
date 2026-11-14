@@ -58,83 +58,72 @@
 
     <!-- MAIN MENU -->
     <main id="mainMenu" class="main-menu">
-
-        <div class="menu-content">
-
+        <div class="menu-content" id="menuHome">
             <header class="menu-header">
-
-                <div class="game-logo">
-                    ON <span>RED</span>
-                </div>
-
-                <p class="game-subtitle">
-                    SURVIVE · PERFECT TIMING · MERGE
-                </p>
-
+                <div class="game-logo">ON <span>RED</span></div>
+                <p class="game-subtitle">ARCADE SURVIVAL · TESTE SEUS LIMITES</p>
             </header>
-
-            <section class="menu-actions">
-
-                <button
-                    type="button"
-                    id="playButton"
-                    class="menu-button play-button"
-                >
-                    <span>PLAY</span>
-                    <span class="button-arrow">›</span>
-                </button>
-
-                <div class="score-panel">
-
-                    <span class="score-label">
-                        BEST SCORE
-                    </span>
-
-                    <span id="bestScore" class="score-value">
-                        000000
-                    </span>
-
-                </div>
-
-                <button
-                    type="button"
-                    id="settingsButton"
-                    class="menu-button settings-button"
-                >
-                    SETTINGS
-                </button>
-
+            <section class="menu-actions" aria-label="Menu principal">
+                <button type="button" id="playButton" class="menu-button play-button"><span>INICIAR JOGO</span><span class="button-arrow">›</span></button>
+                <button type="button" id="phasesButton" class="menu-button">FASES</button>
+                <button type="button" id="recordsButton" class="menu-button">RECORDES</button>
+                <button type="button" id="instructionsButton" class="menu-button">INSTRUÇÕES E CONTROLES</button>
+                <button type="button" id="settingsButton" class="menu-button settings-button">CONFIGURAÇÕES</button>
             </section>
-
-            <footer class="menu-footer">
-
-                <span>ARCADE SURVIVAL</span>
-                <span>ON RED · V1.3</span>
-
-            </footer>
-
+            <div class="menu-best-preview"><span class="score-label">SEU RECORDE</span><strong id="bestScore" class="score-value">000000</strong></div>
+            <footer class="menu-footer"><span>ARCADE SURVIVAL</span><span>ON RED · V1.3</span></footer>
         </div>
 
-        <!-- SETTINGS PANEL -->
-        <section
-            id="settingsPanel"
-            class="settings-panel hidden"
-        >
-
-            <h2>SETTINGS</h2>
-
-            <p>CONFIGURAÇÕES</p>
-
-            <button
-                type="button"
-                id="backButton"
-                class="menu-button"
-            >
-                BACK
-            </button>
-
+        <section id="phasesPanel" class="menu-panel hidden" aria-labelledby="phasesTitle">
+            <div class="menu-panel-heading"><span class="menu-kicker">PROGRESSÃO</span><h2 id="phasesTitle">SELECIONE UMA FASE</h2></div>
+            <article class="phase-card phase-available">
+                <div><span class="phase-number">FASE 01</span><h3>ON RED</h3><p>Sobreviva, domine os sistemas e enfrente o Boss.</p></div>
+                <span class="phase-status">DISPONÍVEL</span>
+                <button type="button" id="phaseOneButton" class="menu-button play-button">JOGAR FASE 1 <span class="button-arrow">›</span></button>
+            </article>
+            <article class="phase-card phase-development">
+                <div><span class="phase-number">FASE 02</span><h3>EM DESENVOLVIMENTO</h3><p>Novos perigos e mecânicas estão sendo preparados.</p></div>
+                <span class="phase-status">ATUALIZAÇÕES EM BREVE</span>
+            </article>
+            <div class="menu-panel-note">As fases futuras serão liberadas por atualização.</div>
+            <button type="button" class="menu-button menu-back" data-menu-back>VOLTAR</button>
         </section>
 
+        <section id="recordsPanel" class="menu-panel hidden" aria-labelledby="recordsTitle">
+            <div class="menu-panel-heading"><span class="menu-kicker">DESEMPENHO</span><h2 id="recordsTitle">RECORDES</h2></div>
+            <div class="record-card"><span class="score-label">MELHOR PONTUAÇÃO</span><strong id="recordsBestScore" class="record-value">000000</strong><span class="record-caption">Recorde pessoal salvo neste dispositivo</span></div>
+            <div class="record-card record-upcoming"><span class="score-label">RANKING MUNDIAL</span><strong>EM BREVE</strong><span class="record-caption">O placar online será adicionado em uma atualização futura.</span></div>
+            <button type="button" class="menu-button menu-back" data-menu-back>VOLTAR</button>
+        </section>
+
+        <section id="instructionsPanel" class="menu-panel hidden" aria-labelledby="instructionsTitle">
+            <div class="menu-panel-heading"><span class="menu-kicker">APRENDA A JOGAR</span><h2 id="instructionsTitle">CONTROLES</h2></div>
+            <div class="control-group">
+                <h3>COMPUTADOR</h3>
+                <div class="control-row"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>Movimentar o jogador</span></div>
+                <div class="control-row"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd><span>Movimentar (alternativa)</span></div>
+                <div class="control-row"><kbd>SHIFT</kbd><span>Ativar Perfect Timing</span></div>
+                <div class="control-row"><kbd>P</kbd><span>Pausar / continuar</span></div>
+                <div class="control-row"><kbd>ESC</kbd><span>Pausar / continuar</span></div>
+            </div>
+            <div class="control-group">
+                <h3>CELULAR</h3>
+                <div class="control-row"><span class="control-icon">◎</span><span>Use o joystick virtual para movimentar.</span></div>
+                <div class="control-row"><span class="control-icon">◆</span><span>Toque no botão Perfect Timing quando estiver carregado.</span></div>
+                <div class="control-row"><span class="control-icon">Ⅱ</span><span>Use o botão no canto superior para pausar.</span></div>
+            </div>
+            <p class="menu-panel-note">Dica: sobreviva, evite os obstáculos e use o Perfect Timing no momento certo.</p>
+            <button type="button" class="menu-button menu-back" data-menu-back>VOLTAR</button>
+        </section>
+
+        <section id="settingsPanel" class="menu-panel hidden" aria-labelledby="settingsTitle">
+            <div class="menu-panel-heading"><span class="menu-kicker">PREFERÊNCIAS</span><h2 id="settingsTitle">CONFIGURAÇÕES</h2></div>
+            <div class="setting-row"><div><label for="volumeSlider">VOLUME GERAL</label><p>Preferência salva neste dispositivo.</p></div><strong id="volumeValue">70%</strong></div>
+            <input id="volumeSlider" class="volume-slider" type="range" min="0" max="100" step="1" value="70" aria-label="Volume geral">
+            <div class="setting-scale"><span>MUDO</span><span>MÁXIMO</span></div>
+            <p class="menu-panel-note">O controle já salva seu nível de volume. Os efeitos sonoros do jogo ainda serão integrados.</p>
+            <button type="button" class="menu-button menu-back" data-menu-back>VOLTAR</button>
+        </section>
     </main>
 
     <!-- GAME OVER -->
