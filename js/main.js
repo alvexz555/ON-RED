@@ -38,6 +38,8 @@ const menuBestScoreLabel = document.getElementById("bestScore");
 const victoryScreen = document.getElementById("victoryScreen");
 const victoryRetryButton = document.getElementById("victoryRetryButton");
 const victoryMenuButton = document.getElementById("victoryMenuButton");
+const victoryFinalScoreLabel = document.getElementById("victoryFinalScore");
+const victoryBestScoreLabel = document.getElementById("victoryBestScore");
 
 // ==========================================
 // SCORE
@@ -90,6 +92,11 @@ function refreshBestScoreDisplays() {
 
     if (bestScoreGameOverLabel) {
         bestScoreGameOverLabel.textContent =
+            formatScore(scoreState.best);
+    }
+
+    if (victoryBestScoreLabel) {
+        victoryBestScoreLabel.textContent =
             formatScore(scoreState.best);
     }
 
@@ -199,6 +206,14 @@ function activatePerfectTiming() {
             perfectTimingRuntime.feedbackTimer = 1.2;
             return true;
         }
+
+        // Tentativa inválida: informa o motivo sem consumir a carga e sem
+        // cair na lógica de obstáculos comuns (que não existem na luta).
+        perfectTimingRuntime.feedback = parry.reason === "out_of_range"
+            ? "TOO FAR"
+            : parry.reason === "not_approaching" ? "WRONG TIMING" : "NO TARGET";
+        perfectTimingRuntime.feedbackTimer = 0.6;
+        return false;
     }
 
     // O botão só ativa quando um obstáculo está efetivamente encostando no jogador.
@@ -751,6 +766,9 @@ function triggerGameOver() {
 
 function triggerVictory() {
 
+    // A vitória só pode ser registrada uma vez por partida.
+    if (gameState === GAME_STATE.VICTORY) return;
+
     const bonus = window.ONREDBossSystem
         ? window.ONREDBossSystem.getConfig().victoryBonusScore
         : 5000;
@@ -761,8 +779,8 @@ function triggerVictory() {
     saveBestScore(finalScore);
     refreshBestScoreDisplays();
 
-    if (finalScoreLabel) {
-        finalScoreLabel.textContent = formatScore(finalScore);
+    if (victoryFinalScoreLabel) {
+        victoryFinalScoreLabel.textContent = formatScore(finalScore);
     }
 
     gameState = GAME_STATE.VICTORY;
@@ -878,13 +896,15 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
         const previousBossPhase = bossPhase;
 
+        // update() devolve o estado completo; a fase é uma string e é a
+        // única fonte de verdade usada nas comparações abaixo.
         bossPhase = window.ONREDBossSystem.update(
             deltaTime,
             canvas,
             player,
             window.ONREDHealthSystem,
             window.ONREDCollisionSystem
-        );
+        ).phase;
 
         if (window.ONREDHealthSystem && window.ONREDHealthSystem.getState().gameOver) {
             triggerGameOver();
@@ -895,6 +915,29 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         }
 
         bossPhaseNow = bossPhase;
+    }
+
+    // Relógios que precisam continuar correndo também durante a luta do Boss:
+    // cooldown/feedback do Perfect Timing e invulnerabilidade pós-dano.
+    updatePerfectButton(deltaTime, timerDeltaTime);
+
+    if (window.ONREDCollisionSystem) {
+        ONREDCollisionSystem.update(deltaTime);
+    }
+
+    // SCORE POR SOBREVIVÊNCIA
+    // O congelamento vale apenas para a transição; precisa expirar também
+    // durante WARNING/FIGHT, senão a pontuação fica presa para sempre.
+
+    const scoreMultiplier = perfectTimingRuntime.effect === "score_up"
+        ? perfectTimingConfig.scoreMultiplier : 1;
+
+    if (scoreFreezeTimer > 0) {
+        scoreFreezeTimer = Math.max(0, scoreFreezeTimer - deltaTime);
+    }
+
+    if (scoreFreezeTimer <= 0) {
+        scoreState.value += deltaTime * scoreState.pointsPerSecond * scoreMultiplier;
     }
 
     if (bossPhaseNow === "IDLE") {
@@ -915,21 +958,6 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         constrainPlayerToArena();
     }
 
-    updatePerfectButton(deltaTime, timerDeltaTime);
-
-    // SCORE POR SOBREVIVÊNCIA
-
-    const scoreMultiplier = perfectTimingRuntime.effect === "score_up"
-        ? perfectTimingConfig.scoreMultiplier : 1;
-
-    if (scoreFreezeTimer > 0) {
-        scoreFreezeTimer -= deltaTime;
-    }
-
-    if (scoreFreezeTimer <= 0) {
-        scoreState.value += deltaTime * scoreState.pointsPerSecond * scoreMultiplier;
-    }
-
     // DISPARO DO BOSS FINAL (FASE 1) — gatilho por pontuação.
 
     if (
@@ -944,8 +972,6 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
     // SISTEMA DE COLISÃO
 
     if (window.ONREDCollisionSystem) {
-
-        ONREDCollisionSystem.update(deltaTime);
 
         handlePlayerCollision();
     }
@@ -1532,6 +1558,13 @@ function returnToMainMenu() {
     if (window.ONREDPingPong) {
         ONREDPingPong.reset(canvas, player);
     }
+
+    // O Boss não pode herdar fase/timers de uma partida anterior.
+    if (window.ONREDBossSystem) {
+        window.ONREDBossSystem.reset();
+    }
+    bossPhase = "IDLE";
+    scoreFreezeTimer = 0;
 
     if (gameOverScreen) {
         gameOverScreen.classList.remove("active");

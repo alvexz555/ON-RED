@@ -310,10 +310,20 @@
         }
     }
 
-    function updateWhite(deltaTime, player, health, collision) {
+    function updateWhite(deltaTime, player, health, collision, arena) {
         if (weapon.state !== "ACTIVE") return;
         weapon.x += weapon.vx * deltaTime;
         weapon.y += weapon.vy * deltaTime;
+
+        // Um pong errado não pode ficar ativo para sempre: fora da arena ele
+        // é descartado, liberando o slot de ataque do Boss.
+        const margin = 120;
+        if (arena && Number.isFinite(arena.width) && Number.isFinite(arena.height) &&
+            (weapon.x < -margin || weapon.x > arena.width + margin ||
+             weapon.y < -margin || weapon.y > arena.height + margin)) {
+            weapon = null;
+            return;
+        }
 
         if (collision && collision.checkCollisions(player, [weapon], weapon.radius)) {
             const damage = weapon.damage;
@@ -345,7 +355,7 @@
         }
     }
 
-    function updateCombat(deltaTime, player, health, collision) {
+    function updateCombat(deltaTime, player, health, collision, arena) {
         if (phase !== "FIGHT") return;
 
         if (weapon && weapon.state === "CONSUMED") {
@@ -366,7 +376,7 @@
         if (weapon.type === "ray") {
             updateRay(deltaTime, player, health, collision);
         } else if (weapon.type === "white") {
-            updateWhite(deltaTime, player, health, collision);
+            updateWhite(deltaTime, player, health, collision, arena);
         } else if (weapon.type === "electric") {
             updateElectric(deltaTime, player, health, collision);
         }
@@ -401,7 +411,7 @@
 
         fightTimer += deltaTime;
         updateBossMovement(deltaTime, arena);
-        updateCombat(deltaTime, player, health, collision);
+        updateCombat(deltaTime, player, health, collision, arena);
 
         return getState();
     }

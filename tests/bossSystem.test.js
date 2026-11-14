@@ -208,6 +208,46 @@ test("ten parries defeat the boss with exact hp and never negative", () => {
     assert.ok(boss.getState().boss.hp >= 0);
 });
 
+test("update returns a state object with a string phase through every transition", () => {
+    boss.configure({ bossHp: 1000, pong: { white: { interval: 0.005, firstIn: 0.005 } } });
+    boss.reset();
+
+    let state = boss.update(0.016, arena, player, createCombat().health, createCombat().collision);
+    assert.equal(typeof state.phase, "string");
+    assert.equal(state.phase, "IDLE");
+
+    boss.start(arena, player);
+    state = boss.update(0.016, arena, player, createCombat().health, createCombat().collision);
+    assert.equal(state.phase, "WARNING");
+
+    state = boss.update(2.0, arena, player, createCombat().health, createCombat().collision);
+    assert.equal(state.phase, "FIGHT");
+
+    const game = createCombat(["white"]);
+    player.x = 100;
+    player.y = 650;
+    let guard = 0;
+    while (boss.getState().phase !== "DEFEATED" && guard++ < 80) {
+        let inner = 0;
+        while (inner++ < 2000) {
+            const current = boss.getState();
+            if (current.weapon && current.weapon.type === "white" && current.weapon.state === "ACTIVE") break;
+            boss.update(0.005, arena, player, game.health, game.collision);
+        }
+        const current = boss.getState();
+        if (!(current.weapon && current.weapon.type === "white" && current.weapon.state === "ACTIVE")) break;
+        boss.tryParry(parryTarget());
+    }
+
+    state = boss.getState();
+    assert.equal(state.phase, "DEFEATED");
+    assert.equal(typeof state.phase, "string");
+
+    state = boss.update(1.1, arena, player, game.health, game.collision);
+    assert.equal(state.phase, "IDLE");
+    assert.equal(typeof state.phase, "string");
+});
+
 test("boss at zero hp does not accept new damage", () => {
     boss.configure({ pong: { white: { interval: 0.005, firstIn: 0.005 } } });
     boss.reset();
@@ -302,6 +342,51 @@ test("boss movement stays inside arena and patrol band", () => {
     assert.ok(state.boss.y >= half);
     assert.ok(state.boss.y <= arena.height - half);
     assert.ok(Math.abs(state.boss.x - arena.width / 2) <= state.boss.amplitudeX);
+});
+
+test("a missed white pong leaves the arena and frees the boss attack slot", () => {
+    boss.configure({
+        bossHp: 1000,
+        pong: { white: { interval: 3.4, firstIn: 0.05 }, electric: { interval: 6.8 } },
+        ray: { interval: 7 }
+    });
+    boss.reset();
+    boss.start(arena, player);
+    const game = createCombat(["white"]);
+    player.x = 60;
+    player.y = 640;
+
+    let guard = 0;
+    while (boss.getState().phase !== "FIGHT" && guard++ < 20) {
+        boss.update(0.5, arena, player, game.health, game.collision);
+    }
+
+    guard = 0;
+    let sawWhite = false;
+    while (guard++ < 300) {
+        const state = boss.getState();
+        if (state.weapon && state.weapon.type === "white" && state.weapon.state === "ACTIVE") {
+            sawWhite = true;
+            break;
+        }
+        boss.update(0.1, arena, player, game.health, game.collision);
+    }
+    assert.equal(sawWhite, true, "o pong branco precisa ser disparado");
+
+    guard = 0;
+    while (boss.getState().weapon && guard++ < 300) {
+        boss.update(0.1, arena, player, game.health, game.collision);
+    }
+    assert.equal(boss.getState().weapon, null, "o pong perdido precisa sair da arena");
+
+    guard = 0;
+    let nextAttack = null;
+    while (guard++ < 400 && !nextAttack) {
+        boss.update(0.1, arena, player, game.health, game.collision);
+        const state = boss.getState();
+        if (state.weapon) nextAttack = state.weapon.type;
+    }
+    assert.ok(nextAttack, "o Boss precisa voltar a atacar após perder um pong");
 });
 
 test("reset clears boss hp, projectiles, telegraph and timers", () => {
