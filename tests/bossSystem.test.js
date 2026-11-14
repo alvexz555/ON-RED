@@ -582,3 +582,36 @@ test("five sequence blasts predict the player's recent movement and lock each ma
     assert.equal(weapon.blasts[1].x, lockedSecond);
     assert.equal(weapon.blasts.length, 5);
 });
+
+
+test("electric Boss Pong applies energized status and temporary control interruptions", () => {
+    boss.configure({ ray: { firstIn: 100, interval: 100 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 0.01, electrifiedDuration: 3 } } });
+    const game = startFight(["electric"]);
+    let guard = 0;
+    while ((!boss.getState().weapon || boss.getState().weapon.type !== "electric") && guard++ < 100) boss.update(0.05, arena, player, game.health, game.collision);
+    const projectile = boss.getState().weapon.projectiles[0];
+    player.x = projectile.x + projectile.vx * 0.01; player.y = projectile.y + projectile.vy * 0.01;
+    boss.update(0.05, arena, player, game.health, game.collision);
+    assert.ok(boss.getState().electrifiedTimer > 0 && boss.getState().electrifiedTimer <= 3);
+    let interrupted = false;
+    for (let i = 0; i < 30; i++) { boss.update(0.05, arena, player, game.health, game.collision); if (boss.getState().controlMultiplier === 0) { interrupted = true; break; } }
+    assert.equal(interrupted, true);
+});
+
+test("electric Boss Pong accelerates by 20 percent on wall bounce and caps at 1200", () => {
+    boss.configure({ ray: { firstIn: 100, interval: 100 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 0.01, speed: 100, wallSpeedMultiplier: 1.2, maxSpeed: 1200 } } });
+    const game = startFight(["electric"]);
+    let guard = 0;
+    while ((!boss.getState().weapon || boss.getState().weapon.type !== "electric") && guard++ < 100) boss.update(0.05, arena, player, game.health, game.collision);
+    let volley = boss.getState().weapon;
+    let previousSpeed = Math.hypot(volley.projectiles[0].vx, volley.projectiles[0].vy);
+    player.x = 100; player.y = 650;
+    let observedBounce = false;
+    for (let i = 0; i < 300; i++) {
+        boss.update(0.05, arena, player, game.health, game.collision);
+        volley = boss.getState().weapon; if (!volley || volley.type !== "electric") break;
+        const speed = Math.hypot(volley.projectiles[0].vx, volley.projectiles[0].vy);
+        if (speed > previousSpeed + 0.01) { assert.ok(Math.abs(speed - Math.min(previousSpeed * 1.2, 1200)) < 0.1); observedBounce = true; break; }
+    }
+    assert.equal(observedBounce, true);
+});
