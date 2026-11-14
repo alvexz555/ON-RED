@@ -32,9 +32,11 @@
             radius: 105,
             singleRadius: 170,
             sequenceRadius: 85,
-            sequenceCount: 3,
+            sequenceCount: 5,
             sequenceSpacing: 150,
             sequenceDelay: 0.55,
+            predictionStep: 0.22,
+            predictionMaxDistance: 150,
             damage: 25
         },
         pong: {
@@ -138,6 +140,7 @@
     // Ciclo obrigatório da Boss Fight: A (single) -> C (sequence) -> A -> C...
     // O padrão só avança quando um ataque de área é efetivamente disparado.
     let nextAreaPattern = "single";
+    let playerMotion = { x: null, y: null, vx: 0, vy: 0 };
     // Um Boss derrotado não volta a aparecer na mesma partida;
     // só o reset de partida limpa esta marcação.
     let conquered = false;
@@ -169,6 +172,7 @@
         electricTimer = CONFIG.pong.electric.interval;
         rayVolleyIndex = 0;
         nextAreaPattern = "single";
+        playerMotion = { x: null, y: null, vx: 0, vy: 0 };
 
         return getState();
     }
@@ -304,6 +308,19 @@
         };
     }
 
+    function predictPlayerPosition(player, arena, radius, leadSeconds) {
+        const speed = Math.hypot(playerMotion.vx, playerMotion.vy);
+        const scale = speed > 0
+            ? Math.min(leadSeconds, CONFIG.ray.predictionMaxDistance / speed)
+            : 0;
+        const x = player.x + playerMotion.vx * scale;
+        const y = player.y + playerMotion.vy * scale;
+        return {
+            x: clamp(x, radius, Math.max(radius, arena.width - radius)),
+            y: clamp(y, radius, Math.max(radius, arena.height - radius))
+        };
+    }
+
     function fireRay(player, arena) {
         const pattern = nextAreaPattern;
         nextAreaPattern = nextAreaPattern === "single" ? "sequence" : "single";
@@ -335,8 +352,12 @@
                     targetLocked: false
                 };
                 if (i === 0) {
-                    blast.x = clamp(player ? player.x : arena.width / 2, blast.radius, arena.width - blast.radius);
-                    blast.y = clamp(player ? player.y : arena.height / 2, blast.radius, arena.height - blast.radius);
+                    const target = predictPlayerPosition(
+                        player || { x: arena.width / 2, y: arena.height / 2 },
+                        arena, blast.radius, 0
+                    );
+                    blast.x = target.x;
+                    blast.y = target.y;
                     blast.targetLocked = true;
                 }
                 blasts.push(blast);
@@ -397,8 +418,13 @@
             if (blast.state === "WAITING") {
                 blast.timer -= deltaTime;
                 if (blast.timer <= 0) {
-                    blast.x = clamp(player.x, blast.radius, arena.width - blast.radius);
-                    blast.y = clamp(player.y, blast.radius, arena.height - blast.radius);
+                    const blastIndex = weapon.blasts.indexOf(blast);
+                    const target = predictPlayerPosition(
+                        player, arena, blast.radius,
+                        blastIndex * CONFIG.ray.predictionStep
+                    );
+                    blast.x = target.x;
+                    blast.y = target.y;
                     blast.targetLocked = true;
                     blast.state = "TELEGRAPH";
                     blast.timer = CONFIG.ray.sequenceTelegraphDuration;
@@ -556,12 +582,32 @@
         }
     }
 
+    function updatePlayerMotion(deltaTime, player) {
+        if (!(deltaTime > 0)) return;
+        if (playerMotion.x === null || playerMotion.y === null) {
+            playerMotion.x = player.x;
+            playerMotion.y = player.y;
+            return;
+        }
+        const rawVx = (player.x - playerMotion.x) / deltaTime;
+        const rawVy = (player.y - playerMotion.y) / deltaTime;
+        const speed = Math.hypot(rawVx, rawVy);
+        const maxSpeed = 650;
+        const factor = speed > maxSpeed ? maxSpeed / speed : 1;
+        playerMotion.vx = rawVx * factor;
+        playerMotion.vy = rawVy * factor;
+        playerMotion.x = player.x;
+        playerMotion.y = player.y;
+    }
+
     function update(deltaTime, arena, player, health, collision) {
         if (!Number.isFinite(deltaTime) || deltaTime < 0) return getState();
         if (!arena || !Number.isFinite(arena.width) || !Number.isFinite(arena.height)) return getState();
         if (!player) return getState();
 
         if (phase === "IDLE") return getState();
+
+        updatePlayerMotion(deltaTime, player);
 
         if (phase === "DEFEATED") {
             phaseTimer -= deltaTime;
