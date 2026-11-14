@@ -180,7 +180,7 @@
     // ATUALIZAÇÃO
     // ==========================================
 
-    function update(deltaTime, player, arena, healthSystem) {
+    function update(deltaTime, player, arena, healthSystem, options = {}) {
 
         if (typeof deltaTime !== "number" || deltaTime < 0) {
             return [];
@@ -189,10 +189,13 @@
         elapsed += deltaTime;
         spawnTimer += deltaTime;
 
-        if (spawnTimer >= CONFIG.spawnInterval) {
+        const spawnIntervalMultiplier = Number.isFinite(options.spawnIntervalMultiplier)
+            ? Math.max(1, options.spawnIntervalMultiplier)
+            : 1;
+        const effectiveSpawnInterval = CONFIG.spawnInterval * spawnIntervalMultiplier;
 
-            spawnTimer = 0;
-
+        if (spawnTimer >= effectiveSpawnInterval) {
+            spawnTimer -= effectiveSpawnInterval;
             spawnOrb(arena, player);
         }
 
