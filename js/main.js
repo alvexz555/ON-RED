@@ -805,6 +805,10 @@ function handlePlayerCollision() {
         return;
     }
 
+    // Os obstáculos comuns ficam congelados durante WARNING/FIGHT/DEFEATED.
+    // Não podem continuar causando dano fora da arena de combate normal.
+    if (window.ONREDBossSystem && window.ONREDBossSystem.getState().phase !== "IDLE") return;
+
     const targetObstacle = findCollidingPerfectObstacle();
     if (!targetObstacle) return;
 
@@ -1266,17 +1270,21 @@ function draw() {
     );
 
     drawArena();
-    drawPerfectObstacles();
 
-    if (window.ONREDHexagonSystem) ONREDHexagonSystem.draw(ctx);
+    // A batalha do Boss assume a arena: sistemas normais ficam suspensos
+    // também visualmente, sem obstáculos ou colecionáveis congelados na tela.
+    if (bossPhase === "IDLE") {
+        drawPerfectObstacles();
 
-    if (window.ONREDPingPong) {
-        // Mantém a bola branca e seu destaque visual em contato com o jogador.
-        ONREDPingPong.draw(ctx, player);
-    }
+        if (window.ONREDHexagonSystem) ONREDHexagonSystem.draw(ctx);
 
-    if (window.ONREDMergeSystem) {
-        ONREDMergeSystem.draw(ctx);
+        if (window.ONREDPingPong) {
+            ONREDPingPong.draw(ctx, player);
+        }
+
+        if (window.ONREDMergeSystem) {
+            ONREDMergeSystem.draw(ctx);
+        }
     }
 
     if (window.ONREDBossSystem && bossPhase !== "IDLE") {
