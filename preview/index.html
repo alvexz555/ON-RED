@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <base href="../">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <meta name="theme-color" content="#080B12">
+
+    <meta name="description" content="ON RED - Arcade Survival">
+
+    <title>ON RED</title>
+
+    <!-- GLOBAL STYLES -->
+    <link rel="stylesheet" href="./css/style.css">
+
+    <!-- MENU STYLES -->
+    <link rel="stylesheet" href="./css/menu.css">
+</head>
+
+<body>
+
+    <!-- GAME CANVAS -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- MAIN MENU -->
+    <main id="mainMenu" class="main-menu">
+
+        <div class="menu-content">
+
+            <header class="menu-header">
+
+                <div class="game-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <p class="game-subtitle">
+                    SURVIVE · PERFECT TIMING · MERGE
+                </p>
+
+            </header>
+
+            <section class="menu-actions">
+
+                <button
+                    type="button"
+                    id="playButton"
+                    class="menu-button play-button"
+                >
+                    <span>PLAY</span>
+                    <span class="button-arrow">›</span>
+                </button>
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        BEST SCORE
+                    </span>
+
+                    <span id="bestScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="settingsButton"
+                    class="menu-button settings-button"
+                >
+                    SETTINGS
+                </button>
+
+            </section>
+
+            <footer class="menu-footer">
+
+                <span>ARCADE SURVIVAL</span>
+                <span>ON RED · V1.3</span>
+
+            </footer>
+
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <section
+            id="settingsPanel"
+            class="settings-panel hidden"
+        >
+
+            <h2>SETTINGS</h2>
+
+            <p>CONFIGURAÇÕES</p>
+
+            <button
+                type="button"
+                id="backButton"
+                class="menu-button"
+            >
+                BACK
+            </button>
+
+        </section>
+
+    </main>
+
+    <!-- GAME OVER -->
+    <section
+        id="gameOverScreen"
+        class="game-over-screen"
+        aria-hidden="true"
+    >
+
+        <div class="game-over-content">
+
+            <header class="game-over-header">
+
+                <div class="game-over-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <span class="game-over-label">
+                    SURVIVAL TERMINATED
+                </span>
+
+            </header>
+
+            <div class="game-over-message">
+
+                <span class="game-over-line"></span>
+
+                <h1 class="melting-title" data-text="GAME OVER">
+                GAME OVER
+                </h1>
+
+                <p>
+                    YOUR RUN HAS ENDED
+                </p>
+
+                <span class="game-over-line"></span>
+
+            </div>
+
+            <div class="game-over-actions">
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        SCORE
+                    </span>
+
+                    <span id="finalScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        BEST
+                    </span>
+
+                    <span id="bestScoreGameOver" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="retryButton"
+                    class="game-over-button retry-button"
+                >
+                    RETRY
+                    <span>↻</span>
+                </button>
+
+                <button
+                    type="button"
+                    id="gameOverMenuButton"
+                    class="game-over-button menu-return-button"
+                >
+                    MAIN MENU
+                </button>
+
+            </div>
+
+            <footer class="game-over-footer">
+                ON RED · ARCADE SURVIVAL
+            </footer>
+
+        </div>
+
+    </section>
+
+    <!-- VICTORY SCREEN -->
+    <section
+        id="victoryScreen"
+        class="game-over-screen victory-screen"
+        aria-hidden="true"
+    >
+
+        <div class="game-over-content">
+
+            <header class="game-over-header">
+
+                <div class="game-over-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <span class="game-over-label">
+                    PHASE 1 COMPLETE
+                </span>
+
+            </header>
+
+            <div class="game-over-message">
+
+                <span class="game-over-line"></span>
+
+                <h1 class="melting-title" data-text="FASE 1 CONCLUÍDA">
+                FASE 1 CONCLUÍDA
+                </h1>
+
+                <p>
+                    FINAL BOSS DEFEATED
+                </p>
+
+                <span class="game-over-line"></span>
+
+            </div>
+
+            <div class="game-over-actions">
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        SCORE
+                    </span>
+
+                    <span id="victoryFinalScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        BEST
+                    </span>
+
+                    <span id="victoryBestScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="victoryRetryButton"
+                    class="game-over-button retry-button"
+                >
+                    RETRY
+                    <span>↻</span>
+                </button>
+
+                <button
+                    type="button"
+                    id="victoryMenuButton"
+                    class="game-over-button menu-return-button"
+                >
+                    MAIN MENU
+                </button>
+
+                <div class="victory-difficulty" id="victoryDifficulty" role="group" aria-label="Dificuldade da Fase 1">
+
+                    <span class="victory-difficulty-label">DIFICULDADE DA FASE 1</span>
+
+                    <div class="victory-difficulty-options">
+
+                        <button
+                            type="button"
+                            class="game-over-button difficulty-option"
+                            data-difficulty="EASY"
+                        >
+                            FÁCIL
+                        </button>
+
+                        <button
+                            type="button"
+                            class="game-over-button difficulty-option selected"
+                            data-difficulty="NORMAL"
+                        >
+                            NORMAL
+                        </button>
+
+                        <button
+                            type="button"
+                            class="game-over-button difficulty-option"
+                            data-difficulty="HARD"
+                        >
+                            DIFÍCIL
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="victory-phase2-card">
+                    <span>FASE 2 · ATUALIZAÇÕES EM BREVE</span>
+                </div>
+
+            </div>
+
+            <footer class="game-over-footer">
+                ON RED · ARCADE SURVIVAL
+            </footer>
+
+        </div>
+
+    </section>
+
+    <!-- GAME PHYSICS -->
+    <script src="./js/obstaclePhysics.js"></script>
+
+    <!-- OBSTACLE AI -->
+    <script src="./js/obstacleAI.js"></script>
+
+    <!-- MENU SYSTEM -->
+    <script src="./js/menu.js"></script>
+
+    <!-- HEALTH SYSTEM -->
+    <script src="./js/healthSystem.js"></script>
+
+    <!-- MERGE SYSTEM -->
+    <script src="./js/mergeSystem.js"></script>
+
+    <!-- HEALTH UI -->
+    <script src="./js/healthUI.js"></script>
+
+    <!-- COLLISION SYSTEM -->
+    <script src="./js/collisionSystem.js"></script>
+    
+    <!--keyboard -->
+    <script src="./js/keyboardController.js"></script>
+    
+    <!-- HEXAGON OCCUPANCY SYSTEM -->
+    <script src="./js/hexagonSystem.js"></script>
+
+    <!-- PING PONG ENEMY -->
+    <script src="./js/pingPong.js"></script>
+
+    <!-- PERFECT TIMING LIFECYCLE -->
+    <script src="./js/perfectTimingSystem.js"></script>
+
+    <!-- BOSS SYSTEM (FASE 1) -->
+    <script src="./js/bossSystem.js"></script>
+
+    <!-- MAIN GAME ENGINE -->
+    <script src="./js/main.js"></script>
+
+</body>
+</html>
