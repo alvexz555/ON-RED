@@ -392,3 +392,43 @@
         transform: scaleY(1.04);
     }
 }
+
+
+/* MENU COMPLETO · NAVEGAÇÃO E PAINÉIS */
+.main-menu { padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); }
+.menu-content { max-width: 390px; gap: 25px; }
+.menu-actions { gap: 10px; }
+.menu-actions .menu-button { min-height: 48px; }
+.menu-best-preview { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 11px 15px; border: 1px solid rgba(88,191,255,.2); border-radius: 8px; background: rgba(15,23,36,.88); }
+.menu-best-preview .score-value { font-size: 20px; }
+.menu-panel { position: relative; z-index: 4; width: min(100%, 430px); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; padding: 24px; display: flex; flex-direction: column; gap: 16px; border: 1px solid rgba(22,139,255,.55); border-radius: 12px; background: rgba(8,14,24,.98); box-shadow: 0 18px 60px rgba(0,0,0,.45); color: #fff; text-align: left; }
+.menu-panel.hidden { display: none !important; }
+.menu-panel-heading { text-align: center; display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.menu-kicker { color: #58BFFF; font-size: 9px; font-weight: 800; letter-spacing: 3px; }
+.menu-panel-heading h2 { color: #fff; font-size: clamp(19px,5vw,25px); letter-spacing: 2px; }
+.phase-card, .record-card, .control-group { display: flex; flex-direction: column; gap: 10px; padding: 16px; border: 1px solid rgba(130,147,168,.2); border-radius: 8px; background: #0F1724; }
+.phase-card h3, .control-group h3 { color: #fff; font-size: 14px; letter-spacing: 1px; }
+.phase-card p, .record-caption, .setting-row p { color: #91A0B3; font-size: 11px; line-height: 1.5; }
+.phase-number { color: #58BFFF; font-size: 9px; font-weight: 800; letter-spacing: 2px; }
+.phase-status { color: #58BFFF; font-size: 9px; font-weight: 800; letter-spacing: 1.5px; }
+.phase-development { border-color: rgba(130,147,168,.16); opacity: .82; }
+.phase-development .phase-status { color: #A5B1C1; }
+.phase-available .menu-button { min-height: 46px; }
+.menu-panel-note { color: #7F8DA1; font-size: 10px; line-height: 1.5; text-align: center; }
+.menu-back { min-height: 46px; flex: 0 0 auto; }
+.record-card { align-items: center; text-align: center; padding: 22px 16px; }
+.record-value { color: #58BFFF; font-size: clamp(30px,9vw,42px); letter-spacing: 3px; }
+.record-upcoming strong { color: #A5B1C1; font-size: 17px; letter-spacing: 2px; }
+.control-group h3 { color: #58BFFF; font-size: 10px; letter-spacing: 2px; }
+.control-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; color: #DCE3ED; font-size: 11px; line-height: 1.4; }
+.control-row span:last-child { flex: 1 1 130px; }
+kbd, .control-icon { min-width: 27px; min-height: 27px; padding: 5px 7px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid #34465C; border-radius: 5px; background: #172333; color: #fff; font: 800 10px Arial,sans-serif; }
+.control-icon { color: #58BFFF; font-size: 15px; }
+.setting-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.setting-row label { color: #fff; font-size: 11px; font-weight: 800; letter-spacing: 1.5px; }
+.setting-row strong { color: #58BFFF; font-size: 18px; }
+.volume-slider { width: 100%; accent-color: #168BFF; cursor: pointer; touch-action: pan-y; }
+.setting-scale { display: flex; justify-content: space-between; color: #637187; font-size: 9px; font-weight: 800; letter-spacing: 1px; }
+.menu-button:focus-visible, .volume-slider:focus-visible { outline: 2px solid #58BFFF; outline-offset: 3px; }
+@media (min-width: 700px) { .main-menu { padding: 30px; } .menu-content { max-width: 420px; gap: 28px; } .game-logo { font-size: 72px; } .menu-actions .menu-button { min-height: 52px; } .menu-panel { padding: 28px; } }
+@media (max-height: 700px) { .main-menu { align-items: flex-start; } .menu-content { gap: 16px; } .game-logo { font-size: 48px; } .menu-panel { padding: 16px; gap: 11px; } .phase-card, .record-card, .control-group { padding: 12px; gap: 7px; } }
