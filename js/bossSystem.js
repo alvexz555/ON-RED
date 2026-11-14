@@ -51,6 +51,7 @@
             },
             electric: {
                 interval: 6.8,
+                lifetime: 8.0,
                 projectiles: 2,
                 speed: 380,
                 angleStep: Math.PI / 20,
@@ -387,8 +388,8 @@
     }
 
     function fireElectric(player) {
-        const aimX = player ? clamp(player.x + playerMotion.vx * 0.18, CONFIG.pong.white.radius, arenaWidth()) : boss.x + 1;
-        const aimY = player ? clamp(player.y + playerMotion.vy * 0.18, CONFIG.pong.white.radius, arenaHeight()) : boss.y;
+        const aimX = player ? clamp(player.x + playerMotion.vx * 0.18, CONFIG.pong.white.radius, Math.max(CONFIG.pong.white.radius, arenaWidth() - CONFIG.pong.white.radius)) : boss.x + 1;
+        const aimY = player ? clamp(player.y + playerMotion.vy * 0.18, CONFIG.pong.white.radius, Math.max(CONFIG.pong.white.radius, arenaHeight() - CONFIG.pong.white.radius)) : boss.y;
         const baseAngle = Math.atan2(aimY - boss.y, aimX - boss.x);
         const perpendicularX = -Math.sin(baseAngle);
         const perpendicularY = Math.cos(baseAngle);
@@ -421,7 +422,7 @@
         electricWeapon = {
             type: "electric",
             state: "ACTIVE",
-            timer: CONFIG.pong.electric.interval,
+            timer: CONFIG.pong.electric.lifetime,
             projectiles
         };
         electricTimer = CONFIG.pong.electric.interval;
