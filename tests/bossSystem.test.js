@@ -313,12 +313,13 @@ test("white boss Pong ricochets from arena walls without leaving the arena", () 
     const weapon = advanceUntilWeapon(game, "white");
     assert.ok(weapon);
     const initialVx = weapon.vx;
+    const initialVy = weapon.vy;
     assert.notEqual(initialVx, 0);
+    player.x = 850;
+    player.y = 50;
 
     let bounced = false;
     for (let i = 0; i < 400 && !bounced; i++) {
-        player.x = 100;
-        player.y = 650;
         boss.update(0.05, arena, player, game.health, game.collision);
         const current = boss.getState().weapon;
         if (!current || current.type !== "white") break;
@@ -326,7 +327,7 @@ test("white boss Pong ricochets from arena walls without leaving the arena", () 
             current.y >= current.radius && current.y <= arena.height - current.radius;
         assert.equal(inside, true);
         bounced = Math.sign(current.vx) !== Math.sign(initialVx) ||
-            Math.sign(current.vy) !== Math.sign(weapon.vy);
+            Math.sign(current.vy) !== Math.sign(initialVy);
     }
     assert.equal(bounced, true);
 });
