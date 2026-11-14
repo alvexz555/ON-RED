@@ -31,6 +31,9 @@ const settingsPanel = document.getElementById("settingsPanel");
 
 const gameOverScreen = document.getElementById("gameOverScreen");
 const retryButton = document.getElementById("retryButton");
+const reviveButton = document.getElementById("reviveButton");
+const reviveUnavailable = document.getElementById("reviveUnavailable");
+let reviveUsedThisRun = false;
 const gameOverMenuButton = document.getElementById("gameOverMenuButton");
 const finalScoreLabel = document.getElementById("finalScore");
 const bestScoreGameOverLabel = document.getElementById("bestScoreGameOver");
@@ -785,6 +788,8 @@ function triggerGameOver() {
     if (gameState === GAME_STATE.GAME_OVER) return;
 
     gameState = GAME_STATE.GAME_OVER;
+    if (reviveButton) reviveButton.hidden = reviveUsedThisRun;
+    if (reviveUnavailable) reviveUnavailable.hidden = !reviveUsedThisRun;
     if (pauseButton) pauseButton.style.display = "none";
 
     resetJoystick();
@@ -880,6 +885,10 @@ function handlePlayerCollision() {
 function update(deltaTime, timerDeltaTime = deltaTime) {
 
     if (gameState !== GAME_STATE.PLAYING) return;
+
+    if (window.ONREDHealthSystem && typeof window.ONREDHealthSystem.update === "function") {
+        window.ONREDHealthSystem.update(deltaTime);
+    }
 
     // SHIFT: solicita Perfect Timing uma única vez por pressionamento.
     if (
@@ -1467,6 +1476,9 @@ function resetGame() {
     if (window.ONREDPerfectTimingSystem) ONREDPerfectTimingSystem.reset();
 
     scoreState.value = 0;
+    reviveUsedThisRun = false;
+    if (reviveButton) reviveButton.hidden = false;
+    if (reviveUnavailable) reviveUnavailable.hidden = true;
 
     resizeCanvas();
     spawnPlayer();
@@ -1530,6 +1542,34 @@ window.startONREDGame = function () {
 document.addEventListener("onred:start", function () {
     window.startONREDGame();
 });
+
+// ==========================================
+// REVIVER · UMA CONTINUAÇÃO POR PARTIDA
+// ==========================================
+
+function reviveONREDGame() {
+    if (gameState !== GAME_STATE.GAME_OVER || reviveUsedThisRun) return false;
+
+    const health = window.ONREDHealthSystem;
+    if (!health || typeof health.revive !== "function") return false;
+
+    const result = health.revive();
+    if (!result.applied) return false;
+
+    reviveUsedThisRun = true;
+    gameState = GAME_STATE.PLAYING;
+    if (pauseButton) pauseButton.style.display = "flex";
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    // Reposiciona o jogador, mas não reinicia obstáculos, Boss, fase ou pontuação.
+    resetJoystick();
+    spawnPlayer();
+    lastFrameTime = 0;
+    return true;
+}
 
 // ==========================================
 // REINICIAR PARTIDA
@@ -1691,6 +1731,10 @@ document.addEventListener("visibilitychange", () => {
         pauseONREDGame();
     }
 });
+
+if (reviveButton) {
+    reviveButton.addEventListener("click", reviveONREDGame);
+}
 
 if (retryButton) {
     retryButton.addEventListener("click", restartONREDGame);
