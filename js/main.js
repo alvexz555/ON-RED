@@ -43,15 +43,11 @@ const menuBestScoreLabel = document.getElementById("bestScore");
 const victoryScreen = document.getElementById("victoryScreen");
 const victoryRetryButton = document.getElementById("victoryRetryButton");
 const victoryMenuButton = document.getElementById("victoryMenuButton");
-const victoryDifficulty = document.getElementById("victoryDifficulty");
 const pauseButton = document.getElementById("pauseButton");
 const pauseScreen = document.getElementById("pauseScreen");
 const resumeButton = document.getElementById("resumeButton");
 const pauseRestartButton = document.getElementById("pauseRestartButton");
 const pauseMenuButton = document.getElementById("pauseMenuButton");
-
-// Dificuldade da Fase 1 selecionada após vencer o Boss (padrão NORMAL).
-let bossDifficulty = "NORMAL";
 
 // ==========================================
 // SCORE
@@ -1750,38 +1746,6 @@ if (victoryRetryButton) {
 
 if (victoryMenuButton) {
     victoryMenuButton.addEventListener("click", returnToMainMenu);
-}
-
-// SELEÇÃO DE DIFICULDADE DA FASE 1 (liberada após vencer o Boss).
-
-function applyBossDifficulty(name) {
-
-    bossDifficulty = name;
-
-    if (window.ONREDBossSystem && window.ONREDBossSystem.setDifficulty) {
-        window.ONREDBossSystem.setDifficulty(name);
-    }
-
-    if (victoryDifficulty) {
-        victoryDifficulty
-            .querySelectorAll(".difficulty-option")
-            .forEach(button => {
-                button.classList.toggle(
-                    "selected",
-                    button.getAttribute("data-difficulty") === name
-                );
-            });
-    }
-}
-
-if (victoryDifficulty) {
-    victoryDifficulty
-        .querySelectorAll(".difficulty-option")
-        .forEach(button => {
-            button.addEventListener("click", () => {
-                applyBossDifficulty(button.getAttribute("data-difficulty"));
-            });
-        });
 }
 
 // ==========================================
