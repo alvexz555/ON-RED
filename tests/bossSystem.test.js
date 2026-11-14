@@ -338,29 +338,26 @@ test("area attacks repeat the mandatory A-C-A-C cycle throughout the Boss fight"
     }
 });
 
-test("white boss Pong ricochets from arena walls without leaving the arena", () => {
+test("white boss Pong disappears when it misses the player and reaches a wall", () => {
     boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     const weapon = advanceUntilWeapon(game, "white");
     assert.ok(weapon);
-    const initialVx = weapon.vx;
-    const initialVy = weapon.vy;
-    assert.notEqual(initialVx, 0);
     player.x = 850;
     player.y = 50;
 
-    let bounced = false;
-    for (let i = 0; i < 400 && !bounced; i++) {
+    let disappeared = false;
+    for (let i = 0; i < 400 && !disappeared; i++) {
         boss.update(0.05, arena, player, game.health, game.collision);
         const current = boss.getState().weapon;
-        if (!current || current.type !== "white") break;
-        const inside = current.x >= current.radius && current.x <= arena.width - current.radius &&
-            current.y >= current.radius && current.y <= arena.height - current.radius;
-        assert.equal(inside, true);
-        bounced = Math.sign(current.vx) !== Math.sign(initialVx) ||
-            Math.sign(current.vy) !== Math.sign(initialVy);
+        if (!current) disappeared = true;
+        else {
+            assert.equal(current.type, "white");
+            assert.ok(current.x >= current.radius && current.x <= arena.width - current.radius);
+            assert.ok(current.y >= current.radius && current.y <= arena.height - current.radius);
+        }
     }
-    assert.equal(bounced, true);
+    assert.equal(disappeared, true);
 });
 
 test("missed white pong applies the 25 damage gate once", () => {
@@ -483,30 +480,25 @@ test("a parried projectile that misses cannot parry again and hits once", () => 
     assert.deepEqual(game.damageCalls, []);
 });
 
-test("white Boss Pong keeps ricocheting inside the arena instead of disappearing", () => {
+test("white Boss Pong is removed after a missed shot reaches the arena wall", () => {
     boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     assert.ok(advanceUntilWeapon(game, "white"));
-    // O projétil já foi lançado na direção anterior; afasta o jogador para observar os ricochetes.
     player.x = 800;
     player.y = 650;
 
-    let observedBounce = false;
-    let previousVelocity = null;
-    for (let i = 0; i < 400; i++) {
-        const before = boss.getState().weapon;
-        if (before && before.type === "white") previousVelocity = { vx: before.vx, vy: before.vy };
+    let removedAtWall = false;
+    for (let i = 0; i < 400 && !removedAtWall; i++) {
         boss.update(0.1, arena, player, game.health, game.collision);
         const current = boss.getState().weapon;
-        if (!current || current.type !== "white") break;
-        assert.ok(current.x >= current.radius && current.x <= arena.width - current.radius);
-        assert.ok(current.y >= current.radius && current.y <= arena.height - current.radius);
-        if (previousVelocity &&
-            (Math.sign(current.vx) !== Math.sign(previousVelocity.vx) ||
-             Math.sign(current.vy) !== Math.sign(previousVelocity.vy))) observedBounce = true;
+        if (!current) removedAtWall = true;
+        else {
+            assert.equal(current.type, "white");
+            assert.ok(current.x >= current.radius && current.x <= arena.width - current.radius);
+            assert.ok(current.y >= current.radius && current.y <= arena.height - current.radius);
+        }
     }
-    assert.equal(observedBounce, true);
-    assert.equal(boss.getState().weapon.type, "white");
+    assert.equal(removedAtWall, true);
 });
 
 test("difficulty selection changes only boss combat knobs and survives reset", () => {

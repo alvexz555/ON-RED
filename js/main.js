@@ -33,7 +33,10 @@ const gameOverScreen = document.getElementById("gameOverScreen");
 const retryButton = document.getElementById("retryButton");
 const reviveButton = document.getElementById("reviveButton");
 const reviveUnavailable = document.getElementById("reviveUnavailable");
-let reviveUsedThisRun = false;
+let revivesUsedThisRun = 0;
+let bossVictoryReachedThisRun = false;
+const endlessProgression = { cycle: 1, nextBossScore: 20000, baseTriggerScore: 20000 };
+const bossBaseConfig = window.ONREDBossSystem ? window.ONREDBossSystem.getConfig() : { bossHp: 1000, moveSpeed: 45, ray: { interval: 7 }, pong: { white: { interval: 3.4 }, electric: { interval: 6.8 } } };
 const gameOverMenuButton = document.getElementById("gameOverMenuButton");
 const finalScoreLabel = document.getElementById("finalScore");
 const bestScoreGameOverLabel = document.getElementById("bestScoreGameOver");
@@ -647,6 +650,11 @@ const obstacleConfig = {
     maxObstacles: 5
 };
 
+const obstacleBaseConfig = {
+    speed: obstacleConfig.speed,
+    spawnInterval: obstacleConfig.spawnInterval
+};
+
 let spawnTimer = 0;
 
 // ==========================================
@@ -784,8 +792,7 @@ function triggerGameOver() {
     if (gameState === GAME_STATE.GAME_OVER) return;
 
     gameState = GAME_STATE.GAME_OVER;
-    if (reviveButton) reviveButton.hidden = reviveUsedThisRun;
-    if (reviveUnavailable) reviveUnavailable.hidden = !reviveUsedThisRun;
+    updateReviveOffer();
     if (pauseButton) pauseButton.style.display = "none";
 
     resetJoystick();
@@ -822,6 +829,9 @@ function triggerVictory() {
     if (victoryFinalScoreLabel) {
         victoryFinalScoreLabel.textContent = formatScore(finalScore);
     }
+
+    bossVictoryReachedThisRun = true;
+    updateReviveOffer();
 
     gameState = GAME_STATE.VICTORY;
     if (pauseButton) pauseButton.style.display = "none";
@@ -1008,6 +1018,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
     if (
         window.ONREDBossSystem &&
         window.ONREDBossSystem.getState().phase === "IDLE" &&
+        scoreState.value >= endlessProgression.nextBossScore &&
         window.ONREDBossSystem.shouldStart(scoreState.value)
     ) {
         window.ONREDBossSystem.start(canvas, player);
@@ -1458,6 +1469,72 @@ function drawScore() {
 // RESET COMPLETO DA PARTIDA
 // ==========================================
 
+function resetEndlessProgression() {
+    endlessProgression.cycle = 1;
+    endlessProgression.nextBossScore = endlessProgression.baseTriggerScore;
+    obstacleConfig.speed = obstacleBaseConfig.speed;
+    obstacleConfig.spawnInterval = obstacleBaseConfig.spawnInterval;
+    if (window.ONREDBossSystem) {
+        window.ONREDBossSystem.configure({
+            triggerScore: endlessProgression.baseTriggerScore,
+            bossHp: bossBaseConfig.bossHp,
+            moveSpeed: bossBaseConfig.moveSpeed,
+            ray: { interval: bossBaseConfig.ray.interval },
+            pong: { white: { interval: bossBaseConfig.pong.white.interval }, electric: { interval: bossBaseConfig.pong.electric.interval } }
+        });
+        window.ONREDBossSystem.reset();
+    }
+}
+
+function updateReviveOffer() {
+    const available = revivesUsedThisRun < 1 || (bossVictoryReachedThisRun && revivesUsedThisRun < 2);
+    if (reviveButton) {
+        reviveButton.hidden = !available;
+        reviveButton.textContent = revivesUsedThisRun === 0 ? "REVIVER GRATUITAMENTE" : "REVIVER · 2ª CHANCE";
+    }
+    if (reviveUnavailable) {
+        reviveUnavailable.hidden = available;
+        reviveUnavailable.textContent = bossVictoryReachedThisRun
+            ? "AS DUAS CONTINUAÇÕES FORAM UTILIZADAS · FIM DE JOGO"
+            : "CONTINUAÇÃO UTILIZADA · VENÇA O BOSS PARA DESBLOQUEAR A SEGUNDA";
+    }
+}
+
+function prepareNextEndlessCycle() {
+    endlessProgression.cycle += 1;
+    endlessProgression.nextBossScore = Math.floor(scoreState.value + endlessProgression.baseTriggerScore * endlessProgression.cycle);
+    const cycleScale = endlessProgression.cycle - 1;
+    obstacleConfig.speed = obstacleBaseConfig.speed * (1 + cycleScale * 0.07);
+    obstacleConfig.spawnInterval = Math.max(0.65, obstacleBaseConfig.spawnInterval * (1 - cycleScale * 0.035));
+    if (window.ONREDBossSystem) {
+        const n = endlessProgression.cycle - 1;
+        const intervalScale = Math.max(0.62, 1 - n * 0.045);
+        window.ONREDBossSystem.configure({
+            triggerScore: endlessProgression.nextBossScore,
+            bossHp: Math.round(bossBaseConfig.bossHp * (1 + n * 0.22)),
+            moveSpeed: bossBaseConfig.moveSpeed * (1 + n * 0.08),
+            ray: { interval: Math.max(3.5, bossBaseConfig.ray.interval * intervalScale) },
+            pong: { white: { interval: Math.max(1.6, bossBaseConfig.pong.white.interval * intervalScale) }, electric: { interval: Math.max(2.8, bossBaseConfig.pong.electric.interval * intervalScale) } }
+        });
+        window.ONREDBossSystem.reset();
+    }
+    perfectObstacles.length = 0;
+    spawnTimer = 0;
+    if (window.ONREDPerfectTimingSystem) ONREDPerfectTimingSystem.reset();
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.reset();
+    if (window.ONREDPingPong) ONREDPingPong.reset(canvas, player);
+    if (window.ONREDMergeSystem) ONREDMergeSystem.reset(canvas, player);
+    if (window.ONREDCollisionSystem) ONREDCollisionSystem.reset();
+    bossPhase = "IDLE";
+    scoreFreezeTimer = 0;
+    perfectButton.charge = 1;
+    perfectButton.activationFlash = 0;
+    perfectTimingRuntime.effect = null;
+    perfectTimingRuntime.effectTimer = 0;
+    resetJoystick();
+    spawnPlayer();
+}
+
 function resetGame() {
 
     perfectObstacles.length = 0;
@@ -1478,9 +1555,9 @@ function resetGame() {
     if (window.ONREDPerfectTimingSystem) ONREDPerfectTimingSystem.reset();
 
     scoreState.value = 0;
-    reviveUsedThisRun = false;
-    if (reviveButton) reviveButton.hidden = false;
-    if (reviveUnavailable) reviveUnavailable.hidden = true;
+    revivesUsedThisRun = 0;
+    bossVictoryReachedThisRun = false;
+    updateReviveOffer();
 
     resizeCanvas();
     spawnPlayer();
@@ -1504,6 +1581,7 @@ function resetGame() {
     if (window.ONREDBossSystem) {
         window.ONREDBossSystem.reset();
     }
+    resetEndlessProgression();
 
     bossPhase = "IDLE";
     scoreFreezeTimer = 0;
@@ -1550,7 +1628,8 @@ document.addEventListener("onred:start", function () {
 // ==========================================
 
 function reviveONREDGame() {
-    if (gameState !== GAME_STATE.GAME_OVER || reviveUsedThisRun) return false;
+    const available = revivesUsedThisRun < 1 || (bossVictoryReachedThisRun && revivesUsedThisRun < 2);
+    if (gameState !== GAME_STATE.GAME_OVER || !available) return false;
 
     const health = window.ONREDHealthSystem;
     if (!health || typeof health.revive !== "function") return false;
@@ -1558,7 +1637,8 @@ function reviveONREDGame() {
     const result = health.revive();
     if (!result.applied) return false;
 
-    reviveUsedThisRun = true;
+    revivesUsedThisRun += 1;
+    updateReviveOffer();
     gameState = GAME_STATE.PLAYING;
     if (pauseButton) pauseButton.style.display = "flex";
     if (gameOverScreen) {
@@ -1746,8 +1826,23 @@ if (gameOverMenuButton) {
     gameOverMenuButton.addEventListener("click", returnToMainMenu);
 }
 
+function continueEndlessRun() {
+    if (gameState !== GAME_STATE.VICTORY) return false;
+    if (victoryScreen) {
+        victoryScreen.classList.remove("active");
+        victoryScreen.setAttribute("aria-hidden", "true");
+    }
+    if (mainMenu) mainMenu.classList.add("hidden");
+    prepareNextEndlessCycle();
+    gameState = GAME_STATE.PLAYING;
+    gameStarted = true;
+    if (pauseButton) pauseButton.style.display = "flex";
+    lastFrameTime = 0;
+    return true;
+}
+
 if (victoryRetryButton) {
-    victoryRetryButton.addEventListener("click", restartONREDGame);
+    victoryRetryButton.addEventListener("click", continueEndlessRun);
 }
 
 if (victoryMenuButton) {
