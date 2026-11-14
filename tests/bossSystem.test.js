@@ -61,8 +61,19 @@ function advanceUntilWeapon(game, type, maxSteps = 200) {
     let guard = 0;
     while (guard++ < maxSteps) {
         const state = boss.getState();
-        if (state.weapon && state.weapon.type === type) return state.weapon;
-        boss.update(0.5, arena, player, game.health, game.collision);
+        if (state.weapon && state.weapon.type === type) {
+            const weapon = state.weapon;
+            const distanceFromBoss = Math.hypot(
+                weapon.x - state.boss.x,
+                weapon.y - state.boss.y
+            );
+            // Para testar parry/retorno, o projétil precisa realmente viajar
+            // até a janela de aproximação, não ser rebatido no ponto de spawn.
+            if (type !== "white" || distanceFromBoss >= state.boss.size / 2 + 150) {
+                return weapon;
+            }
+        }
+        boss.update(0.05, arena, player, game.health, game.collision);
     }
     return boss.getState().weapon;
 }
