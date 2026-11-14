@@ -280,6 +280,8 @@ test("single circular blast warns first and damages the entire marked area", () 
     assert.equal(weapon.blasts.length, 1);
     const blast = weapon.blasts[0];
     assert.equal(blast.state, "TELEGRAPH");
+    assert.equal(blast.radius, boss.getConfig().ray.singleRadius);
+    assert.ok(blast.radius > boss.getConfig().ray.sequenceRadius);
     game.damageCalls.length = 0;
 
     player.x = blast.x + blast.radius - 2;
@@ -315,10 +317,10 @@ test("area attacks repeat the mandatory A-C-A-C cycle throughout the Boss fight"
         assert.equal(weapon.blasts.length, expected[index].count);
 
         if (weapon.pattern === "sequence") {
-            assert.ok(weapon.blasts[0].x < weapon.blasts[1].x);
-            assert.ok(weapon.blasts[1].x < weapon.blasts[2].x);
-            assert.ok(weapon.blasts[0].timer < weapon.blasts[1].timer);
-            assert.ok(weapon.blasts[1].timer < weapon.blasts[2].timer);
+            assert.equal(weapon.blasts[0].state, "TELEGRAPH");
+            assert.equal(weapon.blasts[1].state, "WAITING");
+            assert.equal(weapon.blasts[2].state, "WAITING");
+            assert.ok(weapon.blasts.every(blast => blast.radius === boss.getConfig().ray.sequenceRadius));
         }
 
         // Esvazia completamente as zonas antes de solicitar o próximo ataque.
@@ -527,4 +529,48 @@ test("difficulty selection changes only boss combat knobs and survives reset", (
     assert.equal(config.moveSpeed, 36);
     assert.equal(config.ray.interval, 9.0);
     boss.setDifficulty("NORMAL");
+});
+
+
+test("sequence blasts lock the player's position one at a time and never track after marking", () => {
+    boss.configure({ ray: { firstIn: 0.01, interval: 0.01, sequenceDelay: 0.4, sequenceTelegraphDuration: 0.5 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 100 } } });
+    const game = startFight();
+    player.x = 180;
+    player.y = 220;
+
+    let weapon = boss.getState().weapon;
+    let guard = 0;
+    while ((!weapon || weapon.type !== "ray" || weapon.pattern !== "sequence") && guard++ < 300) {
+        boss.update(0.05, arena, player, game.health, game.collision);
+        weapon = boss.getState().weapon;
+    }
+    assert.ok(weapon);
+    const [first, second, third] = weapon.blasts;
+    assert.equal(first.state, "TELEGRAPH");
+    assert.deepEqual([first.x, first.y], [180, 220]);
+    assert.equal(second.state, "WAITING");
+    assert.equal(third.state, "WAITING");
+
+    // A primeira marca permanece fixa mesmo que o jogador se mova.
+    player.x = 700;
+    player.y = 500;
+    boss.update(0.1, arena, player, game.health, game.collision);
+    weapon = boss.getState().weapon;
+    assert.deepEqual([weapon.blasts[0].x, weapon.blasts[0].y], [180, 220]);
+
+    // A segunda marca captura a nova posição apenas quando sua janela começa.
+    boss.update(0.35, arena, player, game.health, game.collision);
+    weapon = boss.getState().weapon;
+    assert.equal(weapon.blasts[1].state, "TELEGRAPH");
+    assert.deepEqual([weapon.blasts[1].x, weapon.blasts[1].y], [700, 500]);
+    assert.equal(weapon.blasts[2].state, "WAITING");
+
+    // A terceira captura uma terceira posição, sem alterar a segunda.
+    player.x = 350;
+    player.y = 600;
+    boss.update(0.4, arena, player, game.health, game.collision);
+    weapon = boss.getState().weapon;
+    assert.equal(weapon.blasts[2].state, "TELEGRAPH");
+    assert.deepEqual([weapon.blasts[2].x, weapon.blasts[2].y], [350, 600]);
+    assert.deepEqual([weapon.blasts[1].x, weapon.blasts[1].y], [700, 500]);
 });
