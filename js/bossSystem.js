@@ -54,7 +54,14 @@
                 projectiles: 2,
                 speed: 380,
                 angleStep: Math.PI / 20,
-                damage: 25
+                damage: 25,
+                wallSpeedMultiplier: 1.2,
+                maxSpeed: 1200,
+                electrifiedDuration: 3.0,
+                stunIntervalMin: 0.22,
+                stunIntervalMax: 0.58,
+                stunDurationMin: 0.10,
+                stunDurationMax: 0.22
             }
         }
     };
@@ -141,6 +148,9 @@
     // O padrão só avança quando um ataque de área é efetivamente disparado.
     let nextAreaPattern = "single";
     let playerMotion = { x: null, y: null, vx: 0, vy: 0 };
+    let electrifiedTimer = 0;
+    let stunTimer = 0;
+    let nextStunIn = 0;
     // Um Boss derrotado não volta a aparecer na mesma partida;
     // só o reset de partida limpa esta marcação.
     let conquered = false;
@@ -173,6 +183,9 @@
         rayVolleyIndex = 0;
         nextAreaPattern = "single";
         playerMotion = { x: null, y: null, vx: 0, vy: 0 };
+        electrifiedTimer = 0;
+        stunTimer = 0;
+        nextStunIn = 0;
 
         return getState();
     }
@@ -515,14 +528,40 @@
                 projectile.electric = true;
                 projectile.impactCount = 20;
             }
-            if (speed > 0 && projectile.impactCount <= 20) {
-                const nextSpeed = Math.min(speed * 1.08, 1200);
+            if (speed > 0) {
+                const multiplier = projectile.electric ? CONFIG.pong.electric.wallSpeedMultiplier : 1.08;
+                const maxSpeed = projectile.electric ? CONFIG.pong.electric.maxSpeed : 1200;
+                const nextSpeed = Math.min(speed * multiplier, maxSpeed);
                 projectile.vx = projectile.vx / speed * nextSpeed;
                 projectile.vy = projectile.vy / speed * nextSpeed;
             }
         }
         return bounced;
     }
+
+    function randomBetween(min, max) { return min + Math.random() * (max - min); }
+
+    function electrifyPlayer() {
+        electrifiedTimer = CONFIG.pong.electric.electrifiedDuration;
+        stunTimer = 0;
+        nextStunIn = randomBetween(CONFIG.pong.electric.stunIntervalMin, CONFIG.pong.electric.stunIntervalMax);
+    }
+
+    function updateElectricalState(deltaTime) {
+        if (electrifiedTimer <= 0) return;
+        electrifiedTimer = Math.max(0, electrifiedTimer - deltaTime);
+        if (stunTimer > 0) stunTimer = Math.max(0, stunTimer - deltaTime);
+        else {
+            nextStunIn -= deltaTime;
+            if (nextStunIn <= 0 && electrifiedTimer > 0) {
+                stunTimer = randomBetween(CONFIG.pong.electric.stunDurationMin, CONFIG.pong.electric.stunDurationMax);
+                nextStunIn = randomBetween(CONFIG.pong.electric.stunIntervalMin, CONFIG.pong.electric.stunIntervalMax);
+            }
+        }
+        if (electrifiedTimer === 0) { stunTimer = 0; nextStunIn = 0; }
+    }
+
+    function getControlMultiplier() { return stunTimer > 0 ? 0 : 1; }
 
     function updateElectric(deltaTime, player, health, collision, arena) {
         weapon.timer -= deltaTime;
@@ -537,9 +576,8 @@
                 collision.checkCollisions(player, [projectile], projectile.radius * 2)
             ) {
                 projectile.state = "CONSUMED";
-                if (collision.registerCollision()) {
-                    health.applyDamage(projectile.damage);
-                }
+                electrifyPlayer();
+                if (collision.registerCollision()) health.applyDamage(projectile.damage);
             }
         }
 
@@ -608,6 +646,7 @@
         if (phase === "IDLE") return getState();
 
         updatePlayerMotion(deltaTime, player);
+        updateElectricalState(deltaTime);
 
         if (phase === "DEFEATED") {
             phaseTimer -= deltaTime;
@@ -724,7 +763,7 @@
         }
     }
 
-    function draw(ctx, canvas) {
+    function draw(ctx, canvas, player) {
         if (!ctx) return;
         if (phase === "IDLE" || phase === "DEFEATED") return;
 
@@ -742,6 +781,30 @@
         ctx.restore();
 
         if (weapon) drawWeapon(ctx, canvas);
+        if (electrifiedTimer > 0 && player) {
+            const pulse = 0.78 + Math.sin(Date.now() / 95) * 0.18;
+            ctx.save();
+            ctx.globalAlpha = pulse;
+            ctx.strokeStyle = "#35CFFF";
+            ctx.lineWidth = 2;
+            ctx.shadowColor = "#168BFF";
+            ctx.shadowBlur = stunTimer > 0 ? 28 : 18;
+            ctx.beginPath();
+            ctx.arc(player.x, player.y, player.radius + 7 + Math.sin(Date.now() / 120) * 2, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            for (let i = 0; i < 8; i++) {
+                const angle = Date.now() / 180 + i * Math.PI / 4;
+                ctx.moveTo(player.x + Math.cos(angle) * (player.radius + 3), player.y + Math.sin(angle) * (player.radius + 3));
+                ctx.lineTo(player.x + Math.cos(angle + 0.12) * (player.radius + 11 + (i % 2) * 5), player.y + Math.sin(angle + 0.12) * (player.radius + 11 + (i % 2) * 5));
+            }
+            ctx.stroke();
+            if (stunTimer > 0) {
+                ctx.strokeStyle = "#FFFFFF"; ctx.globalAlpha = 0.75;
+                ctx.beginPath(); ctx.arc(player.x, player.y, player.radius + 2, 0, Math.PI * 2); ctx.stroke();
+            }
+            ctx.restore();
+        }
     }
 
     function drawHUD(ctx, canvas) {
@@ -784,7 +847,10 @@
             phaseTimer,
             fightTimer,
             boss: { ...boss },
-            weapon: weaponCopy
+            weapon: weaponCopy,
+            electrifiedTimer,
+            stunTimer,
+            controlMultiplier: getControlMultiplier()
         };
     }
 
@@ -800,7 +866,8 @@
         shouldStart,
         configure,
         setDifficulty,
-        getDifficulty
+        getDifficulty,
+        getControlMultiplier
     };
 
     if (typeof module !== "undefined" && module.exports) {

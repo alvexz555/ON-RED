@@ -870,11 +870,9 @@ if (movementMagnitude > 1) {
 
 // Aplica o movimento. Após um impacto do Ping Pong, a influência
 // do joystick/teclado começa reduzida e retorna gradualmente em 1 segundo.
-const controlMultiplier =
-    window.ONREDPingPong &&
-    typeof window.ONREDPingPong.getControlMultiplier === "function"
-        ? window.ONREDPingPong.getControlMultiplier()
-        : 1;
+const commonPongControlMultiplier = window.ONREDPingPong && typeof window.ONREDPingPong.getControlMultiplier === "function" ? window.ONREDPingPong.getControlMultiplier() : 1;
+const bossElectricControlMultiplier = window.ONREDBossSystem && typeof window.ONREDBossSystem.getControlMultiplier === "function" ? window.ONREDBossSystem.getControlMultiplier() : 1;
+const controlMultiplier = Math.min(commonPongControlMultiplier, bossElectricControlMultiplier);
 
 const effectSpeedMultiplier = perfectTimingRuntime.effect === "speed_up"
     ? perfectTimingConfig.playerSpeedBoost
@@ -1285,7 +1283,7 @@ function draw() {
     }
 
     if (window.ONREDBossSystem && currentBossPhase !== "IDLE") {
-        window.ONREDBossSystem.draw(ctx, canvas);
+        window.ONREDBossSystem.draw(ctx, canvas, player);
     }
 
     drawPlayer();
