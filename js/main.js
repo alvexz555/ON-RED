@@ -1838,27 +1838,47 @@ function resumeONREDGame() {
 
 if (pauseButton) {
     const activatePauseFromTouch = event => {
-        const target = event.target;
-        if (!target || typeof target.closest !== "function") return;
-        if (!target.closest("#pauseButton")) return;
+        if (gameState !== GAME_STATE.PLAYING) return;
+
+        // Não confiar em event.target: com pointer capture ativo no canvas,
+        // um segundo toque pode ser retargeted para o canvas mesmo ocorrendo
+        // fisicamente sobre o botão de pausa.
+        let clientX;
+        let clientY;
+
+        if (event.changedTouches && event.changedTouches.length) {
+            clientX = event.changedTouches[0].clientX;
+            clientY = event.changedTouches[0].clientY;
+        } else if (typeof event.clientX === "number") {
+            clientX = event.clientX;
+            clientY = event.clientY;
+        } else {
+            return;
+        }
+
+        const rect = pauseButton.getBoundingClientRect();
+        const hitPauseButton =
+            clientX >= rect.left &&
+            clientX <= rect.right &&
+            clientY >= rect.top &&
+            clientY <= rect.bottom;
+
+        if (!hitPauseButton) return;
 
         event.preventDefault();
         event.stopPropagation();
         pauseONREDGame();
     };
 
-    // Captura o toque no início do gesto, inclusive em navegadores móveis
-    // que não encaminhem o pointerdown ao botão como esperado.
+    // Captura ambos os modelos de evento no documento e decide pela
+    // coordenada física do toque, não pelo elemento que recebeu o evento.
     document.addEventListener("touchstart", activatePauseFromTouch, {
         capture: true,
         passive: false
     });
+    document.addEventListener("pointerdown", activatePauseFromTouch, true);
 
-    pauseButton.addEventListener("pointerdown", activatePauseFromTouch, {
-        passive: false
-    });
-
-    // Fallback para mouse, teclado e tecnologias assistivas.
+    // Fallback para ativação por teclado e tecnologias assistivas.
     pauseButton.addEventListener("click", event => {
         event.preventDefault();
         pauseONREDGame();
