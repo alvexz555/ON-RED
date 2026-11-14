@@ -921,7 +921,13 @@ if (movementMagnitude > 1) {
 
 // Aplica o movimento. Após um impacto do Ping Pong, a influência
 // do joystick/teclado começa reduzida e retorna gradualmente em 1 segundo.
-const commonPongControlMultiplier = window.ONREDPingPong && typeof window.ONREDPingPong.getControlMultiplier === "function" ? window.ONREDPingPong.getControlMultiplier() : 1;
+// O Pong comum fica suspenso durante o Boss. Seu redutor de controle
+// também deve ser ignorado, pois o timer desse sistema não avança na luta.
+const commonPongControlMultiplier = bossPhase === "IDLE" &&
+    window.ONREDPingPong &&
+    typeof window.ONREDPingPong.getControlMultiplier === "function"
+        ? window.ONREDPingPong.getControlMultiplier()
+        : 1;
 const bossElectricControlMultiplier = window.ONREDBossSystem && typeof window.ONREDBossSystem.getControlMultiplier === "function" ? window.ONREDBossSystem.getControlMultiplier() : 1;
 const controlMultiplier = Math.min(commonPongControlMultiplier, bossElectricControlMultiplier);
 
