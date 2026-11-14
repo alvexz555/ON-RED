@@ -785,6 +785,7 @@ function triggerGameOver() {
     if (gameState === GAME_STATE.GAME_OVER) return;
 
     gameState = GAME_STATE.GAME_OVER;
+    if (pauseButton) pauseButton.style.display = "none";
 
     resetJoystick();
 
@@ -822,6 +823,7 @@ function triggerVictory() {
     }
 
     gameState = GAME_STATE.VICTORY;
+    if (pauseButton) pauseButton.style.display = "none";
 
     if (victoryScreen) {
         victoryScreen.classList.add("active");
@@ -1505,6 +1507,7 @@ window.startONREDGame = function () {
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
+    if (pauseButton) pauseButton.style.display = "flex";
 
     resetGame();
 
@@ -1538,6 +1541,7 @@ function restartONREDGame() {
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
+    if (pauseButton) pauseButton.style.display = "flex";
 
     if (pauseScreen) {
         pauseScreen.classList.remove("active");
@@ -1576,6 +1580,7 @@ function returnToMainMenu() {
 
     gameState = GAME_STATE.MENU;
     gameStarted = false;
+    if (pauseButton) pauseButton.style.display = "none";
 
     if (gameOverScreen) {
         gameOverScreen.classList.remove("active");
@@ -1631,6 +1636,7 @@ function pauseONREDGame() {
     if (gameState !== GAME_STATE.PLAYING) return false;
 
     gameState = GAME_STATE.PAUSED;
+    if (pauseButton) pauseButton.style.display = "none";
     resetJoystick();
 
     if (window.ONREDKeyboardController) {
@@ -1654,6 +1660,7 @@ function resumeONREDGame() {
     }
 
     gameState = GAME_STATE.PLAYING;
+    if (pauseButton) pauseButton.style.display = "flex";
     lastFrameTime = 0;
     return true;
 }
