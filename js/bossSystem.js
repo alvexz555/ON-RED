@@ -28,10 +28,9 @@
             interval: 7.0,
             telegraphDuration: 1.2,
             activeDuration: 0.22,
-            width: 10,
-            damage: 25,
-            count: 8,
-            angleStep: Math.PI / 8
+            width: 16,
+            radius: 180,
+            damage: 25
         },
         pong: {
             white: {
@@ -294,21 +293,13 @@
         };
     }
 
-    function fireRay(player) {
-        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : 0;
-        const offset = rayVolleyIndex * CONFIG.ray.angleStep;
-        rayVolleyIndex = (rayVolleyIndex + 1) % CONFIG.ray.count;
-        const count = Math.max(1, Math.floor(CONFIG.ray.count));
-        const rays = Array.from({ length: count }, (_, index) =>
-            baseAngle + offset + (Math.PI * 2 * index) / count
-        );
+    function fireRay() {
         weapon = {
             type: "ray",
             kind: "ray",
             state: "TELEGRAPH",
             timer: CONFIG.ray.telegraphDuration,
-            angle: baseAngle + offset,
-            rays,
+            radius: CONFIG.ray.radius,
             width: CONFIG.ray.width,
             damage: CONFIG.ray.damage,
             x: boss.x,
@@ -368,22 +359,15 @@
         if (weapon.state !== "ACTIVE") return;
 
         weapon.timer -= deltaTime;
-        const reach = Math.hypot(arena.width, arena.height) * 1.5;
-        const start = { x: boss.x, y: boss.y };
-        const rayHit = weapon.rays.some(angle => {
-            const end = {
-                x: boss.x + Math.cos(angle) * reach,
-                y: boss.y + Math.sin(angle) * reach
-            };
-            return distanceToSegment(player, start, end) <=
-                (player.radius || 0) + weapon.width / 2;
-        });
+        const distanceFromCenter = Math.hypot(player.x - weapon.x, player.y - weapon.y);
+        const ringHit = Math.abs(distanceFromCenter - weapon.radius) <=
+            (player.radius || 0) + weapon.width / 2;
 
-        if (rayHit && collision && collision.registerCollision()) {
+        if (ringHit && collision && collision.registerCollision()) {
             health.applyDamage(weapon.damage);
         }
 
-        if (weapon.timer <= 0 || rayHit) {
+        if (weapon.timer <= 0 || ringHit) {
             weapon = null;
         }
     }
@@ -422,25 +406,41 @@
             return;
         }
 
-        // Pong perdido sai da arena: descartado para o Boss voltar a atacar.
-        if (
-            arena &&
-            Number.isFinite(arena.width) &&
-            Number.isFinite(arena.height) &&
-            (weapon.x < -weapon.radius * 2 ||
-                weapon.x > arena.width + weapon.radius * 2 ||
-                weapon.y < -weapon.radius * 2 ||
-                weapon.y > arena.height + weapon.radius * 2)
-        ) {
-            weapon = null;
-        }
+        bounceProjectileFromWalls(weapon, arena);
     }
 
-    function updateElectric(deltaTime, player, health, collision) {
+    function bounceProjectileFromWalls(projectile, arena) {
+        if (!projectile || !arena) return false;
+        const minX = projectile.radius;
+        const maxX = Math.max(minX, arena.width - projectile.radius);
+        const minY = projectile.radius;
+        const maxY = Math.max(minY, arena.height - projectile.radius);
+        let bounced = false;
+
+        if (projectile.x < minX) {
+            projectile.x = minX;
+            if (projectile.vx < 0) { projectile.vx = Math.abs(projectile.vx); bounced = true; }
+        } else if (projectile.x > maxX) {
+            projectile.x = maxX;
+            if (projectile.vx > 0) { projectile.vx = -Math.abs(projectile.vx); bounced = true; }
+        }
+
+        if (projectile.y < minY) {
+            projectile.y = minY;
+            if (projectile.vy < 0) { projectile.vy = Math.abs(projectile.vy); bounced = true; }
+        } else if (projectile.y > maxY) {
+            projectile.y = maxY;
+            if (projectile.vy > 0) { projectile.vy = -Math.abs(projectile.vy); bounced = true; }
+        }
+        return bounced;
+    }
+
+    function updateElectric(deltaTime, player, health, collision, arena) {
         weapon.timer -= deltaTime;
         for (const projectile of weapon.projectiles) {
             projectile.x += projectile.vx * deltaTime;
             projectile.y += projectile.vy * deltaTime;
+            bounceProjectileFromWalls(projectile, arena);
 
             if (
                 projectile.state === "ACTIVE" &&
@@ -482,7 +482,7 @@
         } else if (weapon.type === "white") {
             updateWhite(deltaTime, player, health, collision, arena);
         } else if (weapon.type === "electric") {
-            updateElectric(deltaTime, player, health, collision);
+            updateElectric(deltaTime, player, health, collision, arena);
         }
 
         const bossBody = { x: boss.x, y: boss.y, state: "ACTIVE", kind: "boss" };
@@ -554,23 +554,16 @@
         return { damage: amount, hp: boss.hp, maxHP: boss.maxHP, defeated };
     }
 
-    function drawWeapon(ctx, arena) {
+    function drawWeapon(ctx) {
         if (weapon.type === "ray") {
-            const reach = Math.hypot(arena.width, arena.height) * 1.5;
             ctx.save();
-            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.38 : 1;
+            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.38 : 0.9;
             ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = weapon.state === "TELEGRAPH" ? weapon.width * 0.7 : weapon.width;
+            ctx.lineWidth = weapon.width;
             ctx.shadowColor = "#168BFF";
-            ctx.shadowBlur = 12;
+            ctx.shadowBlur = 16;
             ctx.beginPath();
-            for (const angle of weapon.rays) {
-                ctx.moveTo(boss.x, boss.y);
-                ctx.lineTo(
-                    boss.x + Math.cos(angle) * reach,
-                    boss.y + Math.sin(angle) * reach
-                );
-            }
+            ctx.arc(weapon.x, weapon.y, weapon.radius, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
             return;
@@ -591,6 +584,7 @@
 
         if (Array.isArray(weapon.projectiles)) {
             for (const projectile of weapon.projectiles) {
+                if (projectile.state !== "ACTIVE") continue;
                 ctx.save();
                 ctx.shadowColor = "#8CEBFF";
                 ctx.shadowBlur = 18;
