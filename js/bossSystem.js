@@ -287,7 +287,7 @@
             vy: Math.sin(angle) * speed,
             radius: CONFIG.pong.white.radius,
             damage: CONFIG.pong.white.damage,
-            rebounceSpeed: CONFIG.pong.white.rebounceSpeed,
+            reboundSpeed: CONFIG.pong.white.reboundSpeed,
             windowDistance: CONFIG.pong.white.windowDistance,
             consumed: false
         };
@@ -378,13 +378,14 @@
             const dx = boss.x - weapon.x;
             const dy = boss.y - weapon.y;
             const distance = Math.hypot(dx, dy) || 1;
-            const speed = weapon.rebounceSpeed || CONFIG.pong.white.rebounceSpeed;
+            const speed = weapon.reboundSpeed || CONFIG.pong.white.reboundSpeed;
             weapon.vx = (dx / distance) * speed;
             weapon.vy = (dy / distance) * speed;
             weapon.x += weapon.vx * deltaTime;
             weapon.y += weapon.vy * deltaTime;
+            const distanceAfterMove = Math.hypot(boss.x - weapon.x, boss.y - weapon.y);
 
-            if (distance <= boss.size / 2 + weapon.radius) {
+            if (distanceAfterMove <= boss.size / 2 + weapon.radius) {
                 const impact = applyBossDamage(CONFIG.damagePerParry);
                 weapon = null;
                 return impact;
