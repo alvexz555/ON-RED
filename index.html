@@ -27,6 +27,35 @@
     <!-- GAME CANVAS -->
     <canvas id="gameCanvas"></canvas>
 
+    <!-- PAUSE CONTROL -->
+    <button
+        type="button"
+        id="pauseButton"
+        class="pause-button"
+        aria-label="Pausar partida"
+        title="Pausar (P ou Esc)"
+    >
+        <span></span><span></span>
+    </button>
+
+    <!-- PAUSE SCREEN -->
+    <section
+        id="pauseScreen"
+        class="pause-screen"
+        aria-hidden="true"
+    >
+        <div class="pause-content">
+            <div class="pause-logo">ON <span>RED</span></div>
+            <span class="pause-label">PARTIDA PAUSADA</span>
+            <div class="pause-divider"></div>
+            <button type="button" id="resumeButton" class="pause-action pause-resume">CONTINUAR</button>
+            <button type="button" id="pauseRestartButton" class="pause-action">REINICIAR</button>
+            <button type="button" id="pauseMenuButton" class="pause-action pause-menu">MENU PRINCIPAL</button>
+            <span class="pause-hint">P / ESC PARA CONTINUAR</span>
+        </div>
+    </section>
+
+
     <!-- MAIN MENU -->
     <main id="mainMenu" class="main-menu">
 
