@@ -140,6 +140,8 @@
         defeated: false
     };
     let weapon = null;
+    let electricWeapon = null;
+    let electricTrails = [];
     let whiteTimer = CONFIG.pong.white.firstIn;
     let rayTimer = CONFIG.ray.firstIn;
     let electricTimer = CONFIG.pong.electric.interval;
@@ -148,6 +150,7 @@
     // O padrão só avança quando um ataque de área é efetivamente disparado.
     let nextAreaPattern = "single";
     let playerMotion = { x: null, y: null, vx: 0, vy: 0 };
+    let activeArena = null;
     let electrifiedTimer = 0;
     let stunTimer = 0;
     let nextStunIn = 0;
@@ -177,12 +180,15 @@
             defeated: false
         };
         weapon = null;
+        electricWeapon = null;
+        electricTrails = [];
         whiteTimer = CONFIG.pong.white.firstIn;
         rayTimer = CONFIG.ray.firstIn;
         electricTimer = CONFIG.pong.electric.interval;
         rayVolleyIndex = 0;
         nextAreaPattern = "single";
         playerMotion = { x: null, y: null, vx: 0, vy: 0 };
+        activeArena = null;
         electrifiedTimer = 0;
         stunTimer = 0;
         nextStunIn = 0;
@@ -381,10 +387,20 @@
     }
 
     function fireElectric(player) {
-        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
+        const aimX = player ? clamp(player.x + playerMotion.vx * 0.18, CONFIG.pong.white.radius, arenaWidth()) : boss.x + 1;
+        const aimY = player ? clamp(player.y + playerMotion.vy * 0.18, CONFIG.pong.white.radius, arenaHeight()) : boss.y;
+        const baseAngle = Math.atan2(aimY - boss.y, aimX - boss.x);
+        const perpendicularX = -Math.sin(baseAngle);
+        const perpendicularY = Math.cos(baseAngle);
+        const flankOffset = 46;
         const projectiles = [];
+
         for (let i = 0; i < CONFIG.pong.electric.projectiles; i++) {
-            const angle = baseAngle + (i - 0.5) * CONFIG.pong.electric.angleStep * 2;
+            // Os disparos fecham os dois lados da posição prevista do jogador.
+            const side = i % 2 === 0 ? -1 : 1;
+            const targetX = aimX + perpendicularX * flankOffset * side;
+            const targetY = aimY + perpendicularY * flankOffset * side;
+            const angle = Math.atan2(targetY - boss.y, targetX - boss.x);
             projectiles.push({
                 type: "electric",
                 kind: "electric",
@@ -396,15 +412,27 @@
                 radius: CONFIG.pong.white.radius,
                 damage: CONFIG.pong.electric.damage,
                 impactCount: 0,
-                electric: true
+                electric: true,
+                targetX,
+                targetY
             });
         }
-        weapon = {
+
+        electricWeapon = {
             type: "electric",
             state: "ACTIVE",
             timer: CONFIG.pong.electric.interval,
             projectiles
         };
+        electricTimer = CONFIG.pong.electric.interval;
+    }
+
+    function arenaWidth() {
+        return activeArena ? activeArena.width : CONFIG.bossSize * 3;
+    }
+
+    function arenaHeight() {
+        return activeArena ? activeArena.height : CONFIG.bossSize * 3;
     }
 
     function distanceToSegment(point, start, end) {
@@ -532,8 +560,13 @@
                 const multiplier = projectile.electric ? CONFIG.pong.electric.wallSpeedMultiplier : 1.08;
                 const maxSpeed = projectile.electric ? CONFIG.pong.electric.maxSpeed : 1200;
                 const nextSpeed = Math.min(speed * multiplier, maxSpeed);
-                projectile.vx = projectile.vx / speed * nextSpeed;
-                projectile.vy = projectile.vy / speed * nextSpeed;
+                let angle = Math.atan2(projectile.vy, projectile.vx);
+                if (projectile.electric) {
+                    // Cada ricochete elétrico altera um pouco o ângulo, além de acelerar.
+                    angle += projectile.impactCount % 2 === 0 ? -0.14 : 0.14;
+                }
+                projectile.vx = Math.cos(angle) * nextSpeed;
+                projectile.vy = Math.sin(angle) * nextSpeed;
             }
         }
         return bounced;
@@ -564,51 +597,90 @@
     function getControlMultiplier() { return stunTimer > 0 ? 0 : 1; }
 
     function updateElectric(deltaTime, player, health, collision, arena) {
-        weapon.timer -= deltaTime;
-        for (const projectile of weapon.projectiles) {
-            projectile.x += projectile.vx * deltaTime;
-            projectile.y += projectile.vy * deltaTime;
-            bounceProjectileFromWalls(projectile, arena);
+        if (electricWeapon) {
+            electricWeapon.timer -= deltaTime;
+            for (const projectile of electricWeapon.projectiles) {
+                if (projectile.state !== "ACTIVE") continue;
+                const previousX = projectile.x;
+                const previousY = projectile.y;
+                projectile.x += projectile.vx * deltaTime;
+                projectile.y += projectile.vy * deltaTime;
 
-            if (
-                projectile.state === "ACTIVE" &&
-                collision &&
-                collision.checkCollisions(player, [projectile], projectile.radius * 2)
-            ) {
-                projectile.state = "CONSUMED";
-                electrifyPlayer();
-                if (collision.registerCollision()) health.applyDamage(projectile.damage);
+                if (bounceProjectileFromWalls(projectile, arena)) {
+                    electricTrails.push({
+                        x1: previousX,
+                        y1: previousY,
+                        x2: projectile.x,
+                        y2: projectile.y,
+                        radius: 8,
+                        damage: 12,
+                        timer: 1.15,
+                        consumed: false
+                    });
+                }
+
+                if (
+                    collision &&
+                    collision.checkCollisions(player, [projectile], projectile.radius * 2)
+                ) {
+                    projectile.state = "CONSUMED";
+                    electrifyPlayer();
+                    if (collision.registerCollision()) health.applyDamage(projectile.damage);
+                }
+            }
+
+            if (electricWeapon.timer <= 0) {
+                electricWeapon = null;
             }
         }
 
-        if (weapon.timer <= 0) {
-            weapon = null;
+        for (const trail of electricTrails) {
+            trail.timer = Math.max(0, trail.timer - deltaTime);
+            if (trail.consumed || trail.timer <= 0) continue;
+            const distance = distanceToSegment(
+                player,
+                { x: trail.x1, y: trail.y1 },
+                { x: trail.x2, y: trail.y2 }
+            );
+            if (distance <= (player.radius || 0) + trail.radius) {
+                trail.consumed = true;
+                if (collision && collision.registerCollision()) {
+                    health.applyDamage(trail.damage);
+                }
+            }
         }
+        electricTrails = electricTrails.filter(trail => trail.timer > 0);
     }
 
     function updateCombat(deltaTime, arena, player, health, collision) {
         if (phase !== "FIGHT") return;
 
-        if (weapon && weapon.state === "CONSUMED") {
-            weapon = null;
-        }
+        if (weapon && weapon.state === "CONSUMED") weapon = null;
+
+        // Os relógios avançam em paralelo: o Pong elétrico pode coexistir
+        // com a explosão A/C ou com o Pong branco.
+        whiteTimer -= deltaTime;
+        rayTimer -= deltaTime;
+        electricTimer -= deltaTime;
 
         if (!weapon) {
-            whiteTimer -= deltaTime;
-            rayTimer -= deltaTime;
-            electricTimer -= deltaTime;
-
-            if (whiteTimer <= 0) { whiteTimer = CONFIG.pong.white.interval; fireWhite(player); return; }
-            if (rayTimer <= 0) { rayTimer = CONFIG.ray.interval; fireRay(player, arena); return; }
-            if (electricTimer <= 0) { electricTimer = CONFIG.pong.electric.interval; fireElectric(player); return; }
-            return;
+            if (whiteTimer <= 0) {
+                whiteTimer = CONFIG.pong.white.interval;
+                fireWhite(player);
+            } else if (rayTimer <= 0) {
+                rayTimer = CONFIG.ray.interval;
+                fireRay(player, arena);
+            }
         }
 
-        if (weapon.type === "ray") {
+        if (weapon && weapon.type === "ray") {
             updateRay(deltaTime, arena, player, health, collision);
-        } else if (weapon.type === "white") {
+        } else if (weapon && weapon.type === "white") {
             updateWhite(deltaTime, player, health, collision, arena);
-        } else if (weapon.type === "electric") {
+        }
+
+        if (!electricWeapon && electricTimer <= 0) fireElectric(player);
+        if (electricWeapon || electricTrails.length) {
             updateElectric(deltaTime, player, health, collision, arena);
         }
 
@@ -642,6 +714,7 @@
         if (!Number.isFinite(deltaTime) || deltaTime < 0) return getState();
         if (!arena || !Number.isFinite(arena.width) || !Number.isFinite(arena.height)) return getState();
         if (!player) return getState();
+        activeArena = arena;
 
         if (phase === "IDLE") return getState();
 
@@ -694,6 +767,8 @@
         boss.hp = Math.max(0, boss.hp - amount);
         const defeated = boss.hp <= 0;
         if (defeated) {
+            electricWeapon = null;
+            electricTrails = [];
             phase = "DEFEATED";
             phaseTimer = CONFIG.defeatDuration;
             boss.defeated = true;
@@ -703,7 +778,7 @@
     }
 
     function drawWeapon(ctx) {
-        if (weapon.type === "ray") {
+        if (weapon && weapon.type === "ray") {
             for (const blast of weapon.blasts || []) {
                 if (blast.state === "DONE" || blast.state === "WAITING") continue;
                 ctx.save();
@@ -719,10 +794,9 @@
                 if (active) ctx.fill(); else ctx.stroke();
                 ctx.restore();
             }
-            return;
         }
 
-        if (weapon.type === "white") {
+        if (weapon && weapon.type === "white") {
             ctx.save();
             ctx.shadowColor = weapon.electric ? "#35CFFF" : "#FFFFFF";
             ctx.shadowBlur = weapon.electric ? 26 : 18;
@@ -737,13 +811,28 @@
                 ctx.arc(weapon.x, weapon.y, weapon.radius + 7, 0, Math.PI * 2);
                 ctx.stroke();
             }
-            ctx.shadowBlur = 0;
             ctx.restore();
-            return;
         }
 
-        if (Array.isArray(weapon.projectiles)) {
-            for (const projectile of weapon.projectiles) {
+        // Rastro de ricochete: zona elétrica temporária que permanece na arena.
+        for (const trail of electricTrails) {
+            if (trail.consumed || trail.timer <= 0) continue;
+            ctx.save();
+            ctx.globalAlpha = Math.min(0.82, trail.timer / 1.15);
+            ctx.strokeStyle = "#35CFFF";
+            ctx.lineWidth = trail.radius * 2;
+            ctx.lineCap = "round";
+            ctx.shadowColor = "#168BFF";
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.moveTo(trail.x1, trail.y1);
+            ctx.lineTo(trail.x2, trail.y2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        if (electricWeapon && Array.isArray(electricWeapon.projectiles)) {
+            for (const projectile of electricWeapon.projectiles) {
                 if (projectile.state !== "ACTIVE") continue;
                 ctx.save();
                 ctx.shadowColor = "#8CEBFF";
@@ -757,7 +846,6 @@
                 ctx.beginPath();
                 ctx.arc(projectile.x, projectile.y, projectile.radius + 7, 0, Math.PI * 2);
                 ctx.stroke();
-                ctx.shadowBlur = 0;
                 ctx.restore();
             }
         }
@@ -780,7 +868,7 @@
         ctx.strokeRect(boss.x - boss.size / 2, boss.y - boss.size / 2, boss.size, boss.size);
         ctx.restore();
 
-        if (weapon) drawWeapon(ctx, canvas);
+        if (weapon || electricWeapon || electricTrails.length) drawWeapon(ctx, canvas);
         if (electrifiedTimer > 0 && player) {
             const pulse = 0.78 + Math.sin(Date.now() / 95) * 0.18;
             ctx.save();
@@ -836,18 +924,23 @@
     }
 
     function getState() {
-        const weaponCopy = weapon
+        const cloneWeapon = value => value
             ? {
-                ...weapon,
-                projectiles: weapon.projectiles ? weapon.projectiles.map(p => ({ ...p })) : null
+                ...value,
+                projectiles: value.projectiles ? value.projectiles.map(p => ({ ...p })) : null,
+                blasts: value.blasts ? value.blasts.map(blast => ({ ...blast })) : null
             }
             : null;
+        const weaponCopy = cloneWeapon(weapon);
+        const electricWeaponCopy = cloneWeapon(electricWeapon);
         return {
             phase,
             phaseTimer,
             fightTimer,
             boss: { ...boss },
-            weapon: weaponCopy,
+            weapon: weaponCopy || electricWeaponCopy,
+            electricWeapon: electricWeaponCopy,
+            electricTrails: electricTrails.map(trail => ({ ...trail })),
             electrifiedTimer,
             stunTimer,
             controlMultiplier: getControlMultiplier()
