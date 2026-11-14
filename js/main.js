@@ -578,6 +578,23 @@ function resizeCanvas() {
 
 function resetJoystick() {
 
+    // Libera o dedo capturado pelo canvas antes de zerar o controle.
+    // Isso impede que um toque iniciado no joystick continue preso
+    // ao jogo quando a pausa é aberta com outro dedo.
+    const activePointerId = joystick.pointerId;
+
+    if (
+        activePointerId !== null &&
+        typeof canvas.hasPointerCapture === "function" &&
+        canvas.hasPointerCapture(activePointerId)
+    ) {
+        try {
+            canvas.releasePointerCapture(activePointerId);
+        } catch (error) {
+            // O navegador pode já ter liberado a captura durante pointercancel.
+        }
+    }
+
     joystick.x = 0;
     joystick.y = 0;
 
@@ -1775,13 +1792,17 @@ function returnToMainMenu() {
 function pauseONREDGame() {
     if (gameState !== GAME_STATE.PLAYING) return false;
 
+    // Trava o estado primeiro: nenhuma atualização de movimento pode
+    // acontecer depois que a pausa for solicitada.
     gameState = GAME_STATE.PAUSED;
-    if (pauseButton) pauseButton.style.display = "none";
-    resetJoystick();
 
+    // Zera e solta todas as entradas que poderiam manter o personagem andando.
+    resetJoystick();
     if (window.ONREDKeyboardController) {
         window.ONREDKeyboardController.reset();
     }
+
+    if (pauseButton) pauseButton.style.display = "none";
 
     if (pauseScreen) {
         pauseScreen.classList.add("active");
@@ -1793,6 +1814,12 @@ function pauseONREDGame() {
 
 function resumeONREDGame() {
     if (gameState !== GAME_STATE.PAUSED) return false;
+
+    // Retoma sem reaproveitar o toque que estava pressionado antes da pausa.
+    resetJoystick();
+    if (window.ONREDKeyboardController) {
+        window.ONREDKeyboardController.reset();
+    }
 
     if (pauseScreen) {
         pauseScreen.classList.remove("active");
