@@ -47,12 +47,12 @@
     // DESENHAR VIDAS
     // ==========================================
 
-    function drawLives(ctx, state, x, y) {
+    function drawLives(ctx, state, x, y, spacing = CONFIG.lifeSpacing, radius = CONFIG.lifeRadius) {
 
         for (let i = 0; i < state.maxLives; i++) {
 
             const lifeX =
-                x + i * CONFIG.lifeSpacing;
+                x + i * spacing;
 
             const filled = i < state.lives;
 
@@ -61,7 +61,7 @@
             ctx.arc(
                 lifeX,
                 y,
-                CONFIG.lifeRadius,
+                radius,
                 0,
                 Math.PI * 2
             );
@@ -83,9 +83,9 @@
                 ctx.beginPath();
 
                 ctx.arc(
-                    lifeX - CONFIG.lifeRadius * 0.3,
-                    y - CONFIG.lifeRadius * 0.3,
-                    CONFIG.lifeRadius * 0.3,
+                    lifeX - radius * 0.3,
+                    y - radius * 0.3,
+                    radius * 0.3,
                     0,
                     Math.PI * 2
                 );
@@ -264,33 +264,18 @@
 
         ctx.save();
 
-        // INDICADORES DE VIDA
-        // Sem o rótulo "LIVES", os ícones ocupam o espaço livre à esquerda.
-
+        // HP e vidas na mesma linha, aproveitando o espaço horizontal.
         ctx.font = "bold 10px Arial";
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
 
-        drawLives(
-            ctx,
-            state,
-            x,
-            y
-        );
+        ctx.fillStyle = CONFIG.colors.text;
+        ctx.fillText("HP", x, y + 25);
 
-        // TEXTO HP
-
-        ctx.fillStyle =
-            CONFIG.colors.text;
-
-        ctx.fillText(
-            "HP",
-            x,
-            y + 25
-        );
+        // Ícones compactos entre o rótulo HP e o percentual.
+        drawLives(ctx, state, x + 27, y + 25, 16, 5);
 
         ctx.textAlign = "right";
-
         ctx.fillText(
             `${Math.ceil(state.hp)}%`,
             x + CONFIG.barWidth,
