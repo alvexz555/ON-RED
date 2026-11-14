@@ -347,3 +347,24 @@ test("TESTE 06: coleta com HP cheio e 5 vidas concede 1000 pontos", () => {
     assert.equal(after.hp, 100);
     assert.equal(merge.getOrbs().length, 1);
 });
+
+test("MERGE spawn interval can be slowed during the Boss fight without disabling collection", () => {
+    const { health, merge } = startMatch();
+    const before = merge.getOrbs().length;
+    const farPlayer = playerAt(0, 0);
+
+    merge.update(11.9, farPlayer, ARENA, health, { spawnIntervalMultiplier: 2 });
+    assert.equal(merge.getOrbs().length, before);
+
+    merge.update(0.2, farPlayer, ARENA, health, { spawnIntervalMultiplier: 2 });
+    assert.equal(merge.getOrbs().length, before + 1);
+
+    const orb = merge.getOrbs()[0];
+    health.applyDamage(50);
+    const results = merge.update(0, playerAt(orb.x, orb.y), ARENA, health, {
+        spawnIntervalMultiplier: 2
+    });
+    assert.equal(results.length, 1);
+    assert.equal(results[0].type, "heal");
+    assert.equal(health.getState().hp, 75);
+});
