@@ -38,7 +38,7 @@
             white: {
                 firstIn: 2.0,
                 interval: 3.4,
-                speed: 250,
+                speed: 380,
                 radius: 12,
                 damage: 25,
                 reboundSpeed: 420,
@@ -47,7 +47,7 @@
             electric: {
                 interval: 6.8,
                 projectiles: 2,
-                speed: 300,
+                speed: 380,
                 angleStep: Math.PI / 20,
                 damage: 25
             }
@@ -293,7 +293,9 @@
             damage: CONFIG.pong.white.damage,
             reboundSpeed: CONFIG.pong.white.reboundSpeed,
             windowDistance: CONFIG.pong.white.windowDistance,
-            consumed: false
+            consumed: false,
+            impactCount: 0,
+            electric: false
         };
     }
 
@@ -333,7 +335,9 @@
                 vx: Math.cos(angle) * CONFIG.pong.electric.speed,
                 vy: Math.sin(angle) * CONFIG.pong.electric.speed,
                 radius: CONFIG.pong.white.radius,
-                damage: CONFIG.pong.electric.damage
+                damage: CONFIG.pong.electric.damage,
+                impactCount: 0,
+                electric: true
             });
         }
         weapon = {
@@ -440,6 +444,19 @@
         } else if (projectile.y > maxY) {
             projectile.y = maxY;
             if (projectile.vy > 0) { projectile.vy = -Math.abs(projectile.vy); bounced = true; }
+        }
+        if (bounced) {
+            projectile.impactCount = (projectile.impactCount || 0) + 1;
+            const speed = Math.hypot(projectile.vx, projectile.vy);
+            if (!projectile.electric && projectile.impactCount >= 20) {
+                projectile.electric = true;
+                projectile.impactCount = 20;
+            }
+            if (speed > 0 && projectile.impactCount <= 20) {
+                const nextSpeed = Math.min(speed * 1.08, 1200);
+                projectile.vx = projectile.vx / speed * nextSpeed;
+                projectile.vy = projectile.vy / speed * nextSpeed;
+            }
         }
         return bounced;
     }
@@ -585,12 +602,19 @@
 
         if (weapon.type === "white") {
             ctx.save();
-            ctx.shadowColor = "#FFFFFF";
-            ctx.shadowBlur = 18;
+            ctx.shadowColor = weapon.electric ? "#35CFFF" : "#FFFFFF";
+            ctx.shadowBlur = weapon.electric ? 26 : 18;
             ctx.beginPath();
             ctx.arc(weapon.x, weapon.y, weapon.radius, 0, Math.PI * 2);
             ctx.fillStyle = "#FFFFFF";
             ctx.fill();
+            if (weapon.electric) {
+                ctx.strokeStyle = "#35CFFF";
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(weapon.x, weapon.y, weapon.radius + 7, 0, Math.PI * 2);
+                ctx.stroke();
+            }
             ctx.shadowBlur = 0;
             ctx.restore();
             return;
@@ -601,11 +625,16 @@
                 if (projectile.state !== "ACTIVE") continue;
                 ctx.save();
                 ctx.shadowColor = "#8CEBFF";
-                ctx.shadowBlur = 18;
+                ctx.shadowBlur = 24;
                 ctx.beginPath();
                 ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
                 ctx.fillStyle = "#FFFFFF";
                 ctx.fill();
+                ctx.strokeStyle = "#35CFFF";
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, projectile.radius + 7, 0, Math.PI * 2);
+                ctx.stroke();
                 ctx.shadowBlur = 0;
                 ctx.restore();
             }
