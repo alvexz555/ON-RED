@@ -1572,7 +1572,7 @@ function restartONREDGame() {
 
 function returnToMainMenu() {
 
-    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY) return;
+    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY && gameState !== GAME_STATE.PAUSED) return;
 
     gameState = GAME_STATE.MENU;
     gameStarted = false;
