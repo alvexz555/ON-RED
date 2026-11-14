@@ -295,20 +295,22 @@
     }
 
     function fireRay(player) {
-        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
-        const offset = rayVolleyIndex % 2 === 0 ? 0 : CONFIG.ray.angleStep;
-        rayVolleyIndex += 1;
-        if (rayVolleyIndex >= CONFIG.ray.count) rayVolleyIndex = 0;
+        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : 0;
+        const offset = rayVolleyIndex * CONFIG.ray.angleStep;
+        rayVolleyIndex = (rayVolleyIndex + 1) % CONFIG.ray.count;
+        const count = Math.max(1, Math.floor(CONFIG.ray.count));
+        const rays = Array.from({ length: count }, (_, index) =>
+            baseAngle + offset + (Math.PI * 2 * index) / count
+        );
         weapon = {
             type: "ray",
             kind: "ray",
             state: "TELEGRAPH",
             timer: CONFIG.ray.telegraphDuration,
             angle: baseAngle + offset,
+            rays,
             width: CONFIG.ray.width,
             damage: CONFIG.ray.damage,
-            vx: 0,
-            vy: 0,
             x: boss.x,
             y: boss.y
         };
@@ -339,39 +341,50 @@
         };
     }
 
-    function updateRay(deltaTime, player, health, collision) {
+    function distanceToSegment(point, start, end) {
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const lengthSquared = dx * dx + dy * dy || 1;
+        const projection = clamp(
+            ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared,
+            0,
+            1
+        );
+        const closestX = start.x + projection * dx;
+        const closestY = start.y + projection * dy;
+        return Math.hypot(point.x - closestX, point.y - closestY);
+    }
+
+    function updateRay(deltaTime, arena, player, health, collision) {
         if (weapon.state === "TELEGRAPH") {
             weapon.timer -= deltaTime;
             if (weapon.timer <= 0) {
                 weapon.state = "ACTIVE";
                 weapon.timer = CONFIG.ray.activeDuration;
-                weapon.vx = Math.cos(weapon.angle) * RAY_SPEED;
-                weapon.vy = Math.sin(weapon.angle) * RAY_SPEED;
-                weapon.x = boss.x + Math.cos(weapon.angle) * boss.size / 2;
-                weapon.y = boss.y + Math.sin(weapon.angle) * boss.size / 2;
             }
             return;
         }
 
-        if (weapon.state === "ACTIVE") {
-            weapon.timer -= deltaTime;
-            weapon.x += weapon.vx * deltaTime;
-            weapon.y += weapon.vy * deltaTime;
+        if (weapon.state !== "ACTIVE") return;
 
-            let rayHit = false;
-            if (collision && collision.checkCollisions(player, [weapon], weapon.width)) {
-                rayHit = true;
-            }
+        weapon.timer -= deltaTime;
+        const reach = Math.hypot(arena.width, arena.height) * 1.5;
+        const start = { x: boss.x, y: boss.y };
+        const rayHit = weapon.rays.some(angle => {
+            const end = {
+                x: boss.x + Math.cos(angle) * reach,
+                y: boss.y + Math.sin(angle) * reach
+            };
+            return distanceToSegment(player, start, end) <=
+                (player.radius || 0) + weapon.width / 2;
+        });
 
-            if (weapon.timer <= 0 || rayHit) {
-                weapon = null;
-            }
+        if (rayHit && collision && collision.registerCollision()) {
+            health.applyDamage(weapon.damage);
+        }
 
-            if (rayHit) {
-                if (collision.registerCollision()) {
-                    health.applyDamage(CONFIG.ray.damage);
-                }
-            }
+        if (weapon.timer <= 0 || rayHit) {
+            weapon = null;
         }
     }
 
@@ -465,7 +478,7 @@
         }
 
         if (weapon.type === "ray") {
-            updateRay(deltaTime, player, health, collision);
+            updateRay(deltaTime, arena, player, health, collision);
         } else if (weapon.type === "white") {
             updateWhite(deltaTime, player, health, collision, arena);
         } else if (weapon.type === "electric") {
@@ -541,22 +554,23 @@
         return { damage: amount, hp: boss.hp, maxHP: boss.maxHP, defeated };
     }
 
-    function drawWeapon(ctx) {
+    function drawWeapon(ctx, arena) {
         if (weapon.type === "ray") {
-            const startX = weapon.x + Math.cos(weapon.angle) * boss.size / 2;
-            const startY = weapon.y + Math.sin(weapon.angle) * boss.size / 2;
-            const endX = startX + Math.cos(weapon.angle) * 400;
-            const endY = startY + Math.sin(weapon.angle) * 400;
-
+            const reach = Math.hypot(arena.width, arena.height) * 1.5;
             ctx.save();
-            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.45 : 1;
+            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.38 : 1;
             ctx.strokeStyle = "#FFFFFF";
-            ctx.lineWidth = weapon.state === "TELEGRAPH" ? 8 : weapon.width;
+            ctx.lineWidth = weapon.state === "TELEGRAPH" ? weapon.width * 0.7 : weapon.width;
             ctx.shadowColor = "#168BFF";
             ctx.shadowBlur = 12;
             ctx.beginPath();
-            ctx.moveTo(startX, startY);
-            ctx.lineTo(endX, endY);
+            for (const angle of weapon.rays) {
+                ctx.moveTo(boss.x, boss.y);
+                ctx.lineTo(
+                    boss.x + Math.cos(angle) * reach,
+                    boss.y + Math.sin(angle) * reach
+                );
+            }
             ctx.stroke();
             ctx.restore();
             return;
@@ -607,7 +621,7 @@
         ctx.strokeRect(boss.x - boss.size / 2, boss.y - boss.size / 2, boss.size, boss.size);
         ctx.restore();
 
-        if (weapon) drawWeapon(ctx);
+        if (weapon) drawWeapon(ctx, canvas);
     }
 
     function drawHUD(ctx, canvas) {
