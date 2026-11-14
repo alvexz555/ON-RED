@@ -549,7 +549,7 @@
 
     function tryParry(player) {
         if (phase !== "FIGHT") return { applied: false, reason: "phase" };
-        if (!weapon || weapon.type !== "white" || weapon.state !== "ACTIVE") {
+        if (!weapon || weapon.type !== "white" || weapon.state !== "ACTIVE" || weapon.electric) {
             return { applied: false, reason: "no_target" };
         }
 
