@@ -41,6 +41,11 @@ const victoryScreen = document.getElementById("victoryScreen");
 const victoryRetryButton = document.getElementById("victoryRetryButton");
 const victoryMenuButton = document.getElementById("victoryMenuButton");
 const victoryDifficulty = document.getElementById("victoryDifficulty");
+const pauseButton = document.getElementById("pauseButton");
+const pauseScreen = document.getElementById("pauseScreen");
+const resumeButton = document.getElementById("resumeButton");
+const pauseRestartButton = document.getElementById("pauseRestartButton");
+const pauseMenuButton = document.getElementById("pauseMenuButton");
 
 // Dificuldade da Fase 1 selecionada após vencer o Boss (padrão NORMAL).
 let bossDifficulty = "NORMAL";
@@ -117,6 +122,7 @@ function refreshBestScoreDisplays() {
 const GAME_STATE = {
     MENU: "MENU",
     PLAYING: "PLAYING",
+    PAUSED: "PAUSED",
     GAME_OVER: "GAME_OVER",
     VICTORY: "VICTORY"
 };
@@ -779,6 +785,7 @@ function triggerGameOver() {
     if (gameState === GAME_STATE.GAME_OVER) return;
 
     gameState = GAME_STATE.GAME_OVER;
+    if (pauseButton) pauseButton.style.display = "none";
 
     resetJoystick();
 
@@ -816,6 +823,7 @@ function triggerVictory() {
     }
 
     gameState = GAME_STATE.VICTORY;
+    if (pauseButton) pauseButton.style.display = "none";
 
     if (victoryScreen) {
         victoryScreen.classList.add("active");
@@ -1499,6 +1507,7 @@ window.startONREDGame = function () {
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
+    if (pauseButton) pauseButton.style.display = "flex";
 
     resetGame();
 
@@ -1528,10 +1537,16 @@ document.addEventListener("onred:start", function () {
 
 function restartONREDGame() {
 
-    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY) return;
+    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY && gameState !== GAME_STATE.PAUSED) return;
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
+    if (pauseButton) pauseButton.style.display = "flex";
+
+    if (pauseScreen) {
+        pauseScreen.classList.remove("active");
+        pauseScreen.setAttribute("aria-hidden", "true");
+    }
 
     if (gameOverScreen) {
         gameOverScreen.classList.remove("active");
@@ -1561,10 +1576,11 @@ function restartONREDGame() {
 
 function returnToMainMenu() {
 
-    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY) return;
+    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY && gameState !== GAME_STATE.PAUSED) return;
 
     gameState = GAME_STATE.MENU;
     gameStarted = false;
+    if (pauseButton) pauseButton.style.display = "none";
 
     if (gameOverScreen) {
         gameOverScreen.classList.remove("active");
@@ -1574,6 +1590,11 @@ function returnToMainMenu() {
     if (victoryScreen) {
         victoryScreen.classList.remove("active");
         victoryScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (pauseScreen) {
+        pauseScreen.classList.remove("active");
+        pauseScreen.setAttribute("aria-hidden", "true");
     }
 
     resetJoystick();
@@ -1608,8 +1629,68 @@ function returnToMainMenu() {
 }
 
 // ==========================================
+ // PAUSE SYSTEM
+ // ==========================================
+
+function pauseONREDGame() {
+    if (gameState !== GAME_STATE.PLAYING) return false;
+
+    gameState = GAME_STATE.PAUSED;
+    if (pauseButton) pauseButton.style.display = "none";
+    resetJoystick();
+
+    if (window.ONREDKeyboardController) {
+        window.ONREDKeyboardController.reset();
+    }
+
+    if (pauseScreen) {
+        pauseScreen.classList.add("active");
+        pauseScreen.setAttribute("aria-hidden", "false");
+    }
+
+    return true;
+}
+
+function resumeONREDGame() {
+    if (gameState !== GAME_STATE.PAUSED) return false;
+
+    if (pauseScreen) {
+        pauseScreen.classList.remove("active");
+        pauseScreen.setAttribute("aria-hidden", "true");
+    }
+
+    gameState = GAME_STATE.PLAYING;
+    if (pauseButton) pauseButton.style.display = "flex";
+    lastFrameTime = 0;
+    return true;
+}
+
+// ==========================================
 // EVENTOS DOS BOTÕES
 // ==========================================
+
+if (pauseButton) pauseButton.addEventListener("click", pauseONREDGame);
+if (resumeButton) resumeButton.addEventListener("click", resumeONREDGame);
+if (pauseRestartButton) pauseRestartButton.addEventListener("click", restartONREDGame);
+if (pauseMenuButton) pauseMenuButton.addEventListener("click", returnToMainMenu);
+
+document.addEventListener("keydown", event => {
+    if ((event.code === "Escape" || event.code === "KeyP") && !event.repeat) {
+        if (gameState === GAME_STATE.PLAYING) {
+            event.preventDefault();
+            pauseONREDGame();
+        } else if (gameState === GAME_STATE.PAUSED) {
+            event.preventDefault();
+            resumeONREDGame();
+        }
+    }
+});
+
+document.addEventListener("visibilitychange", () => {
+    if (document.hidden && gameState === GAME_STATE.PLAYING) {
+        pauseONREDGame();
+    }
+});
 
 if (retryButton) {
     retryButton.addEventListener("click", restartONREDGame);
@@ -1680,6 +1761,8 @@ function gameLoop(timestamp) {
     if (gameState === GAME_STATE.PLAYING) {
         update(deltaTime, elapsedTime);
         draw();
+    } else if (gameState === GAME_STATE.PAUSED) {
+        // O loop visual continua agendado, mas nenhum sistema é atualizado.
     } else if (gameState === GAME_STATE.VICTORY) {
         // Mantém o último frame desenhado até o overlay de vitória.
         draw();
