@@ -299,9 +299,9 @@ test("area attacks repeat the mandatory A-C-A-C cycle throughout the Boss fight"
 
     const expected = [
         { pattern: "single", count: 1 },
-        { pattern: "sequence", count: 3 },
+        { pattern: "sequence", count: 5 },
         { pattern: "single", count: 1 },
-        { pattern: "sequence", count: 3 }
+        { pattern: "sequence", count: 5 }
     ];
 
     for (let index = 0; index < expected.length; index++) {
@@ -320,6 +320,8 @@ test("area attacks repeat the mandatory A-C-A-C cycle throughout the Boss fight"
             assert.equal(weapon.blasts[0].state, "TELEGRAPH");
             assert.equal(weapon.blasts[1].state, "WAITING");
             assert.equal(weapon.blasts[2].state, "WAITING");
+            assert.equal(weapon.blasts[3].state, "WAITING");
+            assert.equal(weapon.blasts[4].state, "WAITING");
             assert.ok(weapon.blasts.every(blast => blast.radius === boss.getConfig().ray.sequenceRadius));
         }
 
@@ -532,11 +534,22 @@ test("difficulty selection changes only boss combat knobs and survives reset", (
 });
 
 
-test("sequence blasts lock the player's position one at a time and never track after marking", () => {
-    boss.configure({ ray: { firstIn: 0.01, interval: 0.01, sequenceDelay: 0.4, sequenceTelegraphDuration: 0.5 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 100 } } });
+test("five sequence blasts predict the player's recent movement and lock each mark", () => {
+    boss.configure({
+        ray: {
+            firstIn: 0.01, interval: 0.01, sequenceDelay: 0.4,
+            sequenceTelegraphDuration: 0.5, predictionStep: 0.22,
+            predictionMaxDistance: 150
+        },
+        pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 100 } }
+    });
     const game = startFight();
     player.x = 180;
     player.y = 220;
+    boss.update(0.1, arena, player, game.health, game.collision);
+    player.x = 220;
+    player.y = 220;
+    boss.update(0.1, arena, player, game.health, game.collision);
 
     let weapon = boss.getState().weapon;
     let guard = 0;
@@ -545,32 +558,27 @@ test("sequence blasts lock the player's position one at a time and never track a
         weapon = boss.getState().weapon;
     }
     assert.ok(weapon);
-    const [first, second, third] = weapon.blasts;
+    assert.equal(weapon.blasts.length, 5);
+    const [first, second, third, fourth, fifth] = weapon.blasts;
     assert.equal(first.state, "TELEGRAPH");
-    assert.deepEqual([first.x, first.y], [180, 220]);
+    assert.deepEqual([first.x, first.y], [220, 220]);
     assert.equal(second.state, "WAITING");
     assert.equal(third.state, "WAITING");
+    assert.equal(fourth.state, "WAITING");
+    assert.equal(fifth.state, "WAITING");
 
-    // A primeira marca permanece fixa mesmo que o jogador se mova.
-    player.x = 700;
-    player.y = 500;
-    boss.update(0.1, arena, player, game.health, game.collision);
-    weapon = boss.getState().weapon;
-    assert.deepEqual([weapon.blasts[0].x, weapon.blasts[0].y], [180, 220]);
-
-    // A segunda marca captura a nova posição apenas quando sua janela começa.
-    boss.update(0.35, arena, player, game.health, game.collision);
-    weapon = boss.getState().weapon;
-    assert.equal(weapon.blasts[1].state, "TELEGRAPH");
-    assert.deepEqual([weapon.blasts[1].x, weapon.blasts[1].y], [700, 500]);
-    assert.equal(weapon.blasts[2].state, "WAITING");
-
-    // A terceira captura uma terceira posição, sem alterar a segunda.
-    player.x = 350;
-    player.y = 600;
+    player.x = 260;
+    player.y = 220;
     boss.update(0.4, arena, player, game.health, game.collision);
     weapon = boss.getState().weapon;
-    assert.equal(weapon.blasts[2].state, "TELEGRAPH");
-    assert.deepEqual([weapon.blasts[2].x, weapon.blasts[2].y], [350, 600]);
-    assert.deepEqual([weapon.blasts[1].x, weapon.blasts[1].y], [700, 500]);
+    assert.equal(weapon.blasts[1].state, "TELEGRAPH");
+    assert.ok(weapon.blasts[1].x > player.x);
+    const lockedSecond = weapon.blasts[1].x;
+
+    player.x = 240;
+    player.y = 300;
+    boss.update(0.1, arena, player, game.health, game.collision);
+    weapon = boss.getState().weapon;
+    assert.equal(weapon.blasts[1].x, lockedSecond);
+    assert.equal(weapon.blasts.length, 5);
 });
