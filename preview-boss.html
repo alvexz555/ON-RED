@@ -1,0 +1,6024 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+
+    <meta name="theme-color" content="#080B12">
+
+    <meta name="description" content="ON RED - Arcade Survival">
+
+    <title>ON RED</title>
+
+    <!-- GLOBAL STYLES -->
+    <style>
+/* css/style.css */
+
+/* =================================
+   ON RED - GLOBAL STYLES
+================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #080B12;
+}
+
+body {
+    position: fixed;
+    inset: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+button {
+    font: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+#gameCanvas {
+    position: fixed;
+    inset: 0;
+    display: block;
+    width: 100vw;
+    height: 100vh;
+    touch-action: none;
+}
+
+/* =================================
+   GAME OVER SCREEN
+================================= */
+
+.game-over-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(125, 12, 24, 0.15),
+            transparent 55%
+        ),
+        rgba(3, 6, 13, 0.96);
+
+    opacity: 0;
+}
+
+.game-over-screen.active {
+    display: flex;
+    animation: gameOverAppear 0.35s ease forwards;
+}
+
+/* =================================
+   GAME OVER CONTENT
+================================= */
+
+.game-over-content {
+    width: 100%;
+    max-width: 360px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 38px;
+
+    text-align: center;
+}
+
+/* =================================
+   HEADER
+================================= */
+
+.game-over-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+}
+
+.game-over-logo {
+    color: #FFFFFF;
+    font-size: 27px;
+    font-weight: 900;
+    letter-spacing: 5px;
+}
+
+.game-over-logo span {
+    color: #FF3030;
+}
+
+.game-over-label {
+    color: #778397;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 3px;
+}
+
+/* =================================
+   GAME OVER MESSAGE
+================================= */
+
+.game-over-message {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 15px;
+}
+
+.game-over-message h1 {
+    color: #FF3030;
+
+    font-size: clamp(35px, 10vw, 48px);
+    font-weight: 900;
+
+    letter-spacing: 3px;
+
+    text-shadow:
+        0 0 12px rgba(255, 48, 48, 0.35),
+        0 0 35px rgba(255, 48, 48, 0.12);
+}
+
+.game-over-message p {
+    color: #A3ADBC;
+
+    font-size: 10px;
+    font-weight: bold;
+
+    letter-spacing: 3px;
+}
+
+.game-over-line {
+    width: 65px;
+    height: 2px;
+
+    background: #FF3030;
+
+    box-shadow:
+        0 0 10px rgba(255, 48, 48, 0.5);
+}
+
+/* =================================
+   ACTIONS
+================================= */
+
+.game-over-actions {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.game-over-button {
+    width: 100%;
+    min-height: 55px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 12px;
+
+    border: 1px solid transparent;
+    border-radius: 5px;
+
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: 2px;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.game-over-button:active {
+    transform: scale(0.97);
+}
+
+/* =================================
+   RETRY BUTTON
+================================= */
+
+.retry-button {
+    color: #FFFFFF;
+    background: #E92735;
+
+    box-shadow:
+        0 0 20px rgba(233, 39, 53, 0.16);
+}
+
+.retry-button:hover {
+    background: #FF3545;
+}
+
+.retry-button span {
+    font-size: 22px;
+    line-height: 1;
+}
+
+/* =================================
+   MAIN MENU BUTTON
+================================= */
+
+.menu-return-button {
+    color: #DCE3ED;
+
+    background: #111925;
+
+    border-color: #263447;
+}
+
+.menu-return-button:hover {
+    background: #192536;
+    border-color: #168BFF;
+}
+
+/* =================================
+   FOOTER
+================================= */
+
+.game-over-footer {
+    color: #465164;
+
+    font-size: 9px;
+    font-weight: bold;
+
+    letter-spacing: 2px;
+}
+
+/* =================================
+   ANIMATION
+================================= */
+
+@keyframes gameOverAppear {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* =================================
+   SMALL SCREENS
+================================= */
+
+@media (max-height: 600px) {
+
+    .game-over-content {
+        gap: 22px;
+    }
+
+    .game-over-message h1 {
+        font-size: 34px;
+    }
+
+    .game-over-button {
+        min-height: 47px;
+    }
+}
+
+/* =================================
+   VICTORY SCREEN — PHASE 1 COMPLETE
+   ================================= */
+
+.victory-phase2-card {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 40px;
+
+    border: 1px solid rgba(22, 139, 255, 0.35);
+
+    background: rgba(18, 61, 96, 0.25);
+
+    border-radius: 5px;
+}
+
+.victory-phase2-card span {
+    color: #58BFFF;
+
+    font-size: 9px;
+
+    font-weight: bold;
+
+    letter-spacing: 2px;
+}
+
+</style>
+
+    <!-- MENU STYLES -->
+    <style>
+/* css/menu.css */
+
+/* =====================================
+   ON RED - HYBRID ARCADE MENU
+   VERSION 3.0
+===================================== */
+
+.main-menu,
+.main-menu * {
+    box-sizing: border-box;
+}
+
+.main-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+    height: 100vh;
+
+    z-index: 100;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 24px;
+
+    overflow-y: auto;
+
+    background-color: #080B12;
+    background-image:
+        radial-gradient(
+            circle at 50% 35%,
+            rgba(18, 75, 120, 0.22),
+            transparent 65%
+        );
+
+    color: #FFFFFF;
+
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* GRID BACKGROUND */
+
+.main-menu::before {
+    content: "";
+
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background-image:
+        linear-gradient(
+            rgba(50, 145, 220, 0.04) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(50, 145, 220, 0.04) 1px,
+            transparent 1px
+        );
+
+    background-size: 36px 36px;
+
+    pointer-events: none;
+}
+
+/* MAIN CONTENT */
+
+.menu-content {
+    position: relative;
+    z-index: 2;
+
+    width: 100%;
+    max-width: 340px;
+
+    margin: auto;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    gap: 42px;
+}
+
+/* LOGO */
+
+.menu-header {
+    width: 100%;
+
+    text-align: center;
+}
+
+.game-logo {
+    color: #FFFFFF;
+
+    font-size: 64px;
+    font-weight: 900;
+
+    line-height: 1;
+
+    letter-spacing: -4px;
+
+    white-space: nowrap;
+}
+
+.game-logo span {
+    color: #FF3948;
+
+    text-shadow:
+        0 0 12px rgba(255, 57, 72, 0.55);
+}
+
+.game-subtitle {
+    margin-top: 14px;
+
+    color: #58BFFF;
+
+    font-size: 9px;
+    font-weight: bold;
+
+    letter-spacing: 2px;
+}
+
+/* MENU ACTIONS */
+
+.menu-actions {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 13px;
+}
+
+/* BUTTON BASE */
+
+.menu-button {
+    width: 100%;
+    height: 54px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(90, 160, 215, 0.28);
+    border-radius: 9px;
+
+    background: #111B29;
+
+    color: #FFFFFF;
+
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+
+    letter-spacing: 2px;
+
+    cursor: pointer;
+
+    -webkit-tap-highlight-color: transparent;
+}
+
+.menu-button:active {
+    transform: scale(0.97);
+}
+
+/* PLAY */
+
+.play-button {
+    gap: 15px;
+
+    border: 1px solid #168BFF;
+
+    background: #123D60;
+
+    box-shadow:
+        0 0 20px rgba(22, 139, 255, 0.16);
+}
+
+.button-arrow {
+    color: #58BFFF;
+
+    font-size: 25px;
+}
+
+/* BEST SCORE */
+
+.score-panel {
+    width: 100%;
+    height: 78px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+
+    background: #0F1724;
+}
+
+.score-label {
+    color: #8293A8;
+
+    font-size: 10px;
+    font-weight: bold;
+
+    letter-spacing: 2px;
+}
+
+.score-value {
+    color: #58BFFF;
+
+    font-size: 24px;
+    font-weight: 900;
+
+    letter-spacing: 4px;
+}
+
+/* SETTINGS */
+
+.settings-button {
+    background: #101722;
+}
+
+/* FOOTER */
+
+.menu-footer {
+    width: 100%;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    color: #637187;
+
+    font-size: 9px;
+    font-weight: bold;
+
+    letter-spacing: 1px;
+}
+
+/* SETTINGS PANEL */
+
+.settings-panel {
+    position: absolute;
+    z-index: 5;
+
+    width: 88%;
+    max-width: 340px;
+
+    padding: 28px;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 20px;
+
+    text-align: center;
+
+    border: 1px solid #168BFF;
+    border-radius: 12px;
+
+    background: #0B111D;
+}
+
+.settings-panel h2 {
+    color: #FFFFFF;
+
+    font-size: 24px;
+    letter-spacing: 3px;
+}
+
+.settings-panel p {
+    color: #8796A9;
+    font-size: 11px;
+}
+
+/* HIDDEN ELEMENTS */
+
+.hidden {
+    display: none !important;
+}
+
+/* SMALL SCREENS */
+
+@media screen and (max-height: 650px) {
+
+    .menu-content {
+        gap: 22px;
+    }
+
+    .game-logo {
+        font-size: 50px;
+    }
+
+    .game-subtitle {
+        margin-top: 8px;
+    }
+
+    .menu-button {
+        height: 46px;
+    }
+
+    .score-panel {
+        height: 62px;
+    }
+}
+
+@media screen and (max-width: 360px) {
+
+    .main-menu {
+        padding: 18px;
+    }
+
+    .game-logo {
+        font-size: 56px;
+    }
+
+    .game-subtitle {
+        font-size: 8px;
+        letter-spacing: 1px;
+    }
+}
+/* ==========================================
+   ON RED - GAME OVER
+   VERSION 3.4 - CLEAN STRETCH
+========================================== */
+
+.melting-title {
+    position: relative;
+    display: inline-block;
+
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: clamp(2.8rem, 10vw, 5rem);
+    font-weight: 1000;
+    line-height: 1.1;
+    letter-spacing: -2px;
+
+    background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #ff7777 15%,
+        #ff2020 42%,
+        #c00000 75%,
+        #650000 100%
+    );
+
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+
+    text-shadow: none;
+
+    transform-origin: center top;
+    will-change: transform;
+
+    animation: redPlasticStretch 2s ease-in-out infinite;
+}
+
+@keyframes redPlasticStretch {
+    0%, 100% {
+        transform: scaleY(1);
+    }
+
+    30% {
+        transform: scaleY(1.22);
+    }
+
+    45% {
+        transform: scaleY(1.30);
+    }
+
+    60% {
+        transform: scaleY(1.12);
+    }
+
+    75% {
+        transform: scaleY(0.94);
+    }
+
+    88% {
+        transform: scaleY(1.04);
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+    <!-- GAME CANVAS -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- MAIN MENU -->
+    <main id="mainMenu" class="main-menu">
+
+        <div class="menu-content">
+
+            <header class="menu-header">
+
+                <div class="game-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <p class="game-subtitle">
+                    SURVIVE · PERFECT TIMING · MERGE
+                </p>
+
+            </header>
+
+            <section class="menu-actions">
+
+                <button
+                    type="button"
+                    id="playButton"
+                    class="menu-button play-button"
+                >
+                    <span>PLAY</span>
+                    <span class="button-arrow">›</span>
+                </button>
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        BEST SCORE
+                    </span>
+
+                    <span id="bestScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="settingsButton"
+                    class="menu-button settings-button"
+                >
+                    SETTINGS
+                </button>
+
+            </section>
+
+            <footer class="menu-footer">
+
+                <span>ARCADE SURVIVAL</span>
+                <span>ON RED · V1.3</span>
+
+            </footer>
+
+        </div>
+
+        <!-- SETTINGS PANEL -->
+        <section
+            id="settingsPanel"
+            class="settings-panel hidden"
+        >
+
+            <h2>SETTINGS</h2>
+
+            <p>CONFIGURAÇÕES</p>
+
+            <button
+                type="button"
+                id="backButton"
+                class="menu-button"
+            >
+                BACK
+            </button>
+
+        </section>
+
+    </main>
+
+    <!-- GAME OVER -->
+    <section
+        id="gameOverScreen"
+        class="game-over-screen"
+        aria-hidden="true"
+    >
+
+        <div class="game-over-content">
+
+            <header class="game-over-header">
+
+                <div class="game-over-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <span class="game-over-label">
+                    SURVIVAL TERMINATED
+                </span>
+
+            </header>
+
+            <div class="game-over-message">
+
+                <span class="game-over-line"></span>
+
+                <h1 class="melting-title" data-text="GAME OVER">
+                GAME OVER
+                </h1>
+
+                <p>
+                    YOUR RUN HAS ENDED
+                </p>
+
+                <span class="game-over-line"></span>
+
+            </div>
+
+            <div class="game-over-actions">
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        SCORE
+                    </span>
+
+                    <span id="finalScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        BEST
+                    </span>
+
+                    <span id="bestScoreGameOver" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="retryButton"
+                    class="game-over-button retry-button"
+                >
+                    RETRY
+                    <span>↻</span>
+                </button>
+
+                <button
+                    type="button"
+                    id="gameOverMenuButton"
+                    class="game-over-button menu-return-button"
+                >
+                    MAIN MENU
+                </button>
+
+            </div>
+
+            <footer class="game-over-footer">
+                ON RED · ARCADE SURVIVAL
+            </footer>
+
+        </div>
+
+    </section>
+
+    <!-- VICTORY SCREEN -->
+    <section
+        id="victoryScreen"
+        class="game-over-screen victory-screen"
+        aria-hidden="true"
+    >
+
+        <div class="game-over-content">
+
+            <header class="game-over-header">
+
+                <div class="game-over-logo">
+                    ON <span>RED</span>
+                </div>
+
+                <span class="game-over-label">
+                    PHASE 1 COMPLETE
+                </span>
+
+            </header>
+
+            <div class="game-over-message">
+
+                <span class="game-over-line"></span>
+
+                <h1 class="melting-title" data-text="FASE 1 CONCLUÍDA">
+                FASE 1 CONCLUÍDA
+                </h1>
+
+                <p>
+                    FINAL BOSS DEFEATED
+                </p>
+
+                <span class="game-over-line"></span>
+
+            </div>
+
+            <div class="game-over-actions">
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        SCORE
+                    </span>
+
+                    <span id="victoryFinalScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <div class="score-panel">
+
+                    <span class="score-label">
+                        BEST
+                    </span>
+
+                    <span id="victoryBestScore" class="score-value">
+                        000000
+                    </span>
+
+                </div>
+
+                <button
+                    type="button"
+                    id="victoryRetryButton"
+                    class="game-over-button retry-button"
+                >
+                    RETRY
+                    <span>↻</span>
+                </button>
+
+                <button
+                    type="button"
+                    id="victoryMenuButton"
+                    class="game-over-button menu-return-button"
+                >
+                    MAIN MENU
+                </button>
+
+                <div class="victory-phase2-card">
+                    <span>FASE 2 · ATUALIZAÇÕES EM BREVE</span>
+                </div>
+
+            </div>
+
+            <footer class="game-over-footer">
+                ON RED · ARCADE SURVIVAL
+            </footer>
+
+        </div>
+
+    </section>
+
+    <!-- GAME PHYSICS -->
+    <script>
+/* js/obstaclePhysics.js */
+
+/*
+ * ON RED
+ * OBSTACLE PHYSICS
+ * Version: 1.3
+ *
+ * Sistema de repulsão por velocidade.
+ * Objetivo: manter espaçamento com movimento individual.
+ */
+
+const ObstaclePhysics = {
+
+    // CALCULAR REPULSÃO ENTRE OBSTÁCULOS
+
+    calculateRepulsion(obstacles, size) {
+
+        const gap = 20;
+        const minimumDistance = size + gap;
+        const repulsionGain = 25;
+        const maxRepulsion = 300;
+
+        const forces = obstacles.map(() => ({
+            x: 0,
+            y: 0
+        }));
+
+        for (let i = 0; i < obstacles.length; i++) {
+
+            for (let j = i + 1; j < obstacles.length; j++) {
+
+                const a = obstacles[i];
+                const b = obstacles[j];
+
+                const dx = b.x - a.x;
+                const dy = b.y - a.y;
+
+                const overlapX =
+                    minimumDistance - Math.abs(dx);
+
+                const overlapY =
+                    minimumDistance - Math.abs(dy);
+
+                if (overlapX <= 0 || overlapY <= 0) {
+                    continue;
+                }
+
+                if (overlapX < overlapY) {
+
+                    const direction = dx === 0
+                        ? (i % 2 === 0 ? 1 : -1)
+                        : Math.sign(dx);
+
+                    const force = Math.min(
+                        maxRepulsion,
+                        overlapX * repulsionGain
+                    );
+
+                    forces[i].x -= direction * force;
+                    forces[j].x += direction * force;
+
+                } else {
+
+                    const direction = dy === 0
+                        ? (i % 2 === 0 ? 1 : -1)
+                        : Math.sign(dy);
+
+                    const force = Math.min(
+                        maxRepulsion,
+                        overlapY * repulsionGain
+                    );
+
+                    forces[i].y -= direction * force;
+                    forces[j].y += direction * force;
+                }
+            }
+        }
+
+        return forces;
+    },
+
+    // SISTEMA ANTIGO MANTIDO POR COMPATIBILIDADE
+
+    separate(obstacles, size, deltaTime) {
+
+        const gap = 20;
+        const minimumDistance = size + gap;
+        const iterations = 2;
+
+        const safeDelta = Math.max(
+            0,
+            Math.min(deltaTime, 0.05)
+        );
+
+        const strength = Math.min(1, safeDelta * 24);
+
+        for (let iteration = 0; iteration < iterations; iteration++) {
+
+            for (let i = 0; i < obstacles.length; i++) {
+
+                for (let j = i + 1; j < obstacles.length; j++) {
+
+                    const a = obstacles[i];
+                    const b = obstacles[j];
+
+                    const dx = b.x - a.x;
+                    const dy = b.y - a.y;
+
+                    const overlapX =
+                        minimumDistance - Math.abs(dx);
+
+                    const overlapY =
+                        minimumDistance - Math.abs(dy);
+
+                    if (overlapX <= 0 || overlapY <= 0) {
+                        continue;
+                    }
+
+                    if (overlapX < overlapY) {
+
+                        const direction = dx === 0
+                            ? (i % 2 === 0 ? 1 : -1)
+                            : Math.sign(dx);
+
+                        const correction = (overlapX * strength) / 2;
+
+                        a.x -= direction * correction;
+                        b.x += direction * correction;
+
+                    } else {
+
+                        const direction = dy === 0
+                            ? (i % 2 === 0 ? 1 : -1)
+                            : Math.sign(dy);
+
+                        const correction = (overlapY * strength) / 2;
+
+                        a.y -= direction * correction;
+                        b.y += direction * correction;
+                    }
+                }
+            }
+        }
+    }
+};
+
+</script>
+
+    <!-- OBSTACLE AI -->
+    <script>
+/* js/obstacleAI.js */
+
+/*
+ * ON RED
+ * OBSTACLE AI
+ * Version: 1.0
+ *
+ * Gerenciamento de comportamento dos obstáculos.
+ */
+
+const ObstacleAI = {
+
+    attacker: null,
+
+    // INICIALIZAR A INTELIGÊNCIA
+
+    initialize(obstacles) {
+        this.attacker = null;
+        this.selectAttacker(obstacles);
+    },
+
+    // ESCOLHER O ATACANTE
+
+    selectAttacker(obstacles) {
+
+        if (!obstacles.length) {
+            this.attacker = null;
+            return;
+        }
+
+        let closest = obstacles[0];
+        let shortestDistance = Infinity;
+
+        obstacles.forEach(obstacle => {
+
+            const dx = player.x - obstacle.x;
+            const dy = player.y - obstacle.y;
+
+            const distance = Math.hypot(dx, dy);
+
+            if (distance < shortestDistance) {
+                shortestDistance = distance;
+                closest = obstacle;
+            }
+        });
+
+        this.attacker = closest;
+        closest.role = "attacker";
+    },
+
+    // IDENTIFICAR OS PRESSURIZADORES
+
+    updateRoles(obstacles) {
+
+        obstacles.forEach(obstacle => {
+            obstacle.role =
+                obstacle === this.attacker
+                    ? "attacker"
+                    : "pressure";
+        });
+    },
+    
+    // CALCULAR MOVIMENTO DE CADA OBSTÁCULO
+
+    getDesiredVelocity(obstacle, index, player, speed) {
+
+        const dx = player.x - obstacle.x;
+        const dy = player.y - obstacle.y;
+
+        const distance = Math.hypot(dx, dy);
+
+        if (distance === 0) {
+            return { x: 0, y: 0 };
+        }
+
+        const nx = dx / distance;
+        const ny = dy / distance;
+
+        // ATACANTE: PERSEGUIÇÃO DIRETA
+
+        if (obstacle.role === "attacker") {
+           const aggression = 1.4;
+
+           return {
+             x: nx * speed * aggression,
+             y: ny * speed * aggression
+           };
+        }
+
+        // PRESSURIZADORES: APROXIMAÇÃO E REPOSICIONAMENTO
+
+        const pressureRadius = 130;
+        const orbitSpeed = 35;
+
+        const radialError = distance - pressureRadius;
+
+        const radialSpeed = Math.max(
+            -speed * 0.55,
+            Math.min(speed * 0.55, radialError * 1.2)
+        );
+
+        const direction = obstacle.orbitDirection ??
+            (index % 2 === 0 ? 1 : -1);
+
+        const tangentX = -ny * direction;
+        const tangentY = nx * direction;
+
+        return {
+            x: nx * radialSpeed + tangentX * orbitSpeed,
+            y: ny * radialSpeed + tangentY * orbitSpeed
+        };
+}
+};
+
+
+</script>
+
+    <!-- MENU SYSTEM -->
+    <script>
+/* js/menu.js */
+
+/*
+ * ON RED
+ * MENU MODULE
+ * Version: 1.3 - Direct Integration
+ */
+const ONREDMenu = (() => {
+    const elements = {
+        container: document.getElementById("mainMenu"),
+        play: document.getElementById("playButton"),
+        settings: document.getElementById("settingsButton"),
+        settingsPanel: document.getElementById("settingsPanel"),
+        back: document.getElementById("backButton"),
+        bestScore: document.getElementById("bestScore")
+    };
+
+    function checkElements() {
+        for (const [name, element] of Object.entries(elements)) {
+            if (!element) {
+                console.error(`[ON RED] Elemento não encontrado: ${name}`);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function loadBestScore() {
+        let score = 0;
+
+        try {
+            score = Number(localStorage.getItem("onRedBestScore") || 0) || 0;
+        } catch (error) {
+            console.warn("[ON RED] Erro ao carregar recorde:", error);
+        }
+
+        elements.bestScore.textContent = String(score).padStart(6, "0");
+    }
+
+    function showMenu() {
+        elements.container.classList.remove("hidden");
+        elements.settingsPanel.classList.add("hidden");
+        loadBestScore();
+    }
+
+    function hideMenu() {
+        elements.container.classList.add("hidden");
+    }
+
+    function openSettings() {
+        elements.settingsPanel.classList.remove("hidden");
+    }
+
+    function closeSettings() {
+        elements.settingsPanel.classList.add("hidden");
+    }
+
+    function startGame() {
+        if (typeof window.startONREDGame !== "function") {
+            console.error("[ON RED] Função de início do jogo não encontrada.");
+            return;
+        }
+
+        window.startONREDGame();
+        hideMenu();
+    }
+
+    function initialize() {
+        if (!checkElements()) return;
+
+        elements.play.addEventListener("click", startGame);
+        elements.settings.addEventListener("click", openSettings);
+        elements.back.addEventListener("click", closeSettings);
+
+        showMenu();
+    }
+
+    return {
+        initialize,
+        showMenu,
+        hideMenu
+    };
+})();
+
+ONREDMenu.initialize();
+
+</script>
+
+    <!-- HEALTH SYSTEM -->
+    <script>
+/* js/healthSystem.js */
+
+/*
+ * ON RED
+ * HEALTH SYSTEM
+ * Version: 1.1
+ *
+ * 1 vida inicial + até 4 vidas extras.
+ * Máximo total: 5 vidas.
+ */
+
+(function () {
+    "use strict";
+
+    const CONFIG = {
+        initialLives: 1,
+        maxExtraLives: 4,
+        maxLives: 5,
+        maxHP: 100
+    };
+
+    let state = {};
+
+    function reset() {
+        state = {
+            lives: CONFIG.initialLives,
+            maxLives: CONFIG.maxLives,
+            hp: CONFIG.maxHP,
+            maxHP: CONFIG.maxHP,
+            gameOver: false
+        };
+
+        return getState();
+    }
+
+    function getState() {
+        return { ...state };
+    }
+
+    function applyDamage(amount) {
+        if (state.gameOver) {
+            return {
+                applied: false,
+                reason: "game_over",
+                state: getState()
+            };
+        }
+
+        if (
+            typeof amount !== "number" ||
+            !Number.isFinite(amount) ||
+            amount <= 0
+        ) {
+            return {
+                applied: false,
+                reason: "invalid_damage",
+                state: getState()
+            };
+        }
+
+        const previousHP = state.hp;
+        state.hp = Math.max(0, state.hp - amount);
+
+        const damageApplied = previousHP - state.hp;
+        let lifeLost = false;
+
+        if (state.hp <= 0) {
+            state.lives--;
+            lifeLost = true;
+
+            if (state.lives > 0) {
+                state.hp = CONFIG.maxHP;
+            } else {
+                state.hp = 0;
+                state.gameOver = true;
+            }
+        }
+
+        return {
+            applied: damageApplied > 0,
+            damage: damageApplied,
+            lifeLost,
+            gameOver: state.gameOver,
+            state: getState()
+        };
+    }
+
+    function heal(amount) {
+        if (state.gameOver) {
+            return {
+                applied: false,
+                reason: "game_over",
+                state: getState()
+            };
+        }
+
+        if (
+            typeof amount !== "number" ||
+            !Number.isFinite(amount) ||
+            amount <= 0
+        ) {
+            return {
+                applied: false,
+                reason: "invalid_heal",
+                state: getState()
+            };
+        }
+
+        const previousHP = state.hp;
+
+        state.hp = Math.min(
+            state.maxHP,
+            state.hp + amount
+        );
+
+        return {
+            applied: state.hp > previousHP,
+            healed: state.hp - previousHP,
+            state: getState()
+        };
+    }
+
+    function addExtraLife() {
+        if (state.gameOver) {
+            return {
+                applied: false,
+                reason: "game_over",
+                state: getState()
+            };
+        }
+
+        if (state.lives >= CONFIG.maxLives) {
+            return {
+                applied: false,
+                reason: "life_limit_reached",
+                state: getState()
+            };
+        }
+
+        state.lives++;
+
+        return {
+            applied: true,
+            lifeGranted: true,
+            state: getState()
+        };
+    }
+
+    reset();
+
+    window.ONREDHealthSystem = {
+        reset,
+        getState,
+        applyDamage,
+        heal,
+        addExtraLife
+    };
+
+    console.log("[ON RED] Health System carregado.");
+
+})();
+
+</script>
+
+    <!-- MERGE SYSTEM -->
+    <script>
+/* js/mergeSystem.js */
+/*
+ * ON RED
+ * MERGE SYSTEM
+ * Version: 1.0
+ *
+ * Esferas vermelhas coletáveis dentro da arena.
+ *
+ * Regra do Merge:
+ * - HP abaixo de 100%: recupera HP (nunca passa de 100%).
+ * - HP em 100%: concede uma vida extra.
+ *
+ * A esfera é removida no momento da coleta, impedindo
+ * que a mesma esfera seja ativada mais de uma vez.
+ */
+
+(function () {
+    "use strict";
+
+    // ==========================================
+    // CONFIGURAÇÃO
+    // ==========================================
+
+  const CONFIG = {
+    radius: 9,
+    healAmount: 25,
+
+    bonusScorePerOrb: 1000,
+
+    maxOrbs: 4,
+    initialOrbs: 2,
+    spawnInterval: 6,
+
+    margin: 55,
+    spawnAttempts: 20,
+
+    pulseSpeed: 3.2,
+    glowBlur: 18
+};
+
+    // ==========================================
+    // ESTADO INTERNO
+    // ==========================================
+
+    const orbs = [];
+
+    let spawnTimer = 0;
+    let elapsed = 0;
+
+    // ==========================================
+    // POSIÇÃO ALEATÓRIA DENTRO DA ARENA
+    // ==========================================
+
+    function randomOrbPosition(arena, player) {
+
+        const width = arena && arena.width ? arena.width : 0;
+        const height = arena && arena.height ? arena.height : 0;
+
+        const minX = CONFIG.margin;
+        const maxX = Math.max(minX, width - CONFIG.margin);
+
+        const minY = CONFIG.margin;
+        const maxY = Math.max(minY, height - CONFIG.margin);
+
+        let x = (minX + maxX) / 2;
+        let y = (minY + maxY) / 2;
+
+        const playerX = player ? player.x : null;
+        const playerY = player ? player.y : null;
+        const playerRadius = player ? player.radius : 0;
+
+        const safeDistance =
+            playerRadius + CONFIG.radius + 30;
+
+        for (let attempt = 0; attempt < CONFIG.spawnAttempts; attempt++) {
+
+            x = minX + Math.random() * (maxX - minX);
+            y = minY + Math.random() * (maxY - minY);
+
+            const farFromPlayer =
+                playerX === null ||
+                Math.hypot(x - playerX, y - playerY) > safeDistance;
+
+            if (farFromPlayer) {
+                break;
+            }
+        }
+
+        return { x, y };
+    }
+
+    // ==========================================
+    // GERAÇÃO DE ESFERAS
+    // ==========================================
+
+    function spawnOrb(arena, player) {
+
+        if (orbs.length >= CONFIG.maxOrbs) {
+            return null;
+        }
+
+        const position = randomOrbPosition(arena, player);
+
+        const orb = {
+            x: position.x,
+            y: position.y,
+            radius: CONFIG.radius,
+            phase: Math.random() * Math.PI * 2,
+            collected: false
+        };
+
+        orbs.push(orb);
+
+        return orb;
+    }
+
+    // ==========================================
+    // DETECÇÃO DE COLETA
+    // ==========================================
+
+    function isTouchingPlayer(orb, player) {
+
+        if (!orb || !player) return false;
+
+        const dx = player.x - orb.x;
+        const dy = player.y - orb.y;
+
+        const limit = player.radius + orb.radius;
+
+        return dx * dx + dy * dy <= limit * limit;
+    }
+
+    // ==========================================
+    // APLICAÇÃO DO EFEITO (MERGE)
+    // ==========================================
+
+    function applyMerge(healthSystem) {
+
+        const health = healthSystem || window.ONREDHealthSystem;
+
+        if (!health) {
+            return null;
+        }
+
+        const state = health.getState();
+
+        // HP ABAIXO DE 100%: RECUPERA HP.
+        if (state.hp < state.maxHP) {
+            const result = health.heal(CONFIG.healAmount);
+
+            return {
+                type: "heal",
+                applied: result.applied,
+                healed: result.healed || 0,
+                hp: result.state.hp,
+                maxHP: result.state.maxHP
+            };
+        }
+
+        // HP EM 100%: TENTA CONCEDER VIDA EXTRA.
+        const result = health.addExtraLife();
+
+        // LIMITE DE 5 VIDAS ATINGIDO: CONVERTE A ESFERA EM PONTOS.
+        if (result.reason === "life_limit_reached") {
+            return {
+                type: "bonus_score",
+                applied: true,
+                points: CONFIG.bonusScorePerOrb
+            };
+        }
+
+        return {
+            type: "extra_life",
+            applied: result.applied,
+            lives: result.state.lives,
+            maxLives: result.state.maxLives
+        };
+    }
+
+    // ==========================================
+    // ATUALIZAÇÃO
+    // ==========================================
+
+    function update(deltaTime, player, arena, healthSystem) {
+
+        if (typeof deltaTime !== "number" || deltaTime < 0) {
+            return [];
+        }
+
+        elapsed += deltaTime;
+        spawnTimer += deltaTime;
+
+        if (spawnTimer >= CONFIG.spawnInterval) {
+
+            spawnTimer = 0;
+
+            spawnOrb(arena, player);
+        }
+
+        const results = [];
+
+        for (let index = orbs.length - 1; index >= 0; index--) {
+
+            const orb = orbs[index];
+
+            if (!isTouchingPlayer(orb, player)) {
+                continue;
+            }
+
+            // Marca e remove antes de aplicar o efeito para
+            // que a mesma esfera nunca seja contada duas vezes.
+            orb.collected = true;
+            orbs.splice(index, 1);
+
+            const merge = applyMerge(healthSystem);
+
+            if (merge) {
+                results.push(merge);
+            }
+        }
+
+        return results;
+    }
+
+    // ==========================================
+    // DESENHO
+    // ==========================================
+
+    function draw(ctx) {
+
+        if (!ctx) return;
+
+        orbs.forEach(orb => {
+
+            const pulse =
+                1 + Math.sin(elapsed * CONFIG.pulseSpeed + orb.phase) * 0.12;
+
+            const radius = orb.radius * pulse;
+
+            ctx.save();
+
+            // AURA EXTERNA
+
+            ctx.beginPath();
+            ctx.arc(orb.x, orb.y, radius + 3, 0, Math.PI * 2);
+
+            ctx.strokeStyle = "rgba(255, 48, 63, 0.45)";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // ESFERA VERMELHA
+
+            ctx.beginPath();
+            ctx.arc(orb.x, orb.y, radius, 0, Math.PI * 2);
+
+            ctx.fillStyle = "#FF303F";
+            ctx.shadowColor = "#FF303F";
+            ctx.shadowBlur = CONFIG.glowBlur;
+            ctx.fill();
+
+            // BRILHO INTERNO
+
+            ctx.beginPath();
+            ctx.arc(
+                orb.x - radius * 0.3,
+                orb.y - radius * 0.3,
+                radius * 0.3,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle = "rgba(255,255,255,0.7)";
+            ctx.shadowBlur = 0;
+            ctx.fill();
+
+            ctx.restore();
+        });
+    }
+
+    // ==========================================
+    // RESET
+    // ==========================================
+
+    function reset(arena, player) {
+
+        orbs.length = 0;
+
+        spawnTimer = 0;
+        elapsed = 0;
+
+        for (let i = 0; i < CONFIG.initialOrbs; i++) {
+            spawnOrb(arena, player);
+        }
+    }
+
+    // ==========================================
+    // ESTADO PÚBLICO
+    // ==========================================
+
+    function getOrbs() {
+
+        return orbs.map(orb => ({
+            x: orb.x,
+            y: orb.y,
+            radius: orb.radius,
+            collected: orb.collected
+        }));
+    }
+
+    function getConfig() {
+        return { ...CONFIG };
+    }
+
+    // ==========================================
+    // API GLOBAL
+    // ==========================================
+
+    window.ONREDMergeSystem = {
+        update,
+        draw,
+        reset,
+        spawnOrb,
+        getOrbs,
+        getConfig,
+        healAmount: CONFIG.healAmount
+    };
+
+    console.log("[ON RED] Merge System carregado.");
+
+})();
+
+</script>
+
+    <!-- HEALTH UI -->
+    <script>
+/* js/healthUI.js */
+/*
+ * ON RED
+ * HEALTH UI
+ * Version: 1.0
+ *
+ * HUD de vidas e HP.
+ * Renderização Canvas 2D.
+ */
+
+(function () {
+    "use strict";
+
+    // ==========================================
+    // CONFIGURAÇÃO VISUAL
+    // ==========================================
+
+    const CONFIG = {
+        margin: 22,
+
+        lifeRadius: 7,
+        lifeSpacing: 23,
+
+        barWidth: 125,
+        barHeight: 9,
+
+        colors: {
+            life: "#FF303F",
+            emptyLife: "#54232B",
+
+            hp: "#FF303F",
+            hpBackground: "#303743",
+
+            text: "#FFFFFF",
+            secondary: "#AAB4C3"
+        }
+    };
+
+    // ==========================================
+    // VALIDAR DEPENDÊNCIA
+    // ==========================================
+
+    function getHealthSystem() {
+        return window.ONREDHealthSystem || null;
+    }
+
+    // ==========================================
+    // DESENHAR VIDAS
+    // ==========================================
+
+    function drawLives(ctx, state, x, y) {
+
+        for (let i = 0; i < state.maxLives; i++) {
+
+            const lifeX =
+                x + i * CONFIG.lifeSpacing;
+
+            const filled = i < state.lives;
+
+            ctx.beginPath();
+
+            ctx.arc(
+                lifeX,
+                y,
+                CONFIG.lifeRadius,
+                0,
+                Math.PI * 2
+            );
+
+            if (filled) {
+
+                // MESMA IDENTIDADE DA BOLA DO JOGADOR E DAS ESFERAS DO MERGE:
+                // núcleo vermelho com brilho e ponto de luz branco.
+
+                ctx.shadowColor = CONFIG.colors.life;
+                ctx.shadowBlur = 10;
+
+                ctx.fillStyle = CONFIG.colors.life;
+
+                ctx.fill();
+
+                ctx.shadowBlur = 0;
+
+                ctx.beginPath();
+
+                ctx.arc(
+                    lifeX - CONFIG.lifeRadius * 0.3,
+                    y - CONFIG.lifeRadius * 0.3,
+                    CONFIG.lifeRadius * 0.3,
+                    0,
+                    Math.PI * 2
+                );
+
+                ctx.fillStyle = "rgba(255,255,255,0.7)";
+
+                ctx.fill();
+
+            } else {
+
+                ctx.fillStyle = CONFIG.colors.emptyLife;
+
+                ctx.fill();
+            }
+        }
+    }
+
+    // ==========================================
+    // DESENHAR BARRA DE HP
+    // ==========================================
+
+    function drawHP(ctx, state, x, y) {
+
+        const percentage = Math.max(
+            0,
+            Math.min(1, state.hp / state.maxHP)
+        );
+
+        // FUNDO DA BARRA
+
+        ctx.fillStyle =
+            CONFIG.colors.hpBackground;
+
+        ctx.fillRect(
+            x,
+            y,
+            CONFIG.barWidth,
+            CONFIG.barHeight
+        );
+
+        // PREENCHIMENTO
+
+        if (percentage > 0) {
+
+            // MESMA IDENTIDADE DAS ESFERAS: brilho vermelho no preenchimento.
+
+            ctx.shadowColor = CONFIG.colors.hp;
+            ctx.shadowBlur = 10;
+
+            ctx.fillStyle =
+                CONFIG.colors.hp;
+
+            ctx.fillRect(
+                x,
+                y,
+                CONFIG.barWidth * percentage,
+                CONFIG.barHeight
+            );
+
+            ctx.shadowBlur = 0;
+        }
+
+        // CONTORNO
+
+        ctx.strokeStyle =
+            "rgba(255,255,255,0.15)";
+
+        ctx.lineWidth = 1;
+
+        ctx.strokeRect(
+            x,
+            y,
+            CONFIG.barWidth,
+            CONFIG.barHeight
+        );
+    }
+
+    // ==========================================
+    // FEEDBACK DE MUDANÇA DE HP / VIDAS
+    // ==========================================
+
+    // A UI compara o estado de um frame com o anterior e exibe um
+    // texto curto (dano, cura, vida extra, vida perdida) que se desvanece.
+
+    const FEEDBACK_DURATION = 1.4;
+
+    let lastSnapshot = null;
+    let lastClock = null;
+    let feedback = null;
+
+    function updateFeedback(state) {
+
+        const now = performance.now();
+        const delta = lastClock === null ? 0 : (now - lastClock) / 1000;
+        lastClock = now;
+
+        if (feedback) {
+            feedback.timer = Math.max(0, feedback.timer - delta);
+            if (feedback.timer === 0) {
+                feedback = null;
+            }
+        }
+
+        if (!lastSnapshot) {
+            lastSnapshot = { ...state };
+            return;
+        }
+
+        const hpDelta = state.hp - lastSnapshot.hp;
+        const livesDelta = state.lives - lastSnapshot.lives;
+
+        // Reinício de partida: estados pulam de uma vez (ex.: 0 -> 1 vida,
+        // 100 HP). Não é evento de gameplay, não gera feedback.
+        const matchRestarted =
+            (lastSnapshot.lives === 0 && state.lives > 0) ||
+            (livesDelta > 0 && hpDelta > 50);
+
+        if (
+            !feedback &&
+            !matchRestarted &&
+            (hpDelta !== 0 || livesDelta !== 0)
+        ) {
+            if (livesDelta < 0) {
+                feedback = { text: "LIFE LOST", color: CONFIG.colors.life, timer: FEEDBACK_DURATION };
+            } else if (hpDelta < 0) {
+                feedback = { text: `-${Math.ceil(-hpDelta)} HP`, color: CONFIG.colors.life, timer: FEEDBACK_DURATION };
+            } else if (hpDelta > 0) {
+                feedback = { text: `+${Math.ceil(hpDelta)} HP`, color: CONFIG.colors.text, timer: FEEDBACK_DURATION };
+            } else if (livesDelta > 0) {
+                feedback = { text: "EXTRA LIFE", color: "#168BFF", timer: FEEDBACK_DURATION };
+            }
+        }
+
+        lastSnapshot = { ...state };
+    }
+
+    function drawFeedback(ctx, x, y) {
+
+        if (!feedback) return;
+
+        ctx.save();
+
+        ctx.globalAlpha = Math.min(1, feedback.timer / (FEEDBACK_DURATION * 0.6));
+
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+
+        ctx.fillStyle = feedback.color;
+
+        ctx.fillText(feedback.text, x, y);
+
+        ctx.restore();
+    }
+
+    // ==========================================
+    // DESENHAR HUD COMPLETO
+    // ==========================================
+
+    function draw(ctx, canvas) {
+
+        const health = getHealthSystem();
+
+        if (!health || !ctx || !canvas) {
+            return;
+        }
+
+        const state = health.getState();
+
+        updateFeedback(state);
+
+        const x = CONFIG.margin;
+        const y = CONFIG.margin;
+
+        ctx.save();
+
+        // TEXTO LIVES
+
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+
+        ctx.fillStyle =
+            CONFIG.colors.secondary;
+
+        ctx.fillText(
+            "LIVES",
+            x,
+            y
+        );
+
+        // INDICADORES DE VIDA
+
+        drawLives(
+            ctx,
+            state,
+            x + 58,
+            y
+        );
+
+        // TEXTO HP
+
+        ctx.fillStyle =
+            CONFIG.colors.text;
+
+        ctx.fillText(
+            "HP",
+            x,
+            y + 25
+        );
+
+        ctx.textAlign = "right";
+
+        ctx.fillText(
+            `${Math.ceil(state.hp)}%`,
+            x + CONFIG.barWidth,
+            y + 25
+        );
+
+        // BARRA DE HP
+
+        drawHP(
+            ctx,
+            state,
+            x,
+            y + 37
+        );
+
+        // FEEDBACK DE MUDANÇA (ao lado da barra)
+
+        drawFeedback(
+            ctx,
+            x + CONFIG.barWidth + 14,
+            y + 37 + CONFIG.barHeight / 2
+        );
+
+        ctx.restore();
+    }
+
+    // ==========================================
+    // API PÚBLICA
+    // ==========================================
+
+    window.ONREDHealthUI = {
+        draw
+    };
+
+    console.log("[ON RED] Health UI carregada.");
+
+})();
+
+</script>
+
+    <!-- COLLISION SYSTEM -->
+    <script>
+/* js/collisionSystem.js */
+
+/*
+ * ON RED
+ * COLLISION SYSTEM
+ * Version: 1.1
+ *
+ * Detecção círculo x retângulo.
+ * Dano: 25 HP
+ * Invulnerabilidade: 1 segundo
+ * Feedback: descarga elétrica de impacto.
+ */
+
+(function () {
+    "use strict";
+
+    // ======================================
+    // CONFIGURAÇÃO
+    // ======================================
+
+    const CONFIG = {
+        damage: 25,
+        invulnerabilityTime: 1,
+        effectDuration: 0.32
+    };
+
+    // ======================================
+    // ESTADO INTERNO
+    // ======================================
+
+    let invulnerabilityTimer = 0;
+    let isInvulnerable = false;
+    let impactEffectTimer = 0;
+
+    // ======================================
+    // DETECÇÃO CÍRCULO x RETÂNGULO
+    // ======================================
+
+    function checkCircleRectangle(circle, rectangle, size) {
+
+        const half = size / 2;
+
+        const left = rectangle.x - half;
+        const right = rectangle.x + half;
+        const top = rectangle.y - half;
+        const bottom = rectangle.y + half;
+
+        const closestX = Math.max(left, Math.min(circle.x, right));
+        const closestY = Math.max(top, Math.min(circle.y, bottom));
+
+        const dx = circle.x - closestX;
+        const dy = circle.y - closestY;
+
+        return (
+            dx * dx + dy * dy <=
+            circle.radius * circle.radius
+        );
+    }
+
+    // ======================================
+    // VERIFICAÇÃO DE COLISÃO
+    // ======================================
+
+    function checkCollisions(player, obstacles, obstacleSize) {
+
+        if (!player || !Array.isArray(obstacles)) {
+            return false;
+        }
+
+        if (isInvulnerable) {
+            return false;
+        }
+
+        for (const obstacle of obstacles) {
+
+            if (
+                checkCircleRectangle(
+                    player,
+                    obstacle,
+                    obstacleSize
+                )
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // ======================================
+    // REGISTRO DE COLISÃO
+    // ======================================
+
+    function registerCollision() {
+
+        if (isInvulnerable) {
+            return false;
+        }
+
+        isInvulnerable = true;
+
+        invulnerabilityTimer =
+            CONFIG.invulnerabilityTime;
+
+        impactEffectTimer =
+            CONFIG.effectDuration;
+
+        return true;
+    }
+
+    // ======================================
+    // ATUALIZAÇÃO
+    // ======================================
+
+    function update(deltaTime) {
+
+        if (isInvulnerable) {
+
+            invulnerabilityTimer -= deltaTime;
+
+            if (invulnerabilityTimer <= 0) {
+
+                invulnerabilityTimer = 0;
+                isInvulnerable = false;
+            }
+        }
+
+        if (impactEffectTimer > 0) {
+
+            impactEffectTimer -= deltaTime;
+
+            impactEffectTimer = Math.max(
+                0,
+                impactEffectTimer
+            );
+        }
+    }
+
+    // ======================================
+    // EFEITO VISUAL DE IMPACTO
+    // ======================================
+
+    function drawImpact(ctx, player) {
+
+        if (!ctx || !player || impactEffectTimer <= 0) {
+            return;
+        }
+
+        const progress =
+            1 - impactEffectTimer / CONFIG.effectDuration;
+
+        const alpha = 1 - progress;
+        const radius = player.radius + 8 + progress * 15;
+
+        ctx.save();
+
+        ctx.translate(player.x, player.y);
+        ctx.globalAlpha = alpha;
+
+        // AURA VERMELHA
+
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+
+        ctx.strokeStyle = "#FF303F";
+        ctx.lineWidth = 5;
+        ctx.shadowColor = "#FF303F";
+        ctx.shadowBlur = 28;
+        ctx.stroke();
+
+        // DESCARGAS ELÉTRICAS
+
+        ctx.lineWidth = 2.5;
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.shadowColor = "#FF303F";
+        ctx.shadowBlur = 20;
+
+        const branches = 12;
+
+        for (let i = 0; i < branches; i++) {
+
+            const angle =
+                (Math.PI * 2 / branches) * i +
+                Math.sin(progress * 18 + i) * 0.15;
+
+            const innerRadius = player.radius - 2;
+            const outerRadius = radius + Math.sin(i * 4) * 5;
+
+            const midRadius =
+                (innerRadius + outerRadius) / 2;
+
+            const midAngle =
+                angle + Math.sin(i * 7 + progress * 20) * 0.13;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                Math.cos(angle) * innerRadius,
+                Math.sin(angle) * innerRadius
+            );
+
+            ctx.lineTo(
+                Math.cos(midAngle) * midRadius,
+                Math.sin(midAngle) * midRadius
+            );
+
+            ctx.lineTo(
+                Math.cos(angle) * outerRadius,
+                Math.sin(angle) * outerRadius
+            );
+
+            ctx.stroke();
+        }
+
+        // NÚCLEO BRANCO DO IMPACTO
+
+        ctx.beginPath();
+        ctx.arc(0, 0, player.radius + 2, 0, Math.PI * 2);
+
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 2;
+        ctx.shadowColor = "#FFFFFF";
+        ctx.shadowBlur = 22;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    // ======================================
+    // RESET
+    // ======================================
+
+    function reset() {
+
+        invulnerabilityTimer = 0;
+        isInvulnerable = false;
+        impactEffectTimer = 0;
+    }
+
+    // ======================================
+    // ESTADO PÚBLICO
+    // ======================================
+
+    function getState() {
+
+        return {
+            isInvulnerable,
+            invulnerabilityTimer,
+            impactEffectTimer,
+            damage: CONFIG.damage
+        };
+    }
+
+    // ======================================
+    // API GLOBAL
+    // ======================================
+
+    window.ONREDCollisionSystem = {
+        checkCollisions,
+        registerCollision,
+        update,
+        drawImpact,
+        reset,
+        getState
+    };
+
+    console.log("[ON RED] Collision System carregado.");
+
+})();
+
+</script>
+    
+    <!--keyboard -->
+    <script>
+/* js/keyboardController.js */
+
+/*
+ * ON RED
+ * KEYBOARD CONTROLLER
+ * Version: 1.1
+ *
+ * WASD + Arrow Keys
+ * SHIFT: one-shot Perfect Timing request
+ * Diagonal movement normalized
+ */
+
+(function () {
+    "use strict";
+
+    const keys = new Set();
+    let perfectTimingRequested = false;
+
+    const KEY_MAP = {
+        KeyW: "up",
+        ArrowUp: "up",
+        KeyS: "down",
+        ArrowDown: "down",
+        KeyA: "left",
+        ArrowLeft: "left",
+        KeyD: "right",
+        ArrowRight: "right"
+    };
+
+    function isMovementKey(code) {
+        return Object.prototype.hasOwnProperty.call(KEY_MAP, code);
+    }
+
+    function handleKeyDown(event) {
+
+        // SHIFT dispara uma solicitação única, sem repetir enquanto segurado.
+        if (event.code === "ShiftLeft" || event.code === "ShiftRight") {
+            if (!event.repeat) {
+                perfectTimingRequested = true;
+            }
+            return;
+        }
+
+        if (!isMovementKey(event.code)) return;
+
+        if (event.code.startsWith("Arrow")) {
+            event.preventDefault();
+        }
+
+        keys.add(event.code);
+    }
+
+    function handleKeyUp(event) {
+        if (!isMovementKey(event.code)) return;
+
+        if (event.code.startsWith("Arrow")) {
+            event.preventDefault();
+        }
+
+        keys.delete(event.code);
+    }
+
+    function reset() {
+        keys.clear();
+        perfectTimingRequested = false;
+    }
+
+    function consumePerfectTimingRequest(isPlaying) {
+        const requested = perfectTimingRequested;
+        perfectTimingRequested = false;
+        return Boolean(isPlaying && requested);
+    }
+
+    window.addEventListener("blur", reset);
+
+    document.addEventListener("visibilitychange", function () {
+        if (document.hidden) reset();
+    });
+
+    function getVector(isPlaying) {
+        if (!isPlaying) return { x: 0, y: 0 };
+
+        let x = 0;
+        let y = 0;
+
+        keys.forEach(code => {
+            switch (KEY_MAP[code]) {
+                case "up": y -= 1; break;
+                case "down": y += 1; break;
+                case "left": x -= 1; break;
+                case "right": x += 1; break;
+            }
+        });
+
+        const magnitude = Math.hypot(x, y);
+        if (magnitude > 0) {
+            x /= magnitude;
+            y /= magnitude;
+        }
+
+        return { x, y };
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("keyup", handleKeyUp);
+
+    window.ONREDKeyboardController = {
+        getVector,
+        consumePerfectTimingRequest,
+        reset
+    };
+
+    console.log("[ON RED] Keyboard Controller loaded.");
+})();
+
+</script>
+    
+    <!-- HEXAGON OCCUPANCY SYSTEM -->
+    <script>
+/* js/hexagonSystem.js */
+/*
+ * ON RED
+ * HEXAGON OCCUPANCY SYSTEM
+ * Static arena obstacles with player, pursuer and Ping Pong collisions.
+ */
+(function (root) {
+    "use strict";
+
+    const CONFIG = {
+        radius: 30,
+        // Limite de objetos simultâneos, não de gerações ao longo da partida.
+        maxHexagons: 8,
+        spawnInterval: 8,
+        spawnAttempts: 60,
+        playerSafeMargin: 90,
+        obstacleGap: 8,
+        initialHealth: 3,
+        pingPongDamage: 1,
+        fillColor: "#087BEB",
+        strokeColor: "#65B8FF"
+    };
+
+    const hexagons = [];
+    let spawnTimer = 0;
+    let nextId = 1;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function vertices(hex) {
+        const points = [];
+        for (let i = 0; i < 6; i++) {
+            const angle = -Math.PI / 6 + i * Math.PI / 3;
+            points.push({
+                x: hex.x + Math.cos(angle) * hex.radius,
+                y: hex.y + Math.sin(angle) * hex.radius
+            });
+        }
+        return points;
+    }
+
+    function pointInPolygon(point, polygon) {
+        let inside = false;
+        for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+            const a = polygon[i], b = polygon[j];
+            const crosses = ((a.y > point.y) !== (b.y > point.y)) &&
+                (point.x < (b.x - a.x) * (point.y - a.y) / ((b.y - a.y) || 1e-9) + a.x);
+            if (crosses) inside = !inside;
+        }
+        return inside;
+    }
+
+    function closestPointOnSegment(point, a, b) {
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const lengthSquared = dx * dx + dy * dy;
+        const t = lengthSquared > 0
+            ? clamp(((point.x - a.x) * dx + (point.y - a.y) * dy) / lengthSquared, 0, 1)
+            : 0;
+        return { x: a.x + dx * t, y: a.y + dy * t };
+    }
+
+    function circlePolygonContact(circle, polygon) {
+        let closest = null;
+        let minDistanceSquared = Infinity;
+        for (let i = 0; i < polygon.length; i++) {
+            const candidate = closestPointOnSegment(
+                circle, polygon[i], polygon[(i + 1) % polygon.length]
+            );
+            const dx = circle.x - candidate.x, dy = circle.y - candidate.y;
+            const distanceSquared = dx * dx + dy * dy;
+            if (distanceSquared < minDistanceSquared) {
+                minDistanceSquared = distanceSquared;
+                closest = candidate;
+            }
+        }
+
+        const inside = pointInPolygon(circle, polygon);
+        const radius = Math.max(0, Number(circle.radius) || 0);
+        if (!inside && minDistanceSquared > radius * radius) return null;
+
+        let nx = inside ? closest.x - circle.x : circle.x - closest.x;
+        let ny = inside ? closest.y - circle.y : circle.y - closest.y;
+        let distance = Math.hypot(nx, ny);
+
+        if (distance < 1e-8) {
+            nx = circle.x - polygon.reduce((sum, p) => sum + p.x, 0) / polygon.length;
+            ny = circle.y - polygon.reduce((sum, p) => sum + p.y, 0) / polygon.length;
+            distance = Math.hypot(nx, ny) || 1;
+        }
+
+        nx /= distance;
+        ny /= distance;
+        return {
+            nx, ny, closest,
+            penetration: inside ? radius + distance : radius - distance,
+            inside
+        };
+    }
+
+    function polygonAxes(polygon) {
+        const axes = [];
+        for (let i = 0; i < polygon.length; i++) {
+            const a = polygon[i], b = polygon[(i + 1) % polygon.length];
+            const dx = b.x - a.x, dy = b.y - a.y;
+            const length = Math.hypot(dx, dy) || 1;
+            axes.push({ x: -dy / length, y: dx / length });
+        }
+        return axes;
+    }
+
+    function project(polygon, axis) {
+        let min = Infinity, max = -Infinity;
+        for (const point of polygon) {
+            const value = point.x * axis.x + point.y * axis.y;
+            min = Math.min(min, value);
+            max = Math.max(max, value);
+        }
+        return { min, max };
+    }
+
+    function polygonCollision(a, b) {
+        let smallestOverlap = Infinity;
+        let smallestAxis = null;
+        const axes = polygonAxes(a).concat(polygonAxes(b));
+        for (const axis of axes) {
+            const pa = project(a, axis), pb = project(b, axis);
+            const overlap = Math.min(pa.max - pb.min, pb.max - pa.min);
+            if (overlap <= 0) return null;
+            if (overlap < smallestOverlap) {
+                smallestOverlap = overlap;
+                smallestAxis = axis;
+            }
+        }
+
+        const centerA = a.reduce((s, p) => ({ x: s.x + p.x / a.length, y: s.y + p.y / a.length }), {x:0,y:0});
+        const centerB = b.reduce((s, p) => ({ x: s.x + p.x / b.length, y: s.y + p.y / b.length }), {x:0,y:0});
+        if ((centerB.x - centerA.x) * smallestAxis.x +
+            (centerB.y - centerA.y) * smallestAxis.y < 0) {
+            smallestAxis = { x: -smallestAxis.x, y: -smallestAxis.y };
+        }
+        return { overlap: smallestOverlap, nx: smallestAxis.x, ny: smallestAxis.y };
+    }
+
+    function rectangleVertices(rectangle, size) {
+        const half = size / 2;
+        return [
+            {x: rectangle.x-half, y: rectangle.y-half},
+            {x: rectangle.x+half, y: rectangle.y-half},
+            {x: rectangle.x+half, y: rectangle.y+half},
+            {x: rectangle.x-half, y: rectangle.y+half}
+        ];
+    }
+
+    function circleRectOverlap(circle, rectangle, size) {
+        const half = size / 2;
+        const x = clamp(circle.x, rectangle.x-half, rectangle.x+half);
+        const y = clamp(circle.y, rectangle.y-half, rectangle.y+half);
+        const dx = circle.x-x, dy = circle.y-y;
+        return dx*dx + dy*dy < circle.radius*circle.radius;
+    }
+
+    function isPositionClear(x, y, arena, player, obstacles, obstacleSize, pingPongState) {
+        const radius = CONFIG.radius;
+        if (x < radius + 4 || y < radius + 4 ||
+            x > arena.width - radius - 4 || y > arena.height - radius - 4) return false;
+
+        if (player && Math.hypot(x-player.x, y-player.y) <
+            radius + (player.radius || 0) + CONFIG.playerSafeMargin) return false;
+
+        for (const obstacle of obstacles || []) {
+            if (!obstacle || obstacle.state === "ELIMINATED" || obstacle.state === "RESPAWNING") continue;
+            if (circleRectOverlap({x,y,radius:radius+CONFIG.obstacleGap}, obstacle, obstacleSize)) return false;
+        }
+
+        for (const other of hexagons) {
+            if (Math.hypot(x-other.x, y-other.y) <
+                radius + other.radius + CONFIG.obstacleGap) return false;
+        }
+
+        const ball = pingPongState && pingPongState.ball;
+        if (ball && Math.hypot(x-ball.x, y-ball.y) <
+            radius + ball.radius + CONFIG.obstacleGap) return false;
+
+        return true;
+    }
+
+    function spawn(arena, player, obstacles, obstacleSize, pingPongState) {
+        if (!arena || !Number.isFinite(arena.width) || !Number.isFinite(arena.height) ||
+            hexagons.length >= CONFIG.maxHexagons ||
+            arena.width < CONFIG.radius * 2 + 8 || arena.height < CONFIG.radius * 2 + 8) return null;
+
+        for (let attempt = 0; attempt < CONFIG.spawnAttempts; attempt++) {
+            const x = CONFIG.radius + 4 + Math.random() * (arena.width - CONFIG.radius * 2 - 8);
+            const y = CONFIG.radius + 4 + Math.random() * (arena.height - CONFIG.radius * 2 - 8);
+            if (!isPositionClear(x, y, arena, player, obstacles, obstacleSize, pingPongState)) continue;
+
+            const hex = {
+                id: nextId++,
+                x, y,
+                radius: CONFIG.radius,
+                maxHealth: CONFIG.initialHealth,
+                health: CONFIG.initialHealth,
+                destroyed: false
+            };
+            hexagons.push(hex);
+            return hex;
+        }
+        return null;
+    }
+
+    function update(deltaTime, arena, player, obstacles, obstacleSize, pingPongState) {
+        if (!Number.isFinite(deltaTime) || deltaTime < 0 || !arena) return;
+        spawnTimer += deltaTime;
+        // A geração é contínua durante a partida: hexágonos destruídos liberam
+        // vagas para novas unidades, respeitando apenas o limite simultâneo.
+        if (spawnTimer >= CONFIG.spawnInterval && hexagons.length < CONFIG.maxHexagons) {
+            const created = spawn(arena, player, obstacles, obstacleSize, pingPongState);
+            if (created) spawnTimer = 0;
+            else spawnTimer = Math.min(spawnTimer, CONFIG.spawnInterval);
+        }
+    }
+
+    function damage(hex, amount) {
+        if (!hex || hex.destroyed || !hexagons.includes(hex) ||
+            !Number.isFinite(amount) || amount <= 0) return false;
+        hex.health = Math.max(0, hex.health - amount);
+        if (hex.health <= 0) {
+            hex.destroyed = true;
+            const index = hexagons.indexOf(hex);
+            if (index >= 0) hexagons.splice(index, 1);
+        }
+        return true;
+    }
+
+    function resolvePlayer(player, healthSystem, collisionSystem) {
+        if (!player) return false;
+        let touching = false;
+
+        for (const hex of hexagons) {
+            const contact = circlePolygonContact(player, vertices(hex));
+            if (!contact) continue;
+            touching = true;
+            player.x += contact.nx * (contact.penetration + 0.5);
+            player.y += contact.ny * (contact.penetration + 0.5);
+
+            const registered = collisionSystem ? collisionSystem.registerCollision() : true;
+            if (registered && healthSystem) {
+                const damageAmount = collisionSystem
+                    ? collisionSystem.getState().damage
+                    : 25;
+                const result = healthSystem.applyDamage(damageAmount);
+                if (result.gameOver && typeof root.triggerGameOver === "function") root.triggerGameOver();
+            }
+        }
+        return touching;
+    }
+
+    function resolveObstacles(obstacles, obstacleSize) {
+        if (!Array.isArray(obstacles)) return 0;
+        let resolved = 0;
+        for (const obstacle of obstacles) {
+            if (!obstacle || obstacle.state === "ELIMINATED" || obstacle.state === "RESPAWNING") continue;
+            for (const hex of hexagons) {
+                const collision = polygonCollision(vertices(hex), rectangleVertices(obstacle, obstacleSize));
+                if (!collision) continue;
+                obstacle.x += collision.nx * (collision.overlap + 0.5);
+                obstacle.y += collision.ny * (collision.overlap + 0.5);
+                resolved++;
+            }
+        }
+        return resolved;
+    }
+
+    function resolvePingPongCollision(ball, electric = false) {
+        if (!ball) return false;
+        for (const hex of hexagons) {
+            const contact = circlePolygonContact(ball, vertices(hex));
+            if (!contact) continue;
+
+            // Separa a bola da superfície antes de refletir sua velocidade.
+            ball.x += contact.nx * (contact.penetration + 0.5);
+            ball.y += contact.ny * (contact.penetration + 0.5);
+
+            const velocityAlongNormal = ball.vx * contact.nx + ball.vy * contact.ny;
+            if (velocityAlongNormal < 0) {
+                ball.vx -= 2 * velocityAlongNormal * contact.nx;
+                ball.vy -= 2 * velocityAlongNormal * contact.ny;
+            }
+
+            // Durante a sobrecarga, o impacto elétrico destrói o hexágono
+            // imediatamente, mas preserva o rebote e a trajetória da bola.
+            damage(hex, electric ? hex.health : CONFIG.pingPongDamage);
+            return true;
+        }
+        return false;
+    }
+
+    function isCirclePositionClear(circle) {
+        if (!circle) return true;
+        return !hexagons.some(hex =>
+            circlePolygonContact(circle, vertices(hex)) !== null
+        );
+    }
+
+    function constrainToArena(arena) {
+        if (!arena) return;
+        for (const hex of hexagons) {
+            hex.x = clamp(hex.x, hex.radius + 4, Math.max(hex.radius + 4, arena.width - hex.radius - 4));
+            hex.y = clamp(hex.y, hex.radius + 4, Math.max(hex.radius + 4, arena.height - hex.radius - 4));
+        }
+    }
+
+    function draw(ctx) {
+        if (!ctx) return;
+        for (const hex of hexagons) {
+            const points = vertices(hex);
+            ctx.save();
+            ctx.beginPath();
+            points.forEach((point, index) => {
+                if (index === 0) ctx.moveTo(point.x, point.y);
+                else ctx.lineTo(point.x, point.y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = CONFIG.fillColor;
+            ctx.shadowColor = CONFIG.fillColor;
+            ctx.shadowBlur = 16;
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.strokeStyle = CONFIG.strokeColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            const barWidth = hex.radius * 1.25;
+            const barY = hex.y - hex.radius - 10;
+            ctx.fillStyle = "rgba(0,0,0,0.65)";
+            ctx.fillRect(hex.x - barWidth/2, barY, barWidth, 4);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(hex.x - barWidth/2, barY, barWidth * (hex.health / hex.maxHealth), 4);
+            ctx.restore();
+        }
+    }
+
+    function reset() {
+        hexagons.length = 0;
+        spawnTimer = 0;
+        nextId = 1;
+    }
+
+    function configure(options) {
+        if (!options || typeof options !== "object") return getConfig();
+        for (const key of ["radius","maxHexagons","spawnInterval","spawnAttempts",
+            "playerSafeMargin","obstacleGap","initialHealth","pingPongDamage"]) {
+            if (Object.prototype.hasOwnProperty.call(options,key) &&
+                Number.isFinite(options[key]) && options[key] > 0) CONFIG[key] = options[key];
+        }
+        return getConfig();
+    }
+
+    function getConfig() { return { ...CONFIG }; }
+    function getState() {
+        return {
+            count: hexagons.length,
+            spawnTimer,
+            hexagons: hexagons.map(hex => ({...hex}))
+        };
+    }
+    function getHexagons() { return hexagons.slice(); }
+
+    const api = {
+        update, spawn, draw, reset, configure, getConfig, getState, getHexagons,
+        vertices, circlePolygonContact, polygonCollision, rectangleVertices,
+        resolvePlayer, resolveObstacles, resolvePingPongCollision,
+        isCirclePositionClear, constrainToArena, damage
+    };
+
+    if (typeof module !== "undefined" && module.exports) module.exports = api;
+    if (root) root.ONREDHexagonSystem = api;
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+
+    <!-- PING PONG ENEMY -->
+    <script>
+/* js/pingPong.js */
+/*
+ * ON RED
+ * PING PONG ENEMY + ELECTRIC OVERLOAD
+ * Movimento autônomo, rebotes, aceleração progressiva e eletrização.
+ */
+(function () {
+    "use strict";
+
+    const CONFIG = {
+        radius: 12,
+        speed: 380,
+        maxSpeed: 1200,
+        spawnInterval: 10,
+        spawnMargin: 32,
+        minPlayerDistance: 130,
+        spawnAttempts: 40,
+        knockbackSpeed: 900,
+        knockbackDamping: 4,
+        controlRecoveryDuration: 1,
+        controlMinMultiplier: 0.2,
+        collisionSpeedMultiplier: 1.08,
+        overloadHitCount: 20,
+        electrifiedDuration: 3,
+        stunIntervalMin: 0.22,
+        stunIntervalMax: 0.58,
+        stunDurationMin: 0.10,
+        stunDurationMax: 0.22
+    };
+
+    let ball = null;
+    let spawnTimer = 0;
+    let knockbackX = 0;
+    let knockbackY = 0;
+    let controlSlowTimer = 0;
+    let overloadHits = 0;
+    let electrifiedTimer = 0;
+    let stunTimer = 0;
+    let nextStunIn = 0;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function randomBetween(min, max) {
+        return min + Math.random() * (max - min);
+    }
+
+    function isClearOfObstacles(x, y, obstacles, obstacleSize) {
+        if (!Array.isArray(obstacles)) return true;
+        const half = (Number(obstacleSize) || 0) / 2;
+        for (const obstacle of obstacles) {
+            if (!obstacle || obstacle.state === "ELIMINATED" || obstacle.state === "RESPAWNING") continue;
+            const closestX = clamp(x, obstacle.x - half, obstacle.x + half);
+            const closestY = clamp(y, obstacle.y - half, obstacle.y + half);
+            const dx = x - closestX, dy = y - closestY;
+            if (dx * dx + dy * dy < CONFIG.radius * CONFIG.radius) return false;
+        }
+        return true;
+    }
+
+    function createSpawnPosition(arena, player, obstacles, obstacleSize, hexSystem) {
+        const minX = CONFIG.radius + CONFIG.spawnMargin;
+        const maxX = Math.max(minX, arena.width - minX);
+        const minY = CONFIG.radius + CONFIG.spawnMargin;
+        const maxY = Math.max(minY, arena.height - minY);
+
+        for (let attempt = 0; attempt < CONFIG.spawnAttempts; attempt++) {
+            const candidate = {
+                x: minX + Math.random() * (maxX - minX),
+                y: minY + Math.random() * (maxY - minY)
+            };
+            const playerDistance = Math.hypot(candidate.x - player.x, candidate.y - player.y);
+            const clearOfPlayer = playerDistance >= player.radius + CONFIG.radius + CONFIG.minPlayerDistance;
+            if (clearOfPlayer &&
+                isClearOfObstacles(candidate.x, candidate.y, obstacles, obstacleSize) &&
+                (!hexSystem || typeof hexSystem.isCirclePositionClear !== "function" ||
+                    hexSystem.isCirclePositionClear({ x: candidate.x, y: candidate.y, radius: CONFIG.radius }))) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    function randomDirection() {
+        let angle = 0, vx = 0, vy = 0;
+        for (let attempt = 0; attempt < 30; attempt++) {
+            angle = Math.random() * Math.PI * 2;
+            vx = Math.cos(angle);
+            vy = Math.sin(angle);
+            if (Math.abs(vx) >= 0.2 && Math.abs(vy) >= 0.2) break;
+        }
+        return { x: vx, y: vy };
+    }
+
+    function currentSpeed() {
+        return ball ? Math.hypot(ball.vx, ball.vy) : CONFIG.speed;
+    }
+
+    function setBallSpeed(speed) {
+        if (!ball) return;
+        const magnitude = Math.hypot(ball.vx, ball.vy) || 1;
+        const cappedSpeed = Math.min(speed, CONFIG.maxSpeed);
+        ball.vx = ball.vx / magnitude * cappedSpeed;
+        ball.vy = ball.vy / magnitude * cappedSpeed;
+    }
+
+    function startOverload() {
+        if (!ball || ball.electric) return;
+        ball.electric = true;
+    }
+
+    function registerValidImpact() {
+        if (!ball) return;
+        // Cada impacto válido acelera a bola, inclusive durante a sobrecarga.
+        setBallSpeed(currentSpeed() * CONFIG.collisionSpeedMultiplier);
+        if (!ball.electric) {
+            overloadHits++;
+            if (overloadHits >= CONFIG.overloadHitCount) startOverload();
+        }
+    }
+
+    function endOverload() {
+        if (ball) ball.electric = false;
+        overloadHits = 0;
+        // O fim da sobrecarga remove apenas a eletricidade.
+        // A velocidade acumulada só é restaurada no contato com o jogador.
+    }
+
+    function spawn(arena, player, obstacles, obstacleSize, hexSystem) {
+        if (ball || !arena || !player) return false;
+        const position = createSpawnPosition(arena, player, obstacles, obstacleSize, hexSystem);
+        if (!position) return false;
+        const direction = randomDirection();
+        ball = {
+            x: position.x, y: position.y,
+            vx: direction.x * CONFIG.speed,
+            vy: direction.y * CONFIG.speed,
+            radius: CONFIG.radius,
+            electric: false
+        };
+        return true;
+    }
+
+    function applyPlayerKnockback(deltaTime, player, arena) {
+        if (!player || !arena) return;
+        if (Math.abs(knockbackX) + Math.abs(knockbackY) < 1) {
+            knockbackX = 0;
+            knockbackY = 0;
+            return;
+        }
+        player.x += knockbackX * deltaTime;
+        player.y += knockbackY * deltaTime;
+        player.x = clamp(player.x, player.radius, Math.max(player.radius, arena.width - player.radius));
+        player.y = clamp(player.y, player.radius, Math.max(player.radius, arena.height - player.radius));
+        const damping = Math.exp(-CONFIG.knockbackDamping * deltaTime);
+        knockbackX *= damping;
+        knockbackY *= damping;
+    }
+
+    function bounceFromWalls(arena) {
+        if (!ball) return false;
+        const minX = ball.radius, maxX = Math.max(minX, arena.width - ball.radius);
+        const minY = ball.radius, maxY = Math.max(minY, arena.height - ball.radius);
+        let bounced = false;
+
+        if (ball.x < minX) {
+            ball.x = minX;
+            if (ball.vx < 0) { ball.vx = Math.abs(ball.vx); bounced = true; }
+        } else if (ball.x > maxX) {
+            ball.x = maxX;
+            if (ball.vx > 0) { ball.vx = -Math.abs(ball.vx); bounced = true; }
+        }
+        if (ball.y < minY) {
+            ball.y = minY;
+            if (ball.vy < 0) { ball.vy = Math.abs(ball.vy); bounced = true; }
+        } else if (ball.y > maxY) {
+            ball.y = maxY;
+            if (ball.vy > 0) { ball.vy = -Math.abs(ball.vy); bounced = true; }
+        }
+        return bounced;
+    }
+
+    function electrifyPlayer() {
+        electrifiedTimer = CONFIG.electrifiedDuration;
+        stunTimer = 0;
+        nextStunIn = randomBetween(CONFIG.stunIntervalMin, CONFIG.stunIntervalMax);
+    }
+
+    function collideWithPlayer(player, healthSystem, collisionSystem) {
+        const dx = player.x - ball.x, dy = player.y - ball.y;
+        const minimumDistance = player.radius + ball.radius;
+        const distanceSquared = dx * dx + dy * dy;
+        if (distanceSquared > minimumDistance * minimumDistance) return false;
+
+        const distance = Math.sqrt(distanceSquared);
+        let nx, ny;
+        if (distance > 0.0001) {
+            nx = dx / distance; ny = dy / distance;
+        } else {
+            const speed = Math.hypot(ball.vx, ball.vy) || 1;
+            nx = ball.vx / speed; ny = ball.vy / speed;
+        }
+
+        const overlap = minimumDistance - distance;
+        ball.x -= nx * (overlap + 0.5);
+        ball.y -= ny * (overlap + 0.5);
+
+        const velocityAlongNormal = ball.vx * nx + ball.vy * ny;
+        if (velocityAlongNormal > 0) {
+            ball.vx -= 2 * velocityAlongNormal * nx;
+            ball.vy -= 2 * velocityAlongNormal * ny;
+        }
+
+        knockbackX = nx * CONFIG.knockbackSpeed;
+        knockbackY = ny * CONFIG.knockbackSpeed;
+        controlSlowTimer = CONFIG.controlRecoveryDuration;
+
+        const wasElectric = Boolean(ball.electric);
+        if (wasElectric) {
+            electrifyPlayer();
+            endOverload();
+        } else {
+            overloadHits = 0;
+            setBallSpeed(CONFIG.speed);
+        }
+
+        if (healthSystem) {
+            const damage = collisionSystem && typeof collisionSystem.getState === "function"
+                ? collisionSystem.getState().damage : 25;
+            const result = healthSystem.applyDamage(damage);
+            if (result.gameOver && typeof window.triggerGameOver === "function") window.triggerGameOver();
+        }
+        return true;
+    }
+
+    function updateElectricalState(deltaTime) {
+        if (electrifiedTimer > 0) {
+            electrifiedTimer = Math.max(0, electrifiedTimer - deltaTime);
+            if (stunTimer > 0) {
+                stunTimer = Math.max(0, stunTimer - deltaTime);
+            } else {
+                nextStunIn -= deltaTime;
+                if (nextStunIn <= 0 && electrifiedTimer > 0) {
+                    stunTimer = randomBetween(CONFIG.stunDurationMin, CONFIG.stunDurationMax);
+                    nextStunIn = randomBetween(CONFIG.stunIntervalMin, CONFIG.stunIntervalMax);
+                }
+            }
+            if (electrifiedTimer === 0) {
+                stunTimer = 0;
+                nextStunIn = 0;
+            }
+        }
+    }
+
+    function update(deltaTime, player, arena, healthSystem, collisionSystem, obstacles, obstacleSize, hexSystem) {
+        if (!Number.isFinite(deltaTime) || deltaTime < 0 || !player || !arena ||
+            !Number.isFinite(arena.width) || !Number.isFinite(arena.height)) return;
+
+        controlSlowTimer = Math.max(0, controlSlowTimer - deltaTime);
+        updateElectricalState(deltaTime);
+        applyPlayerKnockback(deltaTime, player, arena);
+
+        if (!ball) {
+            spawnTimer += deltaTime;
+            if (spawnTimer >= CONFIG.spawnInterval) {
+                spawnTimer = 0;
+                spawn(arena, player, obstacles, obstacleSize, hexSystem);
+            }
+            return;
+        }
+
+        ball.x += ball.vx * deltaTime;
+        ball.y += ball.vy * deltaTime;
+
+        if (bounceFromWalls(arena)) registerValidImpact();
+
+        if (hexSystem && typeof hexSystem.resolvePingPongCollision === "function") {
+            const wasElectric = Boolean(ball.electric);
+            const hexHit = hexSystem.resolvePingPongCollision(ball, wasElectric);
+            if (hexHit) {
+                // O impacto sempre acelera; se a bola estava eletrizada, consome a carga.
+                registerValidImpact();
+                if (wasElectric) endOverload();
+            }
+        }
+
+        collideWithPlayer(player, healthSystem, collisionSystem);
+        bounceFromWalls(arena);
+    }
+
+    function drawElectricArc(ctx, x, y, radius, alpha = 1, phase = 0) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = "#8CEBFF";
+        ctx.lineWidth = 2;
+        ctx.shadowColor = "#37CFFF";
+        ctx.shadowBlur = 14;
+        ctx.beginPath();
+        const segments = 12;
+        for (let i = 0; i <= segments; i++) {
+            const angle = phase + (Math.PI * 2 * i) / segments;
+            const jitter = Math.sin(phase * 2.4 + i * 2.1) * 0.12;
+            const r = radius * (i % 2 === 0 ? 1 : 0.72 + jitter);
+            const px = x + Math.cos(angle) * r;
+            const py = y + Math.sin(angle) * r;
+            if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawElectricAura(ctx, x, y, radius, phase, intensity = 1) {
+        ctx.save();
+        ctx.globalAlpha = intensity;
+        ctx.strokeStyle = "#35CFFF";
+        ctx.lineWidth = 2;
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 22;
+        ctx.beginPath();
+        ctx.arc(x, y, radius + Math.sin(phase * 2) * 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+
+        drawElectricArc(ctx, x, y, radius + 5, 0.95 * intensity, phase);
+        drawElectricArc(ctx, x, y, radius + 10, 0.55 * intensity, -phase * 1.3);
+    }
+
+    function draw(ctx, player) {
+        if (!ctx) return;
+
+        const phase = Date.now() / 95;
+        if (electrifiedTimer > 0 && player) {
+            const pulse = 0.72 + Math.sin(phase) * 0.22;
+            drawElectricAura(ctx, player.x, player.y, player.radius + 7, phase, pulse);
+
+            // Pequenos clarões brancos aparecem nas pausas de atordoamento.
+            if (stunTimer > 0) {
+                ctx.save();
+                ctx.globalAlpha = 0.45 + Math.sin(phase * 2.8) * 0.2;
+                ctx.strokeStyle = "#FFFFFF";
+                ctx.lineWidth = 2;
+                ctx.shadowColor = "#8CEBFF";
+                ctx.shadowBlur = 18;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, player.radius + 3, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        if (!ball) return;
+        ctx.save();
+        if (ball.electric) {
+            const pulse = 0.75 + Math.sin(phase * 1.4) * 0.2;
+            drawElectricAura(ctx, ball.x, ball.y, ball.radius + 5, phase, pulse);
+            ctx.shadowColor = "#45DFFF";
+            ctx.shadowBlur = 28;
+        } else {
+            ctx.shadowColor = "#FFFFFF";
+            ctx.shadowBlur = 18;
+        }
+
+        // A esfera permanece branca; a eletricidade azul é uma camada externa.
+        ctx.beginPath();
+        ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.beginPath();
+        ctx.arc(ball.x - ball.radius * 0.3, ball.y - ball.radius * 0.3,
+            ball.radius * 0.24, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(255,255,255,0.85)";
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function reset() {
+        ball = null;
+        spawnTimer = 0;
+        knockbackX = 0;
+        knockbackY = 0;
+        controlSlowTimer = 0;
+        overloadHits = 0;
+        electrifiedTimer = 0;
+        stunTimer = 0;
+        nextStunIn = 0;
+    }
+
+    function getControlMultiplier() {
+        if (stunTimer > 0) return 0;
+        if (controlSlowTimer <= 0) return 1;
+        const duration = Math.max(CONFIG.controlRecoveryDuration, 0.001);
+        const progress = 1 - controlSlowTimer / duration;
+        return CONFIG.controlMinMultiplier + (1 - CONFIG.controlMinMultiplier) * progress;
+    }
+
+    function configure(options) {
+        if (!options || typeof options !== "object") return getConfig();
+        for (const key of Object.keys(CONFIG)) {
+            if (Object.prototype.hasOwnProperty.call(options, key) &&
+                Number.isFinite(options[key]) && options[key] > 0) CONFIG[key] = options[key];
+        }
+        if (ball) ball.radius = CONFIG.radius;
+        return getConfig();
+    }
+
+    function getConfig() { return { ...CONFIG }; }
+
+    function getState() {
+        return {
+            active: Boolean(ball),
+            ball: ball ? { ...ball } : null,
+            spawnTimer,
+            knockback: { x: knockbackX, y: knockbackY },
+            controlSlowTimer,
+            controlMultiplier: getControlMultiplier(),
+            impactCount: overloadHits,
+            overloaded: Boolean(ball && ball.electric),
+            electrifiedTimer,
+            stunTimer
+        };
+    }
+
+    function remove() {
+        ball = null;
+        spawnTimer = 0;
+        overloadHits = 0;
+    }
+
+    window.ONREDPingPong = {
+        update, draw, reset, spawn, remove, configure, getConfig, getState, getControlMultiplier
+    };
+
+    console.log("[ON RED] Ping Pong elétrico carregado.");
+})();
+
+</script>
+
+    <!-- PERFECT TIMING LIFECYCLE -->
+    <script>
+/* js/perfectTimingSystem.js */
+/*
+ * ON RED
+ * PERFECT TIMING SYSTEM
+ * Lifecycle for the five pressure obstacles.
+ *
+ * ACTIVE -> ELIMINATED -> RESPAWNING -> ACTIVE
+ */
+(function (root) {
+    "use strict";
+
+    const CONFIG = {
+        maxObstacles: 5,
+        individualRespawnDelay: 25,
+        collectiveRespawnDelay: 10,
+        playerSafeMargin: 80,
+        obstacleGap: 20,
+        spawnAttempts: 100,
+        retryInterval: 0.25
+    };
+
+    let nextObstacleId = 1;
+    let eliminated = new Map();
+    let collectiveTimer = null;
+    let collectiveRetryTimer = 0;
+
+    function registerObstacle(obstacle) {
+        if (!obstacle || typeof obstacle !== "object") {
+            throw new TypeError("Obstacle must be an object.");
+        }
+
+        if (!Number.isInteger(obstacle.id)) {
+            obstacle.id = nextObstacleId++;
+        }
+
+        obstacle.state = "ACTIVE";
+        return obstacle;
+    }
+
+    function findImpactTarget(player, obstacles, obstacleSize) {
+        if (!player || !Array.isArray(obstacles) || !Number.isFinite(obstacleSize)) return null;
+        const half = obstacleSize / 2;
+        let selected = null, bestApproach = -Infinity, bestPenetration = -Infinity;
+
+        for (const obstacle of obstacles) {
+            if (!obstacle || obstacle.state !== "ACTIVE") continue;
+            const closestX = Math.max(obstacle.x - half, Math.min(player.x, obstacle.x + half));
+            const closestY = Math.max(obstacle.y - half, Math.min(player.y, obstacle.y + half));
+            const ox = player.x - closestX, oy = player.y - closestY;
+            const distanceSquared = ox * ox + oy * oy;
+            if (distanceSquared > player.radius * player.radius) continue;
+
+            const distance = Math.sqrt(distanceSquared);
+            const cx = player.x - obstacle.x, cy = player.y - obstacle.y;
+            const centerDistance = Math.hypot(cx, cy) || 1;
+            const approach = ((Number(obstacle.vx) || 0) * cx +
+                (Number(obstacle.vy) || 0) * cy) / centerDistance;
+            const penetration = player.radius - distance;
+
+            if (approach > bestApproach ||
+                (Math.abs(approach - bestApproach) < 0.000001 &&
+                 penetration > bestPenetration)) {
+                selected = obstacle;
+                bestApproach = approach;
+                bestPenetration = penetration;
+            }
+        }
+        return selected;
+    }
+
+    function eliminate(obstacle, activeObstacles) {
+        if (!obstacle || !Array.isArray(activeObstacles)) {
+            return { applied: false, reason: "invalid_input" };
+        }
+
+        const index = activeObstacles.indexOf(obstacle);
+        if (index < 0 || obstacle.state !== "ACTIVE") {
+            return { applied: false, reason: "not_active" };
+        }
+
+        activeObstacles.splice(index, 1);
+        obstacle.state = "ELIMINATED";
+        eliminated.set(obstacle.id, {
+            obstacle,
+            remaining: CONFIG.individualRespawnDelay
+        });
+
+        const collectiveTriggered =
+            activeObstacles.length === 0 &&
+            eliminated.size === CONFIG.maxObstacles;
+
+        if (collectiveTriggered) {
+            collectiveTimer = CONFIG.collectiveRespawnDelay;
+            collectiveRetryTimer = 0;
+
+            eliminated.forEach(record => {
+                record.remaining = null;
+                record.obstacle.state = "ELIMINATED";
+            });
+        }
+
+        return {
+            applied: true,
+            obstacle,
+            eliminatedCount: eliminated.size,
+            collectiveTriggered
+        };
+    }
+
+    function isSafePosition(x, y, arena, player, obstacleSize, obstacles, reserved) {
+        const half = obstacleSize / 2;
+        const min = half + 4;
+
+        if (
+            x < min || y < min ||
+            x > arena.width - min ||
+            y > arena.height - min
+        ) {
+            return false;
+        }
+
+        if (player) {
+            const minimumPlayerDistance =
+                (player.radius || 0) + half + CONFIG.playerSafeMargin;
+            if (
+                Math.hypot(x - player.x, y - player.y) <
+                minimumPlayerDistance
+            ) {
+                return false;
+            }
+        }
+
+        const minimumObstacleDistance = obstacleSize + CONFIG.obstacleGap;
+        const allObstacles = obstacles.concat(reserved);
+
+        for (const other of allObstacles) {
+            if (
+                Math.abs(x - other.x) < minimumObstacleDistance &&
+                Math.abs(y - other.y) < minimumObstacleDistance
+            ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function findSafePositions(count, arena, player, obstacleSize, activeObstacles) {
+        if (
+            !arena ||
+            !Number.isFinite(arena.width) ||
+            !Number.isFinite(arena.height) ||
+            arena.width < obstacleSize + 8 ||
+            arena.height < obstacleSize + 8
+        ) {
+            return null;
+        }
+
+        const positions = [];
+        const obstacles = activeObstacles.slice();
+
+        for (let i = 0; i < count; i++) {
+            let candidate = null;
+
+            for (let attempt = 0; attempt < CONFIG.spawnAttempts; attempt++) {
+                const x = obstacleSize / 2 + 4 +
+                    Math.random() * Math.max(0, arena.width - obstacleSize - 8);
+                const y = obstacleSize / 2 + 4 +
+                    Math.random() * Math.max(0, arena.height - obstacleSize - 8);
+
+                if (
+                    isSafePosition(
+                        x, y, arena, player, obstacleSize, obstacles, positions
+                    )
+                ) {
+                    candidate = { x, y };
+                    break;
+                }
+            }
+
+            if (!candidate) return null;
+            positions.push(candidate);
+        }
+
+        return positions;
+    }
+
+    function restoreObstacle(record, position) {
+        const obstacle = record.obstacle;
+        obstacle.x = position.x;
+        obstacle.y = position.y;
+        obstacle.vx = 0;
+        obstacle.vy = 0;
+        obstacle.role = "pressure";
+        obstacle.state = "ACTIVE";
+        return obstacle;
+    }
+
+    function update(deltaTime, arena, player, obstacleSize, activeObstacles) {
+        const respawned = [];
+
+        if (
+            !Number.isFinite(deltaTime) ||
+            deltaTime < 0 ||
+            !Array.isArray(activeObstacles)
+        ) {
+            return respawned;
+        }
+
+        if (collectiveTimer !== null) {
+            collectiveTimer = Math.max(0, collectiveTimer - deltaTime);
+
+            if (collectiveTimer <= 0) {
+                collectiveRetryTimer -= deltaTime;
+
+                if (collectiveRetryTimer <= 0) {
+                    const records = Array.from(eliminated.values());
+                    records.forEach(record => {
+                        record.obstacle.state = "RESPAWNING";
+                    });
+                    const positions = findSafePositions(
+                        records.length,
+                        arena,
+                        player,
+                        obstacleSize,
+                        activeObstacles
+                    );
+
+                    if (positions && activeObstacles.length + records.length <= CONFIG.maxObstacles) {
+                        records.forEach((record, index) => {
+                            respawned.push(restoreObstacle(record, positions[index]));
+                        });
+
+                        eliminated.clear();
+                        collectiveTimer = null;
+                        collectiveRetryTimer = 0;
+                        activeObstacles.push(...respawned);
+                    } else {
+                        collectiveRetryTimer = CONFIG.retryInterval;
+                    }
+                }
+            }
+
+            return respawned;
+        }
+
+        for (const [id, record] of eliminated) {
+            record.remaining = Math.max(0, record.remaining - deltaTime);
+
+            if (record.remaining > 0) continue;
+
+            record.obstacle.state = "RESPAWNING";
+            const positions = findSafePositions(
+                1,
+                arena,
+                player,
+                obstacleSize,
+                activeObstacles
+            );
+
+            if (!positions || activeObstacles.length >= CONFIG.maxObstacles) {
+                record.remaining = CONFIG.retryInterval;
+                continue;
+            }
+
+            const obstacle = restoreObstacle(record, positions[0]);
+            activeObstacles.push(obstacle);
+            respawned.push(obstacle);
+            eliminated.delete(id);
+        }
+
+        return respawned;
+    }
+
+    function getState() {
+        const individual = Array.from(eliminated.values())
+            .filter(record => record.remaining !== null)
+            .map(record => ({
+                id: record.obstacle.id,
+                state: record.obstacle.state,
+                remaining: record.remaining
+            }));
+
+        return {
+            maxObstacles: CONFIG.maxObstacles,
+            eliminatedCount: eliminated.size,
+            individual,
+            collectiveActive: collectiveTimer !== null,
+            collectiveRemaining: collectiveTimer,
+            nextObstacleId
+        };
+    }
+
+    function reset() {
+        nextObstacleId = 1;
+        eliminated = new Map();
+        collectiveTimer = null;
+        collectiveRetryTimer = 0;
+    }
+
+    const api = {
+        registerObstacle,
+        findImpactTarget,
+        eliminate,
+        update,
+        getState,
+        reset,
+        getConfig: () => ({ ...CONFIG })
+    };
+
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = api;
+    }
+    if (root) {
+        root.ONREDPerfectTimingSystem = api;
+    }
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+
+    <!-- BOSS SYSTEM (FASE 1) -->
+    <script>
+/* js/bossSystem.js */
+/*
+ * ON RED
+ * BOSS SYSTEM — FINAL BOSS OF PHASE 1
+ * WARNING -> FIGHT -> DEFEATED -> IDLE (a vitória é disparada pelo engine)
+ *
+ * O Boss final da Fase 1:
+ * - WARNING (1,8s): aviso antes da aproximação.
+ * - FIGHT: patrulha lenta no terço superior, raios telegrafados, pongs.
+ * - DEFEATED (1,0s): explosão; o engine assume a vitória.
+ */
+(function (root) {
+    "use strict";
+
+    const CONFIG = {
+        triggerScore: 20000,
+        bossSize: 150,
+        minBossSize: 96,
+        bossHp: 1000,
+        damagePerParry: 100,
+        moveSpeed: 45,
+        patrolAmplitudeRatio: 0.3,
+        patrolYRatio: 0.22,
+        warningDuration: 1.8,
+        defeatDuration: 1.0,
+        victoryBonusScore: 5000,
+        ray: {
+            firstIn: 5.0,
+            interval: 7.0,
+            telegraphDuration: 1.2,
+            activeDuration: 0.22,
+            width: 10,
+            damage: 25,
+            count: 8,
+            angleStep: Math.PI / 8
+        },
+        pong: {
+            white: {
+                firstIn: 2.0,
+                interval: 3.4,
+                speed: 250,
+                radius: 12,
+                damage: 25,
+                rebounceSpeed: 420,
+                windowDistance: 105
+            },
+            electric: {
+                interval: 6.8,
+                projectiles: 2,
+                speed: 300,
+                angleStep: Math.PI / 20,
+                damage: 25
+            }
+        }
+    };
+
+    const RAY_SPEED = 300;
+
+    let phase = "IDLE";
+    let phaseTimer = 0;
+    let fightTimer = 0;
+    let boss = {
+        x: 0,
+        y: 0,
+        size: CONFIG.bossSize,
+        hp: CONFIG.bossHp,
+        maxHP: CONFIG.bossHp,
+        baseX: 0,
+        baseY: 0,
+        amplitudeX: 0,
+        patrolPhase: 0,
+        defeated: false
+    };
+    let weapon = null;
+    let whiteTimer = CONFIG.pong.white.firstIn;
+    let rayTimer = CONFIG.ray.firstIn;
+    let electricTimer = CONFIG.pong.electric.interval;
+    let rayVolleyIndex = 0;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function reset() {
+        phase = "IDLE";
+        phaseTimer = 0;
+        fightTimer = 0;
+        boss = {
+            x: 0,
+            y: 0,
+            size: CONFIG.bossSize,
+            hp: CONFIG.bossHp,
+            maxHP: CONFIG.bossHp,
+            baseX: 0,
+            baseY: 0,
+            amplitudeX: 0,
+            patrolPhase: 0,
+            defeated: false
+        };
+        weapon = null;
+        whiteTimer = CONFIG.pong.white.firstIn;
+        rayTimer = CONFIG.ray.firstIn;
+        electricTimer = CONFIG.pong.electric.interval;
+        rayVolleyIndex = 0;
+
+        return getState();
+    }
+
+    function getConfig() {
+        return {
+            triggerScore: CONFIG.triggerScore,
+            bossSize: CONFIG.bossSize,
+            minBossSize: CONFIG.minBossSize,
+            bossHp: CONFIG.bossHp,
+            damagePerParry: CONFIG.damagePerParry,
+            moveSpeed: CONFIG.moveSpeed,
+            patrolAmplitudeRatio: CONFIG.patrolAmplitudeRatio,
+            patrolYRatio: CONFIG.patrolYRatio,
+            warningDuration: CONFIG.warningDuration,
+            defeatDuration: CONFIG.defeatDuration,
+            victoryBonusScore: CONFIG.victoryBonusScore,
+            ray: { ...CONFIG.ray },
+            pong: {
+                white: { ...CONFIG.pong.white },
+                electric: { ...CONFIG.pong.electric }
+            }
+        };
+    }
+
+    function shouldStart(scoreValue) {
+        const value = Number(scoreValue);
+        return Number.isFinite(value) && value >= CONFIG.triggerScore;
+    }
+
+    function configure(options) {
+        if (!options || typeof options !== "object") return getConfig();
+
+        const numericKeys = [
+            "triggerScore", "bossSize", "minBossSize", "bossHp", "damagePerParry",
+            "moveSpeed", "patrolAmplitudeRatio", "patrolYRatio", "warningDuration",
+            "defeatDuration", "victoryBonusScore"
+        ];
+        for (const key of numericKeys) {
+            if (
+                Object.prototype.hasOwnProperty.call(options, key) &&
+                Number.isFinite(options[key]) && options[key] > 0
+            ) {
+                CONFIG[key] = options[key];
+            }
+        }
+
+        if (options.ray) {
+            for (const key of Object.keys(CONFIG.ray)) {
+                if (Number.isFinite(options.ray[key]) && options.ray[key] > 0) {
+                    CONFIG.ray[key] = options.ray[key];
+                }
+            }
+        }
+
+        if (options.pong) {
+            if (options.pong.white) {
+                for (const key of Object.keys(CONFIG.pong.white)) {
+                    if (Number.isFinite(options.pong.white[key]) && options.pong.white[key] > 0) {
+                        CONFIG.pong.white[key] = options.pong.white[key];
+                    }
+                }
+            }
+            if (options.pong.electric) {
+                for (const key of Object.keys(CONFIG.pong.electric)) {
+                    if (Number.isFinite(options.pong.electric[key]) && options.pong.electric[key] > 0) {
+                        CONFIG.pong.electric[key] = options.pong.electric[key];
+                    }
+                }
+            }
+        }
+
+        return getConfig();
+    }
+
+    function start(arena, player) {
+        if (phase !== "IDLE") return getState();
+
+        phase = "WARNING";
+        phaseTimer = CONFIG.warningDuration;
+
+        const width = arena && Number.isFinite(arena.width) ? arena.width : CONFIG.bossSize * 3;
+        const height = arena && Number.isFinite(arena.height) ? arena.height : CONFIG.bossSize * 3;
+
+        boss.size = clamp(CONFIG.bossSize, CONFIG.minBossSize, width * 0.34);
+        boss.amplitudeX = Math.min(width * CONFIG.patrolAmplitudeRatio, boss.size * 2);
+        boss.baseX = width / 2;
+        boss.baseY = height * CONFIG.patrolYRatio;
+        boss.hp = boss.maxHP;
+        boss.defeated = false;
+        boss.patrolPhase = 0;
+
+        return getState();
+    }
+
+    function updateBossMovement(deltaTime, arena) {
+        if (phase !== "FIGHT") return;
+
+        const half = boss.size / 2;
+        const minX = Math.max(half, 0);
+        const maxX = Math.max(arena.width - half, half);
+        const minY = Math.max(half, 0);
+        const maxY = Math.max(arena.height - half, half);
+
+        boss.x = clamp(arena.width / 2 + Math.sin(boss.patrolPhase) * boss.amplitudeX, minX, maxX);
+        boss.y = clamp(arena.height * CONFIG.patrolYRatio, minY, maxY);
+        boss.patrolPhase += deltaTime * (CONFIG.moveSpeed / Math.max(boss.amplitudeX, 0.0001));
+    }
+
+    function fireWhite(player) {
+        const angle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
+        const speed = CONFIG.pong.white.speed;
+        weapon = {
+            type: "white",
+            kind: "white",
+            state: "ACTIVE",
+            timer: 0,
+            x: boss.x,
+            y: boss.y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            radius: CONFIG.pong.white.radius,
+            damage: CONFIG.pong.white.damage,
+            rebounceSpeed: CONFIG.pong.white.reboundSpeed,
+            windowDistance: CONFIG.pong.white.windowDistance,
+            consumed: false
+        };
+    }
+
+    function fireRay(player) {
+        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
+        const offset = rayVolleyIndex % 2 === 0 ? 0 : CONFIG.ray.angleStep;
+        rayVolleyIndex += 1;
+        if (rayVolleyIndex >= CONFIG.ray.count) rayVolleyIndex = 0;
+        weapon = {
+            type: "ray",
+            kind: "ray",
+            state: "TELEGRAPH",
+            timer: CONFIG.ray.telegraphDuration,
+            angle: baseAngle + offset,
+            width: CONFIG.ray.width,
+            damage: CONFIG.ray.damage,
+            vx: 0,
+            vy: 0,
+            x: boss.x,
+            y: boss.y
+        };
+    }
+
+    function fireElectric(player) {
+        const baseAngle = player ? Math.atan2(player.y - boss.y, player.x - boss.x) : Math.atan2(0, 1);
+        const projectiles = [];
+        for (let i = 0; i < CONFIG.pong.electric.projectiles; i++) {
+            const angle = baseAngle + (i - 0.5) * CONFIG.pong.electric.angleStep * 2;
+            projectiles.push({
+                type: "electric",
+                kind: "electric",
+                state: "ACTIVE",
+                x: boss.x,
+                y: boss.y,
+                vx: Math.cos(angle) * CONFIG.pong.electric.speed,
+                vy: Math.sin(angle) * CONFIG.pong.electric.speed,
+                radius: CONFIG.pong.white.radius,
+                damage: CONFIG.pong.electric.damage
+            });
+        }
+        weapon = {
+            type: "electric",
+            state: "ACTIVE",
+            timer: CONFIG.pong.electric.interval,
+            projectiles
+        };
+    }
+
+    function updateRay(deltaTime, player, health, collision) {
+        if (weapon.state === "TELEGRAPH") {
+            weapon.timer -= deltaTime;
+            if (weapon.timer <= 0) {
+                weapon.state = "ACTIVE";
+                weapon.timer = CONFIG.ray.activeDuration;
+                weapon.vx = Math.cos(weapon.angle) * RAY_SPEED;
+                weapon.vy = Math.sin(weapon.angle) * RAY_SPEED;
+                weapon.x = boss.x + Math.cos(weapon.angle) * boss.size / 2;
+                weapon.y = boss.y + Math.sin(weapon.angle) * boss.size / 2;
+            }
+            return;
+        }
+
+        if (weapon.state === "ACTIVE") {
+            weapon.timer -= deltaTime;
+            weapon.x += weapon.vx * deltaTime;
+            weapon.y += weapon.vy * deltaTime;
+
+            let rayHit = false;
+            if (collision && collision.checkCollisions(player, [weapon], weapon.width)) {
+                rayHit = true;
+            }
+
+            if (weapon.timer <= 0 || rayHit) {
+                weapon = null;
+            }
+
+            if (rayHit) {
+                collision.registerCollision();
+                health.applyDamage(CONFIG.ray.damage);
+            }
+        }
+    }
+
+    function updateWhite(deltaTime, player, health, collision, arena) {
+        if (weapon.state !== "ACTIVE") return;
+        weapon.x += weapon.vx * deltaTime;
+        weapon.y += weapon.vy * deltaTime;
+
+        // Um pong errado não pode ficar ativo para sempre: fora da arena ele
+        // é descartado, liberando o slot de ataque do Boss.
+        const margin = 120;
+        if (arena && Number.isFinite(arena.width) && Number.isFinite(arena.height) &&
+            (weapon.x < -margin || weapon.x > arena.width + margin ||
+             weapon.y < -margin || weapon.y > arena.height + margin)) {
+            weapon = null;
+            return;
+        }
+
+        if (collision && collision.checkCollisions(player, [weapon], weapon.radius)) {
+            const damage = weapon.damage;
+            weapon = null;
+            collision.registerCollision();
+            health.applyDamage(damage);
+        }
+    }
+
+    function updateElectric(deltaTime, player, health, collision) {
+        weapon.timer -= deltaTime;
+        for (const projectile of weapon.projectiles) {
+            projectile.x += projectile.vx * deltaTime;
+            projectile.y += projectile.vy * deltaTime;
+
+            if (
+                projectile.state === "ACTIVE" &&
+                collision &&
+                collision.checkCollisions(player, [projectile], projectile.radius * 2)
+            ) {
+                projectile.state = "CONSUMED";
+                collision.registerCollision();
+                health.applyDamage(projectile.damage);
+            }
+        }
+
+        if (weapon.timer <= 0) {
+            weapon = null;
+        }
+    }
+
+    function updateCombat(deltaTime, player, health, collision, arena) {
+        if (phase !== "FIGHT") return;
+
+        if (weapon && weapon.state === "CONSUMED") {
+            weapon = null;
+        }
+
+        if (!weapon) {
+            whiteTimer -= deltaTime;
+            rayTimer -= deltaTime;
+            electricTimer -= deltaTime;
+
+            if (whiteTimer <= 0) { whiteTimer = CONFIG.pong.white.interval; fireWhite(player); return; }
+            if (rayTimer <= 0) { rayTimer = CONFIG.ray.interval; fireRay(player); return; }
+            if (electricTimer <= 0) { electricTimer = CONFIG.pong.electric.interval; fireElectric(player); return; }
+            return;
+        }
+
+        if (weapon.type === "ray") {
+            updateRay(deltaTime, player, health, collision);
+        } else if (weapon.type === "white") {
+            updateWhite(deltaTime, player, health, collision, arena);
+        } else if (weapon.type === "electric") {
+            updateElectric(deltaTime, player, health, collision);
+        }
+
+        const bossBody = { x: boss.x, y: boss.y, state: "ACTIVE", kind: "boss" };
+        if (collision && collision.checkCollisions(player, [bossBody], boss.size)) {
+            collision.registerCollision();
+            health.applyDamage(collision.getState().damage);
+        }
+    }
+
+    function update(deltaTime, arena, player, health, collision) {
+        if (!Number.isFinite(deltaTime) || deltaTime < 0) return getState();
+        if (!arena || !Number.isFinite(arena.width) || !Number.isFinite(arena.height)) return getState();
+        if (!player) return getState();
+
+        if (phase === "IDLE") return getState();
+
+        if (phase === "DEFEATED") {
+            phaseTimer -= deltaTime;
+            if (phaseTimer <= 0) phase = "IDLE";
+            return getState();
+        }
+
+        if (phase === "WARNING") {
+            phaseTimer -= deltaTime;
+            if (phaseTimer > 0) return getState();
+            phase = "FIGHT";
+            fightTimer = 0;
+            weapon = null;
+        }
+
+        fightTimer += deltaTime;
+        updateBossMovement(deltaTime, arena);
+        updateCombat(deltaTime, player, health, collision, arena);
+
+        return getState();
+    }
+
+    function tryParry(player) {
+        if (phase !== "FIGHT") return { applied: false, reason: "phase" };
+        if (!weapon || weapon.type !== "white" || weapon.state !== "ACTIVE") {
+            return { applied: false, reason: "no_target" };
+        }
+
+        const distance = Math.hypot(player.x - weapon.x, player.y - weapon.y);
+        const speed = Math.hypot(weapon.vx, weapon.vy) || 1;
+        const approaching = (weapon.vx * (player.x - weapon.x) + weapon.vy * (player.y - weapon.y)) > 0;
+
+        if (distance > weapon.windowDistance) return { applied: false, reason: "out_of_range" };
+        if (!approaching) return { applied: false, reason: "not_approaching" };
+
+        weapon.state = "CONSUMED";
+        boss.hp = Math.max(0, boss.hp - CONFIG.damagePerParry);
+        const defeated = boss.hp <= 0;
+        if (defeated) {
+            phase = "DEFEATED";
+            phaseTimer = CONFIG.defeatDuration;
+            boss.defeated = true;
+        }
+
+        return { applied: true, damage: CONFIG.damagePerParry, hp: boss.hp, maxHP: boss.maxHP, defeated };
+    }
+
+    function drawWeapon(ctx) {
+        if (weapon.type === "ray") {
+            const startX = weapon.x + Math.cos(weapon.angle) * boss.size / 2;
+            const startY = weapon.y + Math.sin(weapon.angle) * boss.size / 2;
+            const endX = startX + Math.cos(weapon.angle) * 400;
+            const endY = startY + Math.sin(weapon.angle) * 400;
+
+            ctx.save();
+            ctx.globalAlpha = weapon.state === "TELEGRAPH" ? 0.45 : 1;
+            ctx.strokeStyle = "#FFFFFF";
+            ctx.lineWidth = weapon.state === "TELEGRAPH" ? 8 : weapon.width;
+            ctx.shadowColor = "#168BFF";
+            ctx.shadowBlur = 12;
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            ctx.restore();
+            return;
+        }
+
+        if (weapon.type === "white") {
+            ctx.save();
+            ctx.shadowColor = "#FFFFFF";
+            ctx.shadowBlur = 18;
+            ctx.beginPath();
+            ctx.arc(weapon.x, weapon.y, weapon.radius, 0, Math.PI * 2);
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.restore();
+            return;
+        }
+
+        if (Array.isArray(weapon.projectiles)) {
+            for (const projectile of weapon.projectiles) {
+                ctx.save();
+                ctx.shadowColor = "#8CEBFF";
+                ctx.shadowBlur = 18;
+                ctx.beginPath();
+                ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+        }
+    }
+
+    function draw(ctx, canvas) {
+        if (!ctx) return;
+        if (phase === "IDLE" || phase === "DEFEATED") return;
+
+        ctx.save();
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 26;
+        ctx.fillStyle = "#168BFF";
+        ctx.fillRect(boss.x - boss.size / 2, boss.y - boss.size / 2, boss.size, boss.size);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = "rgba(8, 13, 22, 0.9)";
+        ctx.fillRect(boss.x - boss.size / 2 + 10, boss.y - boss.size / 2 + 10, boss.size - 20, boss.size - 20);
+        ctx.strokeStyle = "#65B8FF";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(boss.x - boss.size / 2, boss.y - boss.size / 2, boss.size, boss.size);
+        ctx.restore();
+
+        if (weapon) drawWeapon(ctx);
+    }
+
+    function drawHUD(ctx, canvas) {
+        if (phase !== "FIGHT") return;
+        if (!ctx || !canvas) return;
+
+        const width = Math.min(420, canvas.width * 0.55);
+        const height = 8;
+        const x = (canvas.width - width) / 2;
+        const y = 66;
+
+        ctx.save();
+        ctx.fillStyle = "#303743";
+        ctx.fillRect(x, y, width, height);
+        const ratio = boss.maxHP > 0 ? Math.max(0, Math.min(1, boss.hp / boss.maxHP)) : 0;
+        ctx.fillStyle = "#FF303F";
+        ctx.fillRect(x, y, width * ratio, height);
+        ctx.strokeStyle = "rgba(255,255,255,0.15)";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x, y, width, height);
+        ctx.fillStyle = "#FFFFFF";
+        ctx.font = "bold 10px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "bottom";
+        ctx.fillText("BOSS", canvas.width / 2, y - 8);
+        ctx.textBaseline = "top";
+        ctx.fillText(Math.ceil(boss.hp) + "%", canvas.width / 2, y + height + 10);
+        ctx.restore();
+    }
+
+    function getState() {
+        const weaponCopy = weapon
+            ? {
+                ...weapon,
+                projectiles: weapon.projectiles ? weapon.projectiles.map(p => ({ ...p })) : null
+            }
+            : null;
+        return {
+            phase,
+            phaseTimer,
+            fightTimer,
+            boss: { ...boss },
+            weapon: weaponCopy
+        };
+    }
+
+    const api = {
+        reset,
+        start,
+        update,
+        draw,
+        drawHUD,
+        tryParry,
+        getState,
+        getConfig,
+        shouldStart,
+        configure
+    };
+
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = api;
+    }
+    if (root) {
+        root.ONREDBossSystem = api;
+    }
+
+    console.log("[ON RED] Boss System carregado.");
+})(typeof window !== "undefined" ? window : globalThis);
+
+</script>
+
+    <!-- MAIN GAME ENGINE -->
+    <script>
+/* js/main.js */
+/*
+ * ON RED
+ * MAIN GAME
+ * Version: 1.3
+ *
+ * Canvas 2D
+ * Joystick virtual
+ * Perfect Timing
+ * Obstáculos com perseguição e separação
+ * Limites físicos da arena
+ * Sistema de colisão e dano
+ * Feedback visual de impacto
+ * Score por sobrevivência + best score
+ * Game Over
+ * Restart / Main Menu
+ */
+
+// ==========================================
+// CONFIGURAÇÃO INICIAL
+// ==========================================
+
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+
+// ==========================================
+// ELEMENTOS DA INTERFACE
+// ==========================================
+
+const mainMenu = document.getElementById("mainMenu");
+const settingsPanel = document.getElementById("settingsPanel");
+
+const gameOverScreen = document.getElementById("gameOverScreen");
+const retryButton = document.getElementById("retryButton");
+const gameOverMenuButton = document.getElementById("gameOverMenuButton");
+const finalScoreLabel = document.getElementById("finalScore");
+const bestScoreGameOverLabel = document.getElementById("bestScoreGameOver");
+const menuBestScoreLabel = document.getElementById("bestScore");
+const victoryScreen = document.getElementById("victoryScreen");
+const victoryRetryButton = document.getElementById("victoryRetryButton");
+const victoryMenuButton = document.getElementById("victoryMenuButton");
+const victoryFinalScoreLabel = document.getElementById("victoryFinalScore");
+const victoryBestScoreLabel = document.getElementById("victoryBestScore");
+
+// ==========================================
+// SCORE
+// ==========================================
+
+const scoreState = {
+    value: 0,
+    pointsPerSecond: 100,
+    storageKey: "onRedBestScore",
+    best: 0
+};
+
+function loadBestScore() {
+
+    try {
+        scoreState.best =
+            Number(localStorage.getItem(scoreState.storageKey) || 0) || 0;
+    } catch (error) {
+        scoreState.best = 0;
+    }
+
+    return scoreState.best;
+}
+
+function saveBestScore(finalScore) {
+
+    if (finalScore <= scoreState.best) {
+        return false;
+    }
+
+    scoreState.best = finalScore;
+
+    try {
+        localStorage.setItem(
+            scoreState.storageKey,
+            String(finalScore)
+        );
+    } catch (error) {
+        return false;
+    }
+
+    return true;
+}
+
+function formatScore(value) {
+    return String(Math.floor(value)).padStart(6, "0");
+}
+
+function refreshBestScoreDisplays() {
+
+    if (bestScoreGameOverLabel) {
+        bestScoreGameOverLabel.textContent =
+            formatScore(scoreState.best);
+    }
+
+    if (victoryBestScoreLabel) {
+        victoryBestScoreLabel.textContent =
+            formatScore(scoreState.best);
+    }
+
+    if (menuBestScoreLabel) {
+        menuBestScoreLabel.textContent =
+            formatScore(scoreState.best);
+    }
+}
+
+// ==========================================
+// ESTADOS DO JOGO
+// ==========================================
+
+const GAME_STATE = {
+    MENU: "MENU",
+    PLAYING: "PLAYING",
+    GAME_OVER: "GAME_OVER",
+    VICTORY: "VICTORY"
+};
+
+let gameState = GAME_STATE.MENU;
+let gameStarted = false;
+let loopRunning = false;
+let bossPhase = "IDLE";
+let scoreFreezeTimer = 0;
+
+// ==========================================
+// JOGADOR
+// ==========================================
+
+const player = {
+    x: 0,
+    y: 0,
+    radius: 15,
+    speed: 3.5
+};
+
+// ==========================================
+// JOYSTICK
+// ==========================================
+
+const joystick = {
+    baseX: 115,
+    baseY: 0,
+    knobX: 115,
+    knobY: 0,
+    radius: 55,
+    knobRadius: 22,
+    x: 0,
+    y: 0,
+    active: false,
+    pointerId: null
+};
+
+// O joystick é um controle de toque: aparece e responde apenas em
+// dispositivos com entrada por toque (celular, tablet, telas híbridas).
+// Desktop com teclado/mouse usa o teclado e não vê o joystick.
+const hasTouchInput =
+    (navigator.maxTouchPoints > 0) ||
+    ("ontouchstart" in window);
+
+// ==========================================
+// BOTÃO PERFECT TIMING
+// ==========================================
+
+const perfectButton = {
+    size: 64,
+    margin: 28,
+    charge: 1,
+    cooldown: 5,
+    activationFlash: 0,
+    x: 0,
+    y: 0
+};
+
+const perfectWave = { duration: 0.4, timer: 0 };
+const perfectTimingConfig = {
+    scorePerElimination: 500, positiveChance: 0.7,
+    effectDuration: 5, playerSpeedBoost: 1.35, playerSpeedPenalty: 0.75,
+    obstacleSlowdown: 0.75, obstacleSpeedBoost: 1.25,
+    scoreMultiplier: 2, healAmount: 25
+};
+const perfectTimingRuntime = {
+    effect: null, effectTimer: 0, feedback: "", feedbackTimer: 0
+};
+
+function updatePerfectButtonPosition() {
+
+    perfectButton.x =
+        canvas.width - perfectButton.margin - perfectButton.size;
+
+    perfectButton.y =
+        canvas.height - perfectButton.margin - perfectButton.size;
+}
+
+function activatePerfectTiming() {
+    if (gameState !== GAME_STATE.PLAYING || perfectButton.charge < 1) return false;
+
+    // Durante a luta do Boss, o Perfect Timing vira rebatida de projétil.
+    const boss = window.ONREDBossSystem;
+    if (boss && boss.getState().phase === "FIGHT") {
+        const parry = boss.tryParry(player);
+        if (parry.applied) {
+            perfectButton.charge = 0;
+            perfectButton.activationFlash = 0.25;
+            perfectTimingRuntime.feedback = "PERFECT! " + parry.damage + " HITS";
+            perfectTimingRuntime.feedbackTimer = 1.2;
+            return true;
+        }
+
+        // Tentativa inválida: informa o motivo sem consumir a carga e sem
+        // cair na lógica de obstáculos comuns (que não existem na luta).
+        perfectTimingRuntime.feedback = parry.reason === "out_of_range"
+            ? "TOO FAR"
+            : parry.reason === "not_approaching" ? "WRONG TIMING" : "NO TARGET";
+        perfectTimingRuntime.feedbackTimer = 0.6;
+        return false;
+    }
+
+    // O botão só ativa quando um obstáculo está efetivamente encostando no jogador.
+    const targetObstacle = findCollidingPerfectObstacle();
+    if (!targetObstacle) {
+        perfectTimingRuntime.feedback = "WAIT FOR CONTACT";
+        perfectTimingRuntime.feedbackTimer = 0.6;
+        return false;
+    }
+
+    return completePerfectTiming(targetObstacle);
+}
+
+function applyPerfectTimingShockwave() {
+    // Recupera o impulso radial original do Perfect Timing.
+    perfectObstacles.forEach(obstacle => {
+        const dx = obstacle.x - player.x;
+        const dy = obstacle.y - player.y;
+        const distance = Math.hypot(dx, dy) || 1;
+        const nx = dx / distance;
+        const ny = dy / distance;
+        const force = 140 + 340 * (1 - Math.min(distance / 500, 1));
+
+        obstacle.vx = nx * force;
+        obstacle.vy = ny * force;
+        obstacle.role = "pressure";
+    });
+
+    if (ObstacleAI.attacker) {
+        ObstacleAI.selectAttacker(perfectObstacles);
+    }
+}
+
+function applyPerfectTimingEffect() {
+    const health = window.ONREDHealthSystem;
+    const positive = Math.random() < perfectTimingConfig.positiveChance;
+    const choices = positive
+        ? ["speed_up", "score_up", "heal", "obstacle_slow"]
+        : ["speed_down", "obstacle_fast", "low_visibility"];
+    const type = choices[Math.floor(Math.random() * choices.length)];
+    perfectTimingRuntime.effect = type;
+    perfectTimingRuntime.effectTimer = perfectTimingConfig.effectDuration;
+
+    const labels = {
+        speed_up: "SPEED BOOST", score_up: "SCORE x2", heal: "HP RESTORED",
+        obstacle_slow: "OBSTACLES SLOWED", speed_down: "SPEED REDUCED",
+        obstacle_fast: "OBSTACLES FASTER", low_visibility: "LOW VISIBILITY"
+    };
+    if (type === "heal" && health) health.heal(perfectTimingConfig.healAmount);
+    perfectTimingRuntime.feedback = labels[type];
+    perfectTimingRuntime.feedbackTimer = 1.5;
+    return labels[type];
+}
+
+function completePerfectTiming(obstacle) {
+    const system = window.ONREDPerfectTimingSystem;
+    const health = window.ONREDHealthSystem;
+    const collision = window.ONREDCollisionSystem;
+    if (!system || !health || !collision || !obstacle || perfectButton.charge < 1) return false;
+
+    const result = system.eliminate(obstacle, perfectObstacles);
+    if (!result.applied) return false;
+
+    // Afasta os obstáculos restantes e inicia a proteção contra dano.
+    applyPerfectTimingShockwave();
+    collision.registerCollision();
+
+    perfectButton.charge = 0;
+    perfectButton.activationFlash = 0.25;
+    scoreState.value += perfectTimingConfig.scorePerElimination;
+    ObstacleAI.updateRoles(perfectObstacles);
+    ObstacleAI.selectAttacker(perfectObstacles);
+
+    if (result.collectiveTriggered) {
+        const state = health.getState();
+        health.heal(state.maxHP - state.hp);
+        if (Math.random() < 0.2) health.addExtraLife();
+        perfectTimingRuntime.effect = null;
+        perfectTimingRuntime.effectTimer = 0;
+        perfectTimingRuntime.feedback = "5/5 ELIMINATED · HP RESTORED";
+        perfectTimingRuntime.feedbackTimer = 2.5;
+    } else {
+        const effectLabel = applyPerfectTimingEffect();
+        perfectTimingRuntime.feedback =
+            "ELIMINATED +" + perfectTimingConfig.scorePerElimination + " · " + effectLabel;
+        perfectTimingRuntime.feedbackTimer = 1.8;
+    }
+    perfectWave.timer = perfectWave.duration;
+    return true;
+}
+
+function findCollidingPerfectObstacle() {
+    const collision = window.ONREDCollisionSystem;
+    if (!collision) return null;
+    if (window.ONREDPerfectTimingSystem &&
+        typeof ONREDPerfectTimingSystem.findImpactTarget === "function") {
+        return ONREDPerfectTimingSystem.findImpactTarget(player, perfectObstacles, obstacleConfig.size);
+    }
+    for (const obstacle of perfectObstacles) {
+        if (obstacle.state === "ACTIVE" &&
+            collision.checkCollisions(player, [obstacle], obstacleConfig.size)) return obstacle;
+    }
+    return null;
+}
+
+// ==========================================
+// SPAWN INICIAL DO JOGADOR
+// ==========================================
+
+function spawnPlayer() {
+
+    player.x = canvas.width / 2;
+    player.y = canvas.height / 2;
+}
+
+// ==========================================
+// LIMITES DA ARENA
+// ==========================================
+
+function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+}
+
+function constrainPlayerToArena() {
+
+    const minX = player.radius;
+    const maxX = canvas.width - player.radius;
+
+    const minY = player.radius;
+    const maxY = canvas.height - player.radius;
+
+    player.x = clamp(player.x, minX, maxX);
+    player.y = clamp(player.y, minY, maxY);
+}
+
+function constrainObstaclesToArena() {
+
+    const half = obstacleConfig.size / 2;
+
+    const minX = Math.min(half, canvas.width / 2);
+    const maxX = Math.max(canvas.width - half, canvas.width / 2);
+
+    const minY = Math.min(half, canvas.height / 2);
+    const maxY = Math.max(canvas.height - half, canvas.height / 2);
+
+    perfectObstacles.forEach(obstacle => {
+
+        obstacle.x = clamp(obstacle.x, minX, maxX);
+        obstacle.y = clamp(obstacle.y, minY, maxY);
+
+    });
+}
+
+// ==========================================
+// CONTROLES DE TOQUE
+// ==========================================
+
+function pointerDown(event) {
+
+    if (gameState !== GAME_STATE.PLAYING) return;
+
+    event.preventDefault();
+
+    if (
+        event.pointerType !== "touch" &&
+        event.pointerType !== "mouse" &&
+        event.pointerType !== "pen"
+    ) {
+        return;
+    }
+
+    const pos = getPosition(event);
+
+    const hitboxPadding = 20;
+
+    const insideButton =
+        pos.x >= perfectButton.x - hitboxPadding &&
+        pos.x <= perfectButton.x + perfectButton.size + hitboxPadding &&
+        pos.y >= perfectButton.y - hitboxPadding &&
+        pos.y <= perfectButton.y + perfectButton.size + hitboxPadding;
+
+    if (insideButton) {
+        activatePerfectTiming();
+        return;
+    }
+
+    if (joystick.active) return;
+
+    // Sem toque no dispositivo, o joystick não é um controle disponível.
+    if (!hasTouchInput) return;
+
+    // Mesmo com tela de toque, o joystick responde apenas a dedo/caneta;
+    // o mouse continua livre para o botão de Perfect Timing.
+    if (
+        event.pointerType !== "touch" &&
+        event.pointerType !== "pen"
+    ) {
+        return;
+    }
+
+    const dx = pos.x - joystick.baseX;
+    const dy = pos.y - joystick.baseY;
+
+    if (Math.hypot(dx, dy) > 90) return;
+
+    joystick.active = true;
+    joystick.pointerId = event.pointerId;
+
+    canvas.setPointerCapture(event.pointerId);
+
+    updateJoystick(event);
+}
+
+function pointerMove(event) {
+
+    if (gameState !== GAME_STATE.PLAYING) return;
+
+    if (!joystick.active) return;
+    if (event.pointerId !== joystick.pointerId) return;
+
+    event.preventDefault();
+    updateJoystick(event);
+}
+
+function pointerUp(event) {
+
+    if (event.pointerId !== joystick.pointerId) return;
+
+    resetJoystick();
+}
+
+// ==========================================
+// ATUALIZAÇÃO DO BOTÃO
+// ==========================================
+
+function updatePerfectButton(deltaTime, timerDeltaTime = deltaTime) {
+    // Relógios de habilidade usam tempo real; animações/física continuam limitadas pelo frame.
+    perfectTimingRuntime.feedbackTimer = Math.max(0, perfectTimingRuntime.feedbackTimer - timerDeltaTime);
+    perfectTimingRuntime.effectTimer = Math.max(0, perfectTimingRuntime.effectTimer - timerDeltaTime);
+    if (perfectTimingRuntime.effectTimer <= 0) perfectTimingRuntime.effect = null;
+
+    if (perfectButton.charge < 1) {
+
+        perfectButton.charge +=
+            timerDeltaTime / perfectButton.cooldown;
+
+        perfectButton.charge =
+            Math.min(perfectButton.charge, 1);
+    }
+
+    if (perfectButton.activationFlash > 0) {
+
+        perfectButton.activationFlash -= timerDeltaTime;
+
+        perfectButton.activationFlash =
+            Math.max(0, perfectButton.activationFlash);
+    }
+
+    if (perfectWave.timer > 0) {
+
+        perfectWave.timer -= timerDeltaTime;
+
+        perfectWave.timer =
+            Math.max(0, perfectWave.timer);
+    }
+}
+
+// ==========================================
+// DIMENSÕES DA TELA
+// ==========================================
+
+function resizeCanvas() {
+
+    document.documentElement.style.margin = "0";
+    document.documentElement.style.padding = "0";
+    document.documentElement.style.overflow = "hidden";
+
+    document.body.style.margin = "0";
+    document.body.style.padding = "0";
+    document.body.style.overflow = "hidden";
+
+    canvas.style.position = "fixed";
+    canvas.style.left = "0";
+    canvas.style.top = "0";
+    canvas.style.zIndex = "0";
+    canvas.style.pointerEvents = "auto";
+    canvas.style.display = "block";
+    canvas.style.margin = "0";
+    canvas.style.padding = "0";
+
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+
+    canvas.style.width = `${screenWidth}px`;
+    canvas.style.height = `${screenHeight}px`;
+
+    canvas.width = screenWidth;
+    canvas.height = screenHeight;
+
+    joystick.baseY = canvas.height - 115;
+
+    updatePerfectButtonPosition();
+
+    resetJoystick();
+
+    constrainPlayerToArena();
+    constrainObstaclesToArena();
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.constrainToArena(canvas);
+}
+
+// ==========================================
+// FUNÇÕES DO JOYSTICK
+// ==========================================
+
+function resetJoystick() {
+
+    joystick.x = 0;
+    joystick.y = 0;
+
+    joystick.knobX = joystick.baseX;
+    joystick.knobY = joystick.baseY;
+
+    joystick.active = false;
+    joystick.pointerId = null;
+}
+
+function getPosition(event) {
+
+    const rect = canvas.getBoundingClientRect();
+
+    return {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
+    };
+}
+
+function updateJoystick(event) {
+
+    const pos = getPosition(event);
+
+    const dx = pos.x - joystick.baseX;
+    const dy = pos.y - joystick.baseY;
+
+    const distance = Math.hypot(dx, dy);
+
+    const limitedDistance = Math.min(
+        distance,
+        joystick.radius
+    );
+
+    if (distance > 0) {
+
+        const angle = Math.atan2(dy, dx);
+
+        joystick.knobX =
+            joystick.baseX +
+            Math.cos(angle) * limitedDistance;
+
+        joystick.knobY =
+            joystick.baseY +
+            Math.sin(angle) * limitedDistance;
+
+        const strength = Math.min(
+            distance / joystick.radius,
+            1
+        );
+
+        joystick.x = (dx / distance) * strength;
+        joystick.y = (dy / distance) * strength;
+
+    } else {
+
+        joystick.x = 0;
+        joystick.y = 0;
+
+        joystick.knobX = joystick.baseX;
+        joystick.knobY = joystick.baseY;
+    }
+}
+
+// ==========================================
+// OBSTÁCULOS
+// ==========================================
+
+const perfectObstacles = [];
+
+const obstacleConfig = {
+    size: 34,
+    speed: 85,
+    spawnInterval: 1.8,
+    maxObstacles: 5
+};
+
+let spawnTimer = 0;
+
+// ==========================================
+// CRIAÇÃO DOS OBSTÁCULOS
+// ==========================================
+
+function spawnPerfectObstacle() {
+
+    const lifecycle = window.ONREDPerfectTimingSystem
+        ? ONREDPerfectTimingSystem.getState()
+        : { eliminatedCount: 0 };
+    if (perfectObstacles.length + lifecycle.eliminatedCount >= obstacleConfig.maxObstacles) {
+        return;
+    }
+
+    const side = Math.floor(Math.random() * 4);
+
+    let x;
+    let y;
+
+    switch (side) {
+
+        case 0:
+            x = Math.random() * canvas.width;
+            y = -40;
+            break;
+
+        case 1:
+            x = canvas.width + 40;
+            y = Math.random() * canvas.height;
+            break;
+
+        case 2:
+            x = Math.random() * canvas.width;
+            y = canvas.height + 40;
+            break;
+
+        case 3:
+            x = -40;
+            y = Math.random() * canvas.height;
+            break;
+    }
+
+    const obstacle = window.ONREDPerfectTimingSystem
+        ? ONREDPerfectTimingSystem.registerObstacle({ x, y, vx: 0, vy: 0, role: "pressure" })
+        : { x, y, vx: 0, vy: 0, role: "pressure", state: "ACTIVE" };
+    perfectObstacles.push(obstacle);
+
+    ObstacleAI.updateRoles(perfectObstacles);
+
+    if (!ObstacleAI.attacker) {
+        ObstacleAI.selectAttacker(perfectObstacles);
+    }
+}
+
+// ==========================================
+// ATUALIZAÇÃO DOS OBSTÁCULOS
+// ==========================================
+
+function updatePerfectObstacles(deltaTime, timerDeltaTime = deltaTime) {
+
+    spawnTimer += deltaTime;
+
+    if (spawnTimer >= obstacleConfig.spawnInterval) {
+
+        spawnTimer = 0;
+
+        spawnPerfectObstacle();
+    }
+
+    if (window.ONREDPerfectTimingSystem) {
+        ONREDPerfectTimingSystem.update(timerDeltaTime, canvas, player, obstacleConfig.size, perfectObstacles);
+        ObstacleAI.updateRoles(perfectObstacles);
+        if (!ObstacleAI.attacker && perfectObstacles.length) ObstacleAI.selectAttacker(perfectObstacles);
+    }
+
+    const effect = perfectTimingRuntime.effect;
+    const obstacleSpeedMultiplier = effect === "obstacle_slow"
+        ? perfectTimingConfig.obstacleSlowdown
+        : effect === "obstacle_fast" ? perfectTimingConfig.obstacleSpeedBoost : 1;
+
+    const repulsions = ObstaclePhysics.calculateRepulsion(
+        perfectObstacles,
+        obstacleConfig.size
+    );
+
+    perfectObstacles.forEach((obstacle, index) => {
+
+        const desired = ObstacleAI.getDesiredVelocity(
+            obstacle,
+            index,
+            player,
+            obstacleConfig.speed * obstacleSpeedMultiplier
+        );
+
+        const chaseX = desired.x;
+        const chaseY = desired.y;
+
+        const repulsion = repulsions[index];
+
+        const desiredX = chaseX + repulsion.x;
+        const desiredY = chaseY + repulsion.y;
+
+        const response = Math.min(
+            1,
+            deltaTime * 8
+        );
+
+        obstacle.vx +=
+            (desiredX - obstacle.vx) * response;
+
+        obstacle.vy +=
+            (desiredY - obstacle.vy) * response;
+
+        obstacle.x += obstacle.vx * deltaTime;
+        obstacle.y += obstacle.vy * deltaTime;
+
+    });
+
+    ObstaclePhysics.separate(
+        perfectObstacles,
+        obstacleConfig.size,
+        deltaTime
+    );
+
+    constrainObstaclesToArena();
+}
+
+// ==========================================
+// GAME OVER
+// ==========================================
+
+function triggerGameOver() {
+
+    if (gameState === GAME_STATE.GAME_OVER) return;
+
+    gameState = GAME_STATE.GAME_OVER;
+
+    resetJoystick();
+
+    const finalScore = Math.floor(scoreState.value);
+
+    const isRecord = saveBestScore(finalScore);
+
+    if (finalScoreLabel) {
+        finalScoreLabel.textContent =
+            formatScore(finalScore);
+    }
+
+    refreshBestScoreDisplays();
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.add("active");
+        gameOverScreen.setAttribute("aria-hidden", "false");
+    }
+}
+
+function triggerVictory() {
+
+    // A vitória só pode ser registrada uma vez por partida.
+    if (gameState === GAME_STATE.VICTORY) return;
+
+    const bonus = window.ONREDBossSystem
+        ? window.ONREDBossSystem.getConfig().victoryBonusScore
+        : 5000;
+    const finalScore = Math.floor(scoreState.value + bonus);
+
+    scoreState.value = finalScore;
+
+    saveBestScore(finalScore);
+    refreshBestScoreDisplays();
+
+    if (victoryFinalScoreLabel) {
+        victoryFinalScoreLabel.textContent = formatScore(finalScore);
+    }
+
+    gameState = GAME_STATE.VICTORY;
+
+    if (victoryScreen) {
+        victoryScreen.classList.add("active");
+        victoryScreen.setAttribute("aria-hidden", "false");
+    }
+}
+
+// ==========================================
+// SISTEMA DE COLISÃO E DANO
+// ==========================================
+
+function handlePlayerCollision() {
+
+    const collision = window.ONREDCollisionSystem;
+    const health = window.ONREDHealthSystem;
+
+    if (!collision || !health) return;
+
+    if (gameState !== GAME_STATE.PLAYING) return;
+
+    const healthState = health.getState();
+
+    if (healthState.gameOver) {
+        triggerGameOver();
+        return;
+    }
+
+    const targetObstacle = findCollidingPerfectObstacle();
+    if (!targetObstacle) return;
+
+    const registered = collision.registerCollision();
+
+    if (!registered) return;
+
+    const result = health.applyDamage(
+        collision.getState().damage
+    );
+
+    if (!result.applied) return;
+
+    if (result.gameOver) {
+        triggerGameOver();
+    }
+}
+
+// ==========================================
+// ATUALIZAÇÃO GERAL
+// ==========================================
+
+function update(deltaTime, timerDeltaTime = deltaTime) {
+
+    if (gameState !== GAME_STATE.PLAYING) return;
+
+    // SHIFT: solicita Perfect Timing uma única vez por pressionamento.
+    if (
+        window.ONREDKeyboardController &&
+        window.ONREDKeyboardController.consumePerfectTimingRequest(
+            gameState === GAME_STATE.PLAYING
+        )
+    ) {
+        activatePerfectTiming();
+    }
+
+    // ==========================================
+// MOVIMENTO DO JOGADOR
+// JOYSTICK + TECLADO
+// ==========================================
+
+const keyboard = window.ONREDKeyboardController
+    ? window.ONREDKeyboardController.getVector(
+        gameState === GAME_STATE.PLAYING
+    )
+    : { x: 0, y: 0 };
+
+// Combina os dois controles.
+let moveX = joystick.x + keyboard.x;
+let moveY = joystick.y + keyboard.y;
+
+// Normaliza para impedir velocidade excessiva.
+const movementMagnitude = Math.hypot(moveX, moveY);
+
+if (movementMagnitude > 1) {
+    moveX /= movementMagnitude;
+    moveY /= movementMagnitude;
+}
+
+// Aplica o movimento. Após um impacto do Ping Pong, a influência
+// do joystick/teclado começa reduzida e retorna gradualmente em 1 segundo.
+const controlMultiplier =
+    window.ONREDPingPong &&
+    typeof window.ONREDPingPong.getControlMultiplier === "function"
+        ? window.ONREDPingPong.getControlMultiplier()
+        : 1;
+
+const effectSpeedMultiplier = perfectTimingRuntime.effect === "speed_up"
+    ? perfectTimingConfig.playerSpeedBoost
+    : perfectTimingRuntime.effect === "speed_down" ? perfectTimingConfig.playerSpeedPenalty : 1;
+player.x += moveX * player.speed * controlMultiplier * effectSpeedMultiplier * deltaTime * 60;
+player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * deltaTime * 60;
+
+    // LIMITES DO JOGADOR
+
+    constrainPlayerToArena();
+
+    // BOSS FINAL DA FASE 1
+
+    let bossPhaseNow = bossPhase;
+
+    if (window.ONREDBossSystem) {
+
+        const previousBossPhase = bossPhase;
+
+        // update() devolve o estado completo; a fase é uma string e é a
+        // única fonte de verdade usada nas comparações abaixo.
+        bossPhase = window.ONREDBossSystem.update(
+            deltaTime,
+            canvas,
+            player,
+            window.ONREDHealthSystem,
+            window.ONREDCollisionSystem
+        ).phase;
+
+        if (window.ONREDHealthSystem && window.ONREDHealthSystem.getState().gameOver) {
+            triggerGameOver();
+        }
+
+        if (previousBossPhase === "DEFEATED" && bossPhase === "IDLE") {
+            triggerVictory();
+        }
+
+        bossPhaseNow = bossPhase;
+    }
+
+    // Relógios que precisam continuar correndo também durante a luta do Boss:
+    // cooldown/feedback do Perfect Timing e invulnerabilidade pós-dano.
+    updatePerfectButton(deltaTime, timerDeltaTime);
+
+    if (window.ONREDCollisionSystem) {
+        ONREDCollisionSystem.update(deltaTime);
+    }
+
+    // SCORE POR SOBREVIVÊNCIA
+    // O congelamento vale apenas para a transição; precisa expirar também
+    // durante WARNING/FIGHT, senão a pontuação fica presa para sempre.
+
+    const scoreMultiplier = perfectTimingRuntime.effect === "score_up"
+        ? perfectTimingConfig.scoreMultiplier : 1;
+
+    if (scoreFreezeTimer > 0) {
+        scoreFreezeTimer = Math.max(0, scoreFreezeTimer - deltaTime);
+    }
+
+    if (scoreFreezeTimer <= 0) {
+        scoreState.value += deltaTime * scoreState.pointsPerSecond * scoreMultiplier;
+    }
+
+    if (bossPhaseNow === "IDLE") {
+
+    // SISTEMAS DO JOGO
+
+    updatePerfectObstacles(deltaTime, timerDeltaTime);
+
+    if (window.ONREDHexagonSystem) {
+        ONREDHexagonSystem.update(
+            deltaTime, canvas, player, perfectObstacles, obstacleConfig.size,
+            window.ONREDPingPong ? ONREDPingPong.getState() : null
+        );
+        ONREDHexagonSystem.resolveObstacles(perfectObstacles, obstacleConfig.size);
+        ONREDHexagonSystem.resolvePlayer(
+            player, window.ONREDHealthSystem, window.ONREDCollisionSystem
+        );
+        constrainPlayerToArena();
+    }
+
+    // DISPARO DO BOSS FINAL (FASE 1) — gatilho por pontuação.
+
+    if (
+        window.ONREDBossSystem &&
+        window.ONREDBossSystem.getState().phase === "IDLE" &&
+        window.ONREDBossSystem.shouldStart(scoreState.value)
+    ) {
+        window.ONREDBossSystem.start(canvas, player);
+        scoreFreezeTimer = window.ONREDBossSystem.getConfig().warningDuration;
+    }
+
+    // SISTEMA DE COLISÃO
+
+    if (window.ONREDCollisionSystem) {
+
+        handlePlayerCollision();
+    }
+
+    // INIMIGO PING PONG
+    if (window.ONREDPingPong) {
+        ONREDPingPong.update(
+            deltaTime,
+            player,
+            canvas,
+            window.ONREDHealthSystem,
+            window.ONREDCollisionSystem,
+            perfectObstacles,
+            obstacleConfig.size,
+            window.ONREDHexagonSystem
+        );
+    }
+
+        // SISTEMA MERGE (ESFERAS VERMELHAS)
+
+    if (window.ONREDMergeSystem) {
+
+       
+const mergeResults = ONREDMergeSystem.update(
+    deltaTime,
+    player,
+    canvas,
+    window.ONREDHealthSystem
+);
+
+// APLICA BÔNUS DE PONTUAÇÃO DO MERGE.
+
+mergeResults.forEach(result => {
+
+    if (
+        result.type === "bonus_score" &&
+        result.applied
+    ) {
+        scoreState.value += result.points;
+    }
+
+});
+
+    }
+} else {
+    // Durante a luta o Boss assume a arena: spawns, score e combate normal pausados.
+    updatePerfectButton(deltaTime, timerDeltaTime);
+}
+}
+
+// ==========================================
+// DESENHO DA ARENA
+// ==========================================
+
+function drawArena() {
+
+    ctx.fillStyle = "#03060d";
+
+    ctx.fillRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    const hexSize = 28;
+    const hexWidth = Math.sqrt(3) * hexSize;
+    const hexHeight = hexSize * 1.5;
+
+    for (
+        let row = -1;
+        row < canvas.height / hexHeight + 2;
+        row++
+    ) {
+
+        for (
+            let col = -1;
+            col < canvas.width / hexWidth + 2;
+            col++
+        ) {
+
+            const x = col * hexWidth +
+                (row % 2) * hexWidth / 2;
+
+            const y = row * hexHeight;
+
+            ctx.beginPath();
+
+            for (let i = 0; i < 6; i++) {
+
+                const angle =
+                    (Math.PI / 180) * (60 * i - 30);
+
+                const px = x + hexSize * Math.cos(angle);
+                const py = y + hexSize * Math.sin(angle);
+
+                if (i === 0) {
+                    ctx.moveTo(px, py);
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+
+            ctx.closePath();
+
+            ctx.fillStyle = "#080D16";
+            ctx.fill();
+
+            ctx.strokeStyle = "rgba(22, 139, 255, 0.22)";
+            ctx.lineWidth = 1;
+
+            ctx.stroke();
+        }
+    }
+}
+
+// ==========================================
+// DESENHO DO JOGADOR
+// ==========================================
+
+function drawPlayer() {
+
+    ctx.save();
+
+    ctx.shadowColor = "#ff2525";
+    ctx.shadowBlur = 22;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        player.x,
+        player.y,
+        player.radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "#ff2525";
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        player.x - 4,
+        player.y - 4,
+        player.radius * 0.3,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "rgba(255,255,255,0.65)";
+    ctx.fill();
+
+    ctx.restore();
+}
+
+// ==========================================
+// DESENHO DOS OBSTÁCULOS
+// ==========================================
+
+function drawPerfectObstacles() {
+
+    perfectObstacles.forEach(obstacle => {
+        if (obstacle.state !== "ACTIVE") return;
+        const half = obstacleConfig.size / 2;
+
+        ctx.beginPath();
+        ctx.rect(
+            obstacle.x - half,
+            obstacle.y - half,
+            obstacleConfig.size,
+            obstacleConfig.size
+        );
+        ctx.strokeStyle = "#168BFF";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    });
+
+    // Penalidade de visibilidade escurece a arena, mas mantém
+    // jogador e controles desenhados depois desta camada legíveis.
+    if (perfectTimingRuntime.effect === "low_visibility") {
+        ctx.save();
+        ctx.fillStyle = "rgba(3, 6, 13, 0.48)";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+    }
+}
+
+// ==========================================
+// DESENHO DO JOYSTICK
+// ==========================================
+
+function drawJoystick() {
+
+    // Em desktop sem toque o joystick não existe: nada é desenhado.
+    if (!hasTouchInput) return;
+
+    ctx.beginPath();
+
+    ctx.arc(
+        joystick.baseX,
+        joystick.baseY,
+        joystick.radius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "rgba(180,180,180,0.3)";
+    ctx.fill();
+
+    ctx.beginPath();
+
+    ctx.arc(
+        joystick.knobX,
+        joystick.knobY,
+        joystick.knobRadius,
+        0,
+        Math.PI * 2
+    );
+
+    ctx.fillStyle = "#ffffff";
+    ctx.fill();
+}
+
+// ==========================================
+// DESENHO DO BOTÃO PERFECT TIMING
+// ==========================================
+
+function drawPerfectButton() {
+
+    const x = perfectButton.x;
+    const y = perfectButton.y;
+    const size = perfectButton.size;
+
+    const padding = 5;
+    const innerSize = size - padding * 2;
+
+    const fillHeight =
+        innerSize * perfectButton.charge;
+
+    ctx.fillStyle = "#101820";
+
+    ctx.fillRect(
+        x,
+        y,
+        size,
+        size
+    );
+
+    ctx.fillStyle = perfectButton.charge >= 1
+        ? "#168BFF"
+        : "#07539C";
+
+    ctx.fillRect(
+        x + padding,
+        y + size - padding - fillHeight,
+        innerSize,
+        fillHeight
+    );
+
+    ctx.strokeStyle =
+        perfectButton.activationFlash > 0
+            ? "#FFFFFF"
+            : "#168BFF";
+
+    ctx.lineWidth = 3;
+
+    ctx.strokeRect(
+        x,
+        y,
+        size,
+        size
+    );
+
+    ctx.fillStyle = "#FFFFFF";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = "bold 12px Arial";
+
+    ctx.fillText(
+        perfectButton.charge >= 1
+            ? "READY"
+            : `${Math.floor(perfectButton.charge * 100)}%`,
+        x + size / 2, y + size / 2
+    );
+}
+
+// ==========================================
+// DESENHO GERAL
+// ==========================================
+
+function draw() {
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    drawArena();
+    drawPerfectObstacles();
+
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.draw(ctx);
+
+    if (window.ONREDPingPong) {
+        // Mantém a bola branca e seu destaque visual em contato com o jogador.
+        ONREDPingPong.draw(ctx, player);
+    }
+
+    if (window.ONREDMergeSystem) {
+        ONREDMergeSystem.draw(ctx);
+    }
+
+    if (window.ONREDBossSystem && bossPhase !== "IDLE") {
+        window.ONREDBossSystem.draw(ctx, canvas);
+    }
+
+    drawPlayer();
+
+    if (window.ONREDCollisionSystem) {
+
+        ONREDCollisionSystem.drawImpact(
+            ctx,
+            player
+        );
+    }
+
+    drawJoystick();
+    drawPerfectButton();
+
+    drawScore();
+
+    if (window.ONREDBossSystem && bossPhase === "FIGHT") {
+        window.ONREDBossSystem.drawHUD(ctx, canvas);
+    }
+
+    if (window.ONREDHealthUI) {
+        ONREDHealthUI.draw(ctx, canvas);
+    }
+}
+
+// ==========================================
+// DESENHO DO SCORE E DA ONDA DE CHOQUE
+// ==========================================
+
+function drawScore() {
+
+    if (gameState === GAME_STATE.PLAYING) {
+
+        ctx.fillStyle = "#FFFFFF";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = "bold 18px Arial";
+
+        ctx.fillText(
+            formatScore(scoreState.value),
+            canvas.width / 2,
+            18
+        );
+
+        // BARRA DE APRESENTAÇÃO DO BOSS FINAL (FASE 1) — visível a partir de 5.000, pisca em 18.000.
+        if (window.ONREDBossSystem) {
+            const appearanceFrom = 5000;
+            const blinkAt = 18000;
+            const ratio = Math.min(1, scoreState.value / window.ONREDBossSystem.getConfig().triggerScore);
+            if (scoreState.value >= appearanceFrom) {
+                ctx.globalAlpha = scoreState.value >= blinkAt
+                    ? (Math.sin(Date.now() / 250) > 0 ? 0.95 : 0.15)
+                    : 0.95;
+                ctx.fillStyle = "#168BFF";
+                ctx.fillRect(0, 6, canvas.width * ratio, 2);
+                ctx.globalAlpha = 1;
+            }
+        }
+    }
+
+    if (perfectTimingRuntime.feedbackTimer > 0) {
+        ctx.save();
+        ctx.fillStyle = "#FFFFFF";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.font = "bold 12px Arial";
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 12;
+        ctx.fillText(perfectTimingRuntime.feedback, canvas.width / 2, 44);
+        ctx.restore();
+    }
+
+    if (window.ONREDPerfectTimingSystem) {
+        const state = ONREDPerfectTimingSystem.getState();
+        if (state.collectiveActive) {
+            ctx.save();
+            ctx.fillStyle = "#FFFFFF";
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.font = "bold 13px Arial";
+            ctx.fillText("5/5 RETURN IN " + Math.ceil(state.collectiveRemaining) + "s", canvas.width / 2, 62);
+            ctx.restore();
+        }
+    }
+
+    if (perfectWave.timer > 0) {
+
+        const progress =
+            1 - perfectWave.timer / perfectWave.duration;
+
+        const radius =
+            player.radius + progress * 320;
+
+        ctx.save();
+
+        ctx.globalAlpha = 1 - progress;
+
+        ctx.beginPath();
+
+        ctx.arc(
+            player.x,
+            player.y,
+            radius,
+            0,
+            Math.PI * 2
+        );
+
+        ctx.strokeStyle = "#168BFF";
+        ctx.lineWidth = 4;
+        ctx.shadowColor = "#168BFF";
+        ctx.shadowBlur = 20;
+        ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+// ==========================================
+// RESET COMPLETO DA PARTIDA
+// ==========================================
+
+function resetGame() {
+
+    perfectObstacles.length = 0;
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.reset();
+
+    spawnTimer = 0;
+
+    resetJoystick();
+
+    perfectButton.charge = 1;
+    perfectButton.activationFlash = 0;
+
+    perfectWave.timer = 0;
+    perfectTimingRuntime.effect = null;
+    perfectTimingRuntime.effectTimer = 0;
+    perfectTimingRuntime.feedback = "";
+    perfectTimingRuntime.feedbackTimer = 0;
+    if (window.ONREDPerfectTimingSystem) ONREDPerfectTimingSystem.reset();
+
+    scoreState.value = 0;
+
+    resizeCanvas();
+    spawnPlayer();
+
+    if (window.ONREDHealthSystem) {
+        ONREDHealthSystem.reset();
+    }
+
+    if (window.ONREDCollisionSystem) {
+        ONREDCollisionSystem.reset();
+    }
+
+    if (window.ONREDMergeSystem) {
+        ONREDMergeSystem.reset(canvas, player);
+    }
+
+    if (window.ONREDPingPong) {
+        ONREDPingPong.reset(canvas, player);
+    }
+
+    if (window.ONREDBossSystem) {
+        window.ONREDBossSystem.reset();
+    }
+
+    bossPhase = "IDLE";
+    scoreFreezeTimer = 0;
+
+    lastFrameTime = 0;
+}
+
+// ==========================================
+// INICIAR PARTIDA
+// ==========================================
+
+window.startONREDGame = function () {
+
+    if (gameStarted) return;
+
+    gameStarted = true;
+    gameState = GAME_STATE.PLAYING;
+
+    resetGame();
+
+    if (mainMenu) {
+        mainMenu.classList.add("hidden");
+    }
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (!loopRunning) {
+        loopRunning = true;
+        requestAnimationFrame(gameLoop);
+    }
+};
+
+// Compatibilidade com menu.js que dispara o evento onred:start.
+document.addEventListener("onred:start", function () {
+    window.startONREDGame();
+});
+
+// ==========================================
+// REINICIAR PARTIDA
+// ==========================================
+
+function restartONREDGame() {
+
+    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY) return;
+
+    gameStarted = true;
+    gameState = GAME_STATE.PLAYING;
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (victoryScreen) {
+        victoryScreen.classList.remove("active");
+        victoryScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (mainMenu) {
+        mainMenu.classList.add("hidden");
+    }
+
+    resetGame();
+
+    if (!loopRunning) {
+        loopRunning = true;
+        requestAnimationFrame(gameLoop);
+    }
+}
+
+// ==========================================
+// RETORNAR AO MENU PRINCIPAL
+// ==========================================
+
+function returnToMainMenu() {
+
+    if (gameState !== GAME_STATE.GAME_OVER && gameState !== GAME_STATE.VICTORY) return;
+
+    gameState = GAME_STATE.MENU;
+    gameStarted = false;
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (victoryScreen) {
+        victoryScreen.classList.remove("active");
+        victoryScreen.setAttribute("aria-hidden", "true");
+    }
+
+    resetJoystick();
+
+    perfectObstacles.length = 0;
+    spawnTimer = 0;
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.reset();
+
+    if (window.ONREDPingPong) {
+        ONREDPingPong.reset(canvas, player);
+    }
+
+    // O Boss não pode herdar fase/timers de uma partida anterior.
+    if (window.ONREDBossSystem) {
+        window.ONREDBossSystem.reset();
+    }
+    bossPhase = "IDLE";
+    scoreFreezeTimer = 0;
+
+    if (gameOverScreen) {
+        gameOverScreen.classList.remove("active");
+        gameOverScreen.setAttribute("aria-hidden", "true");
+    }
+
+    if (settingsPanel) {
+        settingsPanel.classList.add("hidden");
+    }
+
+    if (mainMenu) {
+        mainMenu.classList.remove("hidden");
+    }
+}
+
+// ==========================================
+// EVENTOS DOS BOTÕES
+// ==========================================
+
+if (retryButton) {
+    retryButton.addEventListener("click", restartONREDGame);
+}
+
+if (gameOverMenuButton) {
+    gameOverMenuButton.addEventListener("click", returnToMainMenu);
+}
+
+if (victoryRetryButton) {
+    victoryRetryButton.addEventListener("click", restartONREDGame);
+}
+
+if (victoryMenuButton) {
+    victoryMenuButton.addEventListener("click", returnToMainMenu);
+}
+
+// ==========================================
+// LOOP PRINCIPAL
+// ==========================================
+
+let lastFrameTime = 0;
+
+function gameLoop(timestamp) {
+
+    const elapsedTime = lastFrameTime
+        ? Math.max(0, (timestamp - lastFrameTime) / 1000)
+        : 0;
+
+    // Física e movimento mantêm o limite de 50 ms para evitar saltos.
+    // Cooldown e respawn recebem o tempo decorrido real, sem perder segundos.
+    const deltaTime = Math.min(elapsedTime, 0.05);
+
+    lastFrameTime = timestamp;
+
+    if (gameState === GAME_STATE.PLAYING) {
+        update(deltaTime, elapsedTime);
+        draw();
+    } else if (gameState === GAME_STATE.VICTORY) {
+        // Mantém o último frame desenhado até o overlay de vitória.
+        draw();
+    }
+
+    requestAnimationFrame(gameLoop);
+}
+
+// ==========================================
+// EVENTOS
+// ==========================================
+
+canvas.addEventListener("pointerdown", pointerDown);
+canvas.addEventListener("pointermove", pointerMove);
+canvas.addEventListener("pointerup", pointerUp);
+canvas.addEventListener("pointercancel", pointerUp);
+canvas.addEventListener("lostpointercapture", pointerUp);
+
+window.addEventListener("resize", resizeCanvas);
+
+document.addEventListener(
+    "touchmove",
+    event => {
+        event.preventDefault();
+    },
+    { passive: false }
+);
+
+// ==========================================
+// INICIALIZAÇÃO
+// ==========================================
+
+resizeCanvas();
+
+loadBestScore();
+
+</script>
+
+
+<!-- PREVIEW ONLY: atalho de teste para a luta do Boss. Nao faz parte da correcao. -->
+<script>
+(function () {
+    var armed = false;
+    setInterval(function () {
+        try {
+            if (typeof gameState === 'undefined' || typeof scoreState === 'undefined') return;
+            if (gameState !== 'PLAYING') { armed = false; return; }
+            if (armed) return;
+            armed = true;
+            scoreState.value = 19990;
+        } catch (e) {}
+    }, 400);
+})();
+</script>
+</body>
+</html>
