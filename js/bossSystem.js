@@ -498,7 +498,7 @@
             electricTimer -= deltaTime;
 
             if (whiteTimer <= 0) { whiteTimer = CONFIG.pong.white.interval; fireWhite(player); return; }
-            if (rayTimer <= 0) { rayTimer = CONFIG.ray.interval; fireRay(player); return; }
+            if (rayTimer <= 0) { rayTimer = CONFIG.ray.interval; fireRay(player, arena); return; }
             if (electricTimer <= 0) { electricTimer = CONFIG.pong.electric.interval; fireElectric(player); return; }
             return;
         }
