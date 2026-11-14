@@ -303,7 +303,12 @@
         const pattern = nextAreaPattern;
         nextAreaPattern = nextAreaPattern === "single" ? "sequence" : "single";
         const count = pattern === "single" ? 1 : CONFIG.ray.sequenceCount;
-        const centerX = clamp(player ? player.x : arena.width / 2, CONFIG.ray.radius, arena.width - CONFIG.ray.radius);
+        const sequenceHalfSpan = pattern === "sequence" ? ((count - 1) / 2) * CONFIG.ray.sequenceSpacing : 0;
+        const centerX = clamp(
+            player ? player.x : arena.width / 2,
+            CONFIG.ray.radius + sequenceHalfSpan,
+            arena.width - CONFIG.ray.radius - sequenceHalfSpan
+        );
         const centerY = clamp(player ? player.y : arena.height / 2, CONFIG.ray.radius, arena.height - CONFIG.ray.radius);
         const blasts = [];
         for (let i = 0; i < count; i++) {
