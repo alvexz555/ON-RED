@@ -650,6 +650,11 @@ const obstacleConfig = {
     maxObstacles: 5
 };
 
+const obstacleBaseConfig = {
+    speed: obstacleConfig.speed,
+    spawnInterval: obstacleConfig.spawnInterval
+};
+
 let spawnTimer = 0;
 
 // ==========================================
@@ -1467,6 +1472,8 @@ function drawScore() {
 function resetEndlessProgression() {
     endlessProgression.cycle = 1;
     endlessProgression.nextBossScore = endlessProgression.baseTriggerScore;
+    obstacleConfig.speed = obstacleBaseConfig.speed;
+    obstacleConfig.spawnInterval = obstacleBaseConfig.spawnInterval;
     if (window.ONREDBossSystem) window.ONREDBossSystem.configure({
         triggerScore: endlessProgression.baseTriggerScore,
         bossHp: bossBaseConfig.bossHp,
@@ -1493,6 +1500,9 @@ function updateReviveOffer() {
 function prepareNextEndlessCycle() {
     endlessProgression.cycle += 1;
     endlessProgression.nextBossScore = Math.floor(scoreState.value + endlessProgression.baseTriggerScore * endlessProgression.cycle);
+    const cycleScale = endlessProgression.cycle - 1;
+    obstacleConfig.speed = obstacleBaseConfig.speed * (1 + cycleScale * 0.07);
+    obstacleConfig.spawnInterval = Math.max(0.65, obstacleBaseConfig.spawnInterval * (1 - cycleScale * 0.035));
     if (window.ONREDBossSystem) {
         const n = endlessProgression.cycle - 1;
         const intervalScale = Math.max(0.62, 1 - n * 0.045);
