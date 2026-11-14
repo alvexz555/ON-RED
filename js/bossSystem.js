@@ -132,7 +132,9 @@
     let rayTimer = CONFIG.ray.firstIn;
     let electricTimer = CONFIG.pong.electric.interval;
     let rayVolleyIndex = 0;
-    // Ciclo obrigatório da Boss Fight: A (single) -> C (sequence) -> A -> C...\n    // O padrão só avança quando um ataque de área é efetivamente disparado.\n    let nextAreaPattern = "single";
+    // Ciclo obrigatório da Boss Fight: A (single) -> C (sequence) -> A -> C...
+    // O padrão só avança quando um ataque de área é efetivamente disparado.
+    let nextAreaPattern = "single";
     // Um Boss derrotado não volta a aparecer na mesma partida;
     // só o reset de partida limpa esta marcação.
     let conquered = false;
