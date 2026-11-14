@@ -406,13 +406,6 @@ button {
     border-radius: 2px;
     background: #FFFFFF;
 }
-body:has(#mainMenu.hidden) .pause-button {
-    display: flex;
-}
-body:has(.game-over-screen.active) .pause-button,
-body:has(#pauseScreen.active) .pause-button {
-    display: none;
-}
 .pause-screen {
     position: fixed;
     inset: 0;
