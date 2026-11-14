@@ -26,9 +26,12 @@
         ray: {
             firstIn: 5.0,
             interval: 7.0,
-            telegraphDuration: 1.2,
+            telegraphDuration: 1.0,
+            sequenceTelegraphDuration: 0.9,
             activeDuration: 0.16,
             radius: 105,
+            singleRadius: 170,
+            sequenceRadius: 85,
             sequenceCount: 3,
             sequenceSpacing: 150,
             sequenceDelay: 0.55,
@@ -305,26 +308,41 @@
         const pattern = nextAreaPattern;
         nextAreaPattern = nextAreaPattern === "single" ? "sequence" : "single";
         const count = pattern === "single" ? 1 : CONFIG.ray.sequenceCount;
-        const sequenceHalfSpan = pattern === "sequence" ? ((count - 1) / 2) * CONFIG.ray.sequenceSpacing : 0;
-        const centerX = clamp(
-            player ? player.x : arena.width / 2,
-            CONFIG.ray.radius + sequenceHalfSpan,
-            arena.width - CONFIG.ray.radius - sequenceHalfSpan
-        );
-        const centerY = clamp(player ? player.y : arena.height / 2, CONFIG.ray.radius, arena.height - CONFIG.ray.radius);
         const blasts = [];
-        for (let i = 0; i < count; i++) {
-            const offset = pattern === "single" ? 0 : (i - (count - 1) / 2) * CONFIG.ray.sequenceSpacing;
+
+        if (pattern === "single") {
+            const radius = CONFIG.ray.singleRadius;
+            const x = clamp(player ? player.x : arena.width / 2, radius, arena.width - radius);
+            const y = clamp(player ? player.y : arena.height / 2, radius, arena.height - radius);
             blasts.push({
-                x: clamp(centerX + offset, CONFIG.ray.radius, arena.width - CONFIG.ray.radius),
-                y: centerY,
-                radius: CONFIG.ray.radius,
+                x, y, radius,
                 damage: CONFIG.ray.damage,
                 state: "TELEGRAPH",
-                timer: CONFIG.ray.telegraphDuration + i * (pattern === "sequence" ? CONFIG.ray.sequenceDelay : 0),
-                activeTimer: CONFIG.ray.activeDuration
+                timer: CONFIG.ray.telegraphDuration,
+                activeTimer: CONFIG.ray.activeDuration,
+                targetLocked: true
             });
+        } else {
+            for (let i = 0; i < count; i++) {
+                const blast = {
+                    x: null,
+                    y: null,
+                    radius: CONFIG.ray.sequenceRadius,
+                    damage: CONFIG.ray.damage,
+                    state: i === 0 ? "TELEGRAPH" : "WAITING",
+                    timer: i === 0 ? CONFIG.ray.sequenceTelegraphDuration : i * CONFIG.ray.sequenceDelay,
+                    activeTimer: CONFIG.ray.activeDuration,
+                    targetLocked: false
+                };
+                if (i === 0) {
+                    blast.x = clamp(player ? player.x : arena.width / 2, blast.radius, arena.width - blast.radius);
+                    blast.y = clamp(player ? player.y : arena.height / 2, blast.radius, arena.height - blast.radius);
+                    blast.targetLocked = true;
+                }
+                blasts.push(blast);
+            }
         }
+
         weapon = { type: "ray", kind: "area", state: "TELEGRAPH", pattern, blasts };
     }
 
@@ -373,7 +391,19 @@
         if (!weapon || !Array.isArray(weapon.blasts)) return;
         for (const blast of weapon.blasts) {
             if (blast.state === "DONE") continue;
-            if (blast.state === "TELEGRAPH") {
+
+            // C: cada marca só captura a posição do jogador quando sua vez começa.
+            // Depois de marcada, a coordenada fica travada até a detonação.
+            if (blast.state === "WAITING") {
+                blast.timer -= deltaTime;
+                if (blast.timer <= 0) {
+                    blast.x = clamp(player.x, blast.radius, arena.width - blast.radius);
+                    blast.y = clamp(player.y, blast.radius, arena.height - blast.radius);
+                    blast.targetLocked = true;
+                    blast.state = "TELEGRAPH";
+                    blast.timer = CONFIG.ray.sequenceTelegraphDuration;
+                }
+            } else if (blast.state === "TELEGRAPH") {
                 blast.timer -= deltaTime;
                 if (blast.timer <= 0) {
                     blast.state = "ACTIVE";
@@ -590,7 +620,7 @@
     function drawWeapon(ctx) {
         if (weapon.type === "ray") {
             for (const blast of weapon.blasts || []) {
-                if (blast.state === "DONE") continue;
+                if (blast.state === "DONE" || blast.state === "WAITING") continue;
                 ctx.save();
                 const active = blast.state === "ACTIVE";
                 ctx.globalAlpha = active ? 0.85 : 0.42;
