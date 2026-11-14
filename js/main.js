@@ -1837,16 +1837,28 @@ function resumeONREDGame() {
 // ==========================================
 
 if (pauseButton) {
-    // Em telas touch, click só é disparado depois que o dedo é solto.
-    // Pausar no pointerdown interrompe a partida imediatamente, mesmo
-    // quando outro dedo ainda está segurando ou arrastando o joystick.
-    pauseButton.addEventListener("pointerdown", event => {
+    const activatePauseFromTouch = event => {
+        const target = event.target;
+        if (!target || typeof target.closest !== "function") return;
+        if (!target.closest("#pauseButton")) return;
+
         event.preventDefault();
         event.stopPropagation();
         pauseONREDGame();
-    }, { passive: false });
+    };
 
-    // Mantém suporte a ativação por teclado e tecnologias assistivas.
+    // Captura o toque no início do gesto, inclusive em navegadores móveis
+    // que não encaminhem o pointerdown ao botão como esperado.
+    document.addEventListener("touchstart", activatePauseFromTouch, {
+        capture: true,
+        passive: false
+    });
+
+    pauseButton.addEventListener("pointerdown", activatePauseFromTouch, {
+        passive: false
+    });
+
+    // Fallback para mouse, teclado e tecnologias assistivas.
     pauseButton.addEventListener("click", event => {
         event.preventDefault();
         pauseONREDGame();
