@@ -524,7 +524,13 @@
             return;
         }
 
-        bounceProjectileFromWalls(weapon, arena);
+        const bounced = bounceProjectileFromWalls(weapon, arena);
+
+        // O Pong branco comum encerra ao tocar a parede se não acertou o jogador.
+        // A versão já eletrificada mantém os ricochetes.
+        if (bounced && !weapon.electric) {
+            weapon = null;
+        }
     }
 
     function bounceProjectileFromWalls(projectile, arena) {
