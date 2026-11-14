@@ -287,95 +287,62 @@ button {
     }
 }
 
-/* =================================
-   VICTORY SCREEN — PHASE 1 COMPLETE
-   ================================= */
-
-.victory-phase2-card {
-    width: 100%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    min-height: 40px;
-
-    border: 1px solid rgba(22, 139, 255, 0.35);
-
-    background: rgba(18, 61, 96, 0.25);
-
-    border-radius: 5px;
-}
-
-.victory-phase2-card span {
-    color: #58BFFF;
-
-    font-size: 9px;
-
-    font-weight: bold;
-
-    letter-spacing: 2px;
-}
-
 /* ==========================================
-   DIFICULDADE DA FASE 1 (TELA DE VITÓRIA)
-   ========================================== */
+   VICTORY SCREEN — INFINITE SURVIVAL MESSAGE
+========================================== */
 
-.victory-difficulty {
-    width: 100%;
+.victory-screen .game-over-content {
+    max-width: 430px;
+    gap: clamp(18px, 4vh, 30px);
+}
 
+.victory-message { gap: 18px; }
+
+.victory-title {
+    max-width: 100%;
+    font-size: clamp(27px, 7.2vw, 40px) !important;
+    line-height: 1.16;
+    letter-spacing: clamp(1px, 0.4vw, 2.5px) !important;
+    text-wrap: balance;
+}
+
+.victory-copy {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
-
-    padding: 12px 10px;
-
-    border: 1px solid rgba(22, 139, 255, 0.35);
-
-    background: rgba(18, 61, 96, 0.25);
-
-    border-radius: 5px;
-}
-
-.victory-difficulty-label {
-    color: #58BFFF;
-
-    font-size: 9px;
-
-    font-weight: bold;
-
-    letter-spacing: 2px;
-}
-
-.victory-difficulty-options {
+    gap: 14px;
     width: 100%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    padding: 0 5px;
 }
 
-.difficulty-option {
-    flex: 1;
-
-    min-height: 40px;
-
-    font-size: 10px;
-
-    letter-spacing: 1px;
-
-    opacity: 0.75;
+.victory-copy p {
+    color: #C0CAD8;
+    font-size: clamp(12px, 3.2vw, 14px);
+    line-height: 1.55;
+    font-weight: 500;
+    letter-spacing: 0.2px;
 }
 
-.difficulty-option.selected {
-    opacity: 1;
+.victory-copy strong {
+    margin-top: 5px;
+    color: #58BFFF;
+    font-size: clamp(11px, 3vw, 13px);
+    line-height: 1.45;
+    font-weight: 900;
+    letter-spacing: clamp(1px, 0.5vw, 2px);
+    text-shadow: 0 0 14px rgba(88, 191, 255, 0.28);
+}
 
-    border-color: #58BFFF;
-
-    box-shadow: 0 0 10px rgba(88, 191, 255, 0.35);
+@media (max-height: 700px) {
+    .victory-screen {
+        overflow-y: auto;
+        align-items: flex-start;
+    }
+    .victory-screen .game-over-content {
+        margin: auto;
+        gap: 18px;
+    }
+    .victory-copy { gap: 9px; }
 }
 
 
