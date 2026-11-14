@@ -353,7 +353,8 @@ button {
     position: fixed;
     top: max(16px, env(safe-area-inset-top));
     right: max(16px, env(safe-area-inset-right));
-    z-index: 30;
+    z-index: 120;
+    pointer-events: auto;
     width: 44px;
     height: 44px;
     display: none;
