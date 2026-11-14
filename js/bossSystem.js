@@ -387,7 +387,7 @@
         return Math.hypot(point.x - closestX, point.y - closestY);
     }
 
-    function updateRay(deltaTime, player, health, collision) {
+    function updateRay(deltaTime, arena, player, health, collision) {
         if (!weapon || !Array.isArray(weapon.blasts)) return;
         for (const blast of weapon.blasts) {
             if (blast.state === "DONE") continue;
@@ -541,7 +541,7 @@
         }
 
         if (weapon.type === "ray") {
-            updateRay(deltaTime, player, health, collision);
+            updateRay(deltaTime, arena, player, health, collision);
         } else if (weapon.type === "white") {
             updateWhite(deltaTime, player, health, collision, arena);
         } else if (weapon.type === "electric") {
