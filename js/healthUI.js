@@ -264,27 +264,17 @@
 
         ctx.save();
 
-        // TEXTO LIVES
+        // INDICADORES DE VIDA
+        // Sem o rótulo "LIVES", os ícones ocupam o espaço livre à esquerda.
 
         ctx.font = "bold 10px Arial";
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
 
-        ctx.fillStyle =
-            CONFIG.colors.secondary;
-
-        ctx.fillText(
-            "LIVES",
-            x,
-            y
-        );
-
-        // INDICADORES DE VIDA
-
         drawLives(
             ctx,
             state,
-            x + 58,
+            x,
             y
         );
 
