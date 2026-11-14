@@ -271,41 +271,44 @@ test("boss at zero hp does not accept new damage", () => {
     assert.equal(result.applied, false);
 });
 
-test("circular area attack telegraphs a ring and deals damage only in its active window", () => {
+test("single circular blast warns first and damages the entire marked area", () => {
     boss.configure({ ray: { firstIn: 0.01 }, pong: { white: { firstIn: 2.0, interval: 3.4 } } });
     const game = startFight();
     const weapon = advanceUntilWeapon(game, "ray");
     assert.ok(weapon);
-    assert.equal(weapon.type, "ray");
-    assert.equal(weapon.state, "TELEGRAPH");
-    assert.ok(weapon.radius > 0);
+    assert.equal(weapon.pattern, "single");
+    assert.equal(weapon.blasts.length, 1);
+    const blast = weapon.blasts[0];
+    assert.equal(blast.state, "TELEGRAPH");
     game.damageCalls.length = 0;
 
-    boss.update(0.5, arena, player, game.health, game.collision);
-    assert.equal(game.damageCalls.length, 0);
-    assert.equal(boss.getState().weapon.state, "TELEGRAPH");
-
-    boss.update(weapon.timer + 0.01, arena, player, game.health, game.collision);
-    const activeWeapon = boss.getState().weapon;
-    assert.equal(activeWeapon.state, "ACTIVE");
-
-    player.x = activeWeapon.x + activeWeapon.radius;
-    player.y = activeWeapon.y;
-    boss.update(0.01, arena, player, game.health, game.collision);
+    player.x = blast.x + blast.radius - 2;
+    player.y = blast.y;
+    boss.update(blast.timer + 0.01, arena, player, game.health, game.collision);
     assert.deepEqual(game.damageCalls, [25]);
+    assert.equal(boss.getState().weapon.blasts[0].state, "ACTIVE");
 });
 
-test("circular area attack keeps its radius stable throughout the telegraph", () => {
-    boss.configure({ ray: { firstIn: 0.01 }, pong: { white: { firstIn: 2.0, interval: 3.4 } } });
+test("area attacks alternate deterministically between one blast and a three-blast sequence", () => {
+    boss.configure({ ray: { firstIn: 0.01, interval: 0.01 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight();
-    const weapon = advanceUntilWeapon(game, "ray");
-    assert.ok(weapon);
-    const telegraphRadius = weapon.radius;
+    const first = advanceUntilWeapon(game, "ray");
+    assert.equal(first.pattern, "single");
+    assert.equal(first.blasts.length, 1);
 
-    boss.update(weapon.timer / 2, arena, player, game.health, game.collision);
-    assert.equal(boss.getState().weapon.state, "TELEGRAPH");
-    assert.equal(boss.getState().weapon.radius, telegraphRadius);
-    assert.equal(boss.getConfig().ray.radius, telegraphRadius);
+    // Aguarda a primeira zona terminar e o próximo ataque de área ser disparado.
+    let guard = 0;
+    while (boss.getState().weapon && guard++ < 100) boss.update(0.1, arena, player, game.health, game.collision);
+    guard = 0;
+    while ((!boss.getState().weapon || boss.getState().weapon.type !== "ray") && guard++ < 100) {
+        boss.update(0.1, arena, player, game.health, game.collision);
+    }
+    const second = boss.getState().weapon;
+    assert.equal(second.type, "ray");
+    assert.equal(second.pattern, "sequence");
+    assert.equal(second.blasts.length, 3);
+    assert.ok(second.blasts[0].x < second.blasts[1].x);
+    assert.ok(second.blasts[1].x < second.blasts[2].x);
 });
 
 test("white boss Pong ricochets from arena walls without leaving the arena", () => {
