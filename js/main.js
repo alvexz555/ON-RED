@@ -1836,7 +1836,22 @@ function resumeONREDGame() {
 // EVENTOS DOS BOTÕES
 // ==========================================
 
-if (pauseButton) pauseButton.addEventListener("click", pauseONREDGame);
+if (pauseButton) {
+    // Em telas touch, click só é disparado depois que o dedo é solto.
+    // Pausar no pointerdown interrompe a partida imediatamente, mesmo
+    // quando outro dedo ainda está segurando ou arrastando o joystick.
+    pauseButton.addEventListener("pointerdown", event => {
+        event.preventDefault();
+        event.stopPropagation();
+        pauseONREDGame();
+    }, { passive: false });
+
+    // Mantém suporte a ativação por teclado e tecnologias assistivas.
+    pauseButton.addEventListener("click", event => {
+        event.preventDefault();
+        pauseONREDGame();
+    });
+}
 if (resumeButton) resumeButton.addEventListener("click", resumeONREDGame);
 if (pauseRestartButton) pauseRestartButton.addEventListener("click", restartONREDGame);
 if (pauseMenuButton) pauseMenuButton.addEventListener("click", returnToMainMenu);
