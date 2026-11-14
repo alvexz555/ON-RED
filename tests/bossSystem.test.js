@@ -61,8 +61,11 @@ function advanceUntilWeapon(game, type, maxSteps = 200) {
     let guard = 0;
     while (guard++ < maxSteps) {
         const state = boss.getState();
-        if (state.weapon && state.weapon.type === type) {
-            const weapon = state.weapon;
+        const candidate = state.weapon && state.weapon.type === type
+            ? state.weapon
+            : (state.electricWeapon && state.electricWeapon.type === type ? state.electricWeapon : null);
+        if (candidate) {
+            const weapon = candidate;
             const distanceFromBoss = Math.hypot(
                 weapon.x - state.boss.x,
                 weapon.y - state.boss.y
@@ -75,7 +78,8 @@ function advanceUntilWeapon(game, type, maxSteps = 200) {
         }
         boss.update(0.05, arena, player, game.health, game.collision);
     }
-    return boss.getState().weapon;
+    const state = boss.getState();
+    return state.weapon || state.electricWeapon;
 }
 
 function parryTarget() {
@@ -588,8 +592,8 @@ test("electric Boss Pong applies energized status and temporary control interrup
     boss.configure({ ray: { firstIn: 100, interval: 100 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 0.01, electrifiedDuration: 3 } } });
     const game = startFight(["electric"]);
     let guard = 0;
-    while ((!boss.getState().weapon || boss.getState().weapon.type !== "electric") && guard++ < 100) boss.update(0.05, arena, player, game.health, game.collision);
-    const projectile = boss.getState().weapon.projectiles[0];
+    while ((!boss.getState().electricWeapon || boss.getState().electricWeapon.type !== "electric") && guard++ < 100) boss.update(0.05, arena, player, game.health, game.collision);
+    const projectile = boss.getState().electricWeapon.projectiles[0];
     player.x = projectile.x + projectile.vx * 0.01; player.y = projectile.y + projectile.vy * 0.01;
     boss.update(0.05, arena, player, game.health, game.collision);
     assert.ok(boss.getState().electrifiedTimer > 0 && boss.getState().electrifiedTimer <= 3);
@@ -602,16 +606,59 @@ test("electric Boss Pong accelerates by 20 percent on wall bounce and caps at 12
     boss.configure({ ray: { firstIn: 100, interval: 100 }, pong: { white: { firstIn: 100, interval: 100 }, electric: { interval: 0.01, speed: 100, wallSpeedMultiplier: 1.2, maxSpeed: 1200 } } });
     const game = startFight(["electric"]);
     let guard = 0;
-    while ((!boss.getState().weapon || boss.getState().weapon.type !== "electric") && guard++ < 100) boss.update(0.05, arena, player, game.health, game.collision);
-    let volley = boss.getState().weapon;
+    while ((!boss.getState().electricWeapon || boss.getState().electricWeapon.type !== "electric") && guard++ < 100) boss.update(0.05, arena, player, game.health, game.collision);
+    let volley = boss.getState().electricWeapon;
     let previousSpeed = Math.hypot(volley.projectiles[0].vx, volley.projectiles[0].vy);
     player.x = 100; player.y = 650;
     let observedBounce = false;
     for (let i = 0; i < 300; i++) {
         boss.update(0.05, arena, player, game.health, game.collision);
-        volley = boss.getState().weapon; if (!volley || volley.type !== "electric") break;
+        volley = boss.getState().electricWeapon; if (!volley || volley.type !== "electric") break;
         const speed = Math.hypot(volley.projectiles[0].vx, volley.projectiles[0].vy);
         if (speed > previousSpeed + 0.01) { assert.ok(Math.abs(speed - Math.min(previousSpeed * 1.2, 1200)) < 0.1); observedBounce = true; break; }
     }
     assert.equal(observedBounce, true);
+});
+
+
+test("electric Boss volley overlaps an area attack instead of waiting for it to finish", () => {
+    boss.configure({
+        ray: { firstIn: 0.01, interval: 100 },
+        pong: {
+            white: { firstIn: 100, interval: 100 },
+            electric: { interval: 0.01, lifetime: 8, speed: 380 }
+        }
+    });
+    const game = startFight(["ray", "electric"]);
+    boss.update(0.05, arena, player, game.health, game.collision);
+    const state = boss.getState();
+    assert.equal(state.weapon.type, "ray");
+    assert.equal(state.electricWeapon.type, "electric");
+    assert.equal(state.electricWeapon.projectiles.length, 2);
+});
+
+test("electric wall ricochets leave visible temporary damage trails", () => {
+    boss.configure({
+        ray: { firstIn: 100, interval: 100 },
+        pong: {
+            white: { firstIn: 100, interval: 100 },
+            electric: { interval: 0.01, lifetime: 8, speed: 600, wallSpeedMultiplier: 1.2 }
+        }
+    });
+    const game = startFight(["electric"]);
+    boss.update(0.05, arena, player, game.health, game.collision);
+    player.x = 800;
+    player.y = 650;
+
+    let observedTrail = false;
+    for (let i = 0; i < 80; i++) {
+        boss.update(0.05, arena, player, game.health, game.collision);
+        const state = boss.getState();
+        if (state.electricTrails.length > 0) {
+            observedTrail = true;
+            assert.ok(state.electricTrails.some(trail => trail.timer > 0));
+            break;
+        }
+    }
+    assert.equal(observedTrail, true);
 });
