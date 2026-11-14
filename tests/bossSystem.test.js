@@ -314,7 +314,7 @@ test("area attacks alternate deterministically between one blast and a three-bla
 });
 
 test("white boss Pong ricochets from arena walls without leaving the arena", () => {
-    boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { electric: { interval: 100 } } });
+    boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     const weapon = advanceUntilWeapon(game, "white");
     assert.ok(weapon);
@@ -439,7 +439,7 @@ test("a defeated boss cannot be triggered again in the same match", () => {
 
 
 test("a parried projectile that misses cannot parry again and hits once", () => {
-    boss.configure({ bossHp: 300, ray: { interval: 100, firstIn: 100 }, pong: { electric: { interval: 100 } } });
+    boss.configure({ bossHp: 300, ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 3.4 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     const weapon = advanceUntilWeapon(game, "white");
     assert.ok(weapon);
@@ -459,7 +459,7 @@ test("a parried projectile that misses cannot parry again and hits once", () => 
 });
 
 test("a lost white pong is discarded off-arena and the boss attacks again", () => {
-    boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { electric: { interval: 100 } } });
+    boss.configure({ ray: { interval: 100, firstIn: 100 }, pong: { white: { firstIn: 0.01, interval: 100 }, electric: { interval: 100 } } });
     const game = startFight(["white"]);
     const weapon = advanceUntilWeapon(game, "white");
     assert.ok(weapon);
