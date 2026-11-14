@@ -805,6 +805,10 @@ function handlePlayerCollision() {
         return;
     }
 
+    // Os obstáculos comuns ficam congelados durante WARNING/FIGHT/DEFEATED.
+    // Não podem continuar causando dano fora da arena de combate normal.
+    if (window.ONREDBossSystem && window.ONREDBossSystem.getState().phase !== "IDLE") return;
+
     const targetObstacle = findCollidingPerfectObstacle();
     if (!targetObstacle) return;
 
@@ -970,47 +974,38 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
     if (bossPhaseNow === "IDLE") {
 
-    // INIMIGO PING PONG (pausado durante a luta: o Boss assume os Pongs)
-    if (window.ONREDPingPong) {
-        ONREDPingPong.update(
+        // Pong comum e sistemas de obstáculos ficam suspensos na Boss Fight.
+        if (window.ONREDPingPong) {
+            ONREDPingPong.update(
+                deltaTime,
+                player,
+                canvas,
+                window.ONREDHealthSystem,
+                window.ONREDCollisionSystem,
+                perfectObstacles,
+                obstacleConfig.size,
+                window.ONREDHexagonSystem
+            );
+        }
+    }
+
+    // MERGE continua ativo durante a Boss Fight: somente o spawn fica mais lento.
+    if (window.ONREDMergeSystem) {
+        const mergeSpawnIntervalMultiplier = bossPhaseNow === "IDLE" ? 1 : 2;
+        const mergeResults = ONREDMergeSystem.update(
             deltaTime,
             player,
             canvas,
             window.ONREDHealthSystem,
-            window.ONREDCollisionSystem,
-            perfectObstacles,
-            obstacleConfig.size,
-            window.ONREDHexagonSystem
+            { spawnIntervalMultiplier: mergeSpawnIntervalMultiplier }
         );
+
+        mergeResults.forEach(result => {
+            if (result.type === "bonus_score" && result.applied) {
+                scoreState.value += result.points;
+            }
+        });
     }
-
-        // SISTEMA MERGE (ESFERAS VERMELHAS) (pausado durante a luta)
-
-    if (window.ONREDMergeSystem) {
-
-        
-const mergeResults = ONREDMergeSystem.update(
-    deltaTime,
-    player,
-    canvas,
-    window.ONREDHealthSystem
-);
-
-// APLICA BÔNUS DE PONTUAÇÃO DO MERGE.
-
-mergeResults.forEach(result => {
-
-    if (
-        result.type === "bonus_score" &&
-        result.applied
-    ) {
-        scoreState.value += result.points;
-    }
-
-});
-
-    }
-}
 }
 
 // ==========================================
@@ -1266,20 +1261,30 @@ function draw() {
     );
 
     drawArena();
-    drawPerfectObstacles();
 
-    if (window.ONREDHexagonSystem) ONREDHexagonSystem.draw(ctx);
+    // Usa o estado real do Boss para evitar um frame residual de obstáculos
+    // quando a transição para WARNING/FIGHT começa.
+    const currentBossPhase = window.ONREDBossSystem
+        ? window.ONREDBossSystem.getState().phase
+        : bossPhase;
+    const levelSystemsVisible = currentBossPhase === "IDLE";
 
-    if (window.ONREDPingPong) {
-        // Mantém a bola branca e seu destaque visual em contato com o jogador.
-        ONREDPingPong.draw(ctx, player);
+    if (levelSystemsVisible) {
+        drawPerfectObstacles();
+
+        if (window.ONREDHexagonSystem) ONREDHexagonSystem.draw(ctx);
+
+        if (window.ONREDPingPong) {
+            ONREDPingPong.draw(ctx, player);
+        }
     }
 
+    // MERGE permanece visível e coletável durante a Boss Fight.
     if (window.ONREDMergeSystem) {
-        ONREDMergeSystem.draw(ctx);
+        window.ONREDMergeSystem.draw(ctx);
     }
 
-    if (window.ONREDBossSystem && bossPhase !== "IDLE") {
+    if (window.ONREDBossSystem && currentBossPhase !== "IDLE") {
         window.ONREDBossSystem.draw(ctx, canvas);
     }
 

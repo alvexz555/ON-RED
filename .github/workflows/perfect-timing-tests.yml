@@ -7,6 +7,7 @@ on:
       - feature/perfect-timing-system
       - feature/electric-ping-pong
       - fix/hexagon-pingpong-balance-2026-11-13
+      - feature/boss-battle-complete
   pull_request:
     branches:
       - main
@@ -29,5 +30,7 @@ jobs:
           node --check js/perfectTimingSystem.js
           node --check js/hexagonSystem.js
           node --check js/pingPong.js
+          node --check js/bossSystem.js
+          node --check js/mergeSystem.js
       - name: Run Perfect Timing unit tests
         run: node --test tests/*.test.js

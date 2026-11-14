@@ -61,8 +61,19 @@ function advanceUntilWeapon(game, type, maxSteps = 200) {
     let guard = 0;
     while (guard++ < maxSteps) {
         const state = boss.getState();
-        if (state.weapon && state.weapon.type === type) return state.weapon;
-        boss.update(0.5, arena, player, game.health, game.collision);
+        if (state.weapon && state.weapon.type === type) {
+            const weapon = state.weapon;
+            const distanceFromBoss = Math.hypot(
+                weapon.x - state.boss.x,
+                weapon.y - state.boss.y
+            );
+            // Para testar parry/retorno, o projétil precisa realmente viajar
+            // até a janela de aproximação, não ser rebatido no ponto de spawn.
+            if (type !== "white" || distanceFromBoss >= state.boss.size / 2 + 150) {
+                return weapon;
+            }
+        }
+        boss.update(0.05, arena, player, game.health, game.collision);
     }
     return boss.getState().weapon;
 }
@@ -260,14 +271,14 @@ test("boss at zero hp does not accept new damage", () => {
     assert.equal(result.applied, false);
 });
 
-test("ray telegraph does not deal damage and the active window deals 25 once", () => {
+test("circular area attack telegraphs a ring and deals damage only in its active window", () => {
     boss.configure({ ray: { firstIn: 0.01 }, pong: { white: { firstIn: 2.0, interval: 3.4 } } });
     const game = startFight();
     const weapon = advanceUntilWeapon(game, "ray");
     assert.ok(weapon);
     assert.equal(weapon.type, "ray");
     assert.equal(weapon.state, "TELEGRAPH");
-    const telegraphAngle = weapon.angle;
+    assert.ok(weapon.radius > 0);
     game.damageCalls.length = 0;
 
     boss.update(0.5, arena, player, game.health, game.collision);
@@ -278,26 +289,47 @@ test("ray telegraph does not deal damage and the active window deals 25 once", (
     const activeWeapon = boss.getState().weapon;
     assert.equal(activeWeapon.state, "ACTIVE");
 
-    const raySpeed = Math.hypot(activeWeapon.vx, activeWeapon.vy) || 1;
-    player.x = activeWeapon.x + (activeWeapon.vx / raySpeed) * 10;
-    player.y = activeWeapon.y + (activeWeapon.vy / raySpeed) * 10;
-
-    boss.update(0.05, arena, player, game.health, game.collision);
+    player.x = activeWeapon.x + activeWeapon.radius;
+    player.y = activeWeapon.y;
+    boss.update(0.01, arena, player, game.health, game.collision);
     assert.deepEqual(game.damageCalls, [25]);
 });
 
-test("ray angle stays immutable after the telegraph starts and volley counts eight rays", () => {
+test("circular area attack keeps its radius stable throughout the telegraph", () => {
     boss.configure({ ray: { firstIn: 0.01 }, pong: { white: { firstIn: 2.0, interval: 3.4 } } });
     const game = startFight();
     const weapon = advanceUntilWeapon(game, "ray");
     assert.ok(weapon);
-    const telegraphAngle = weapon.angle;
+    const telegraphRadius = weapon.radius;
 
     boss.update(weapon.timer / 2, arena, player, game.health, game.collision);
     assert.equal(boss.getState().weapon.state, "TELEGRAPH");
-    assert.equal(boss.getState().weapon.angle, telegraphAngle);
+    assert.equal(boss.getState().weapon.radius, telegraphRadius);
+    assert.equal(boss.getConfig().ray.radius, telegraphRadius);
+});
 
-    assert.equal(boss.getConfig().ray.count, 8);
+test("white boss Pong ricochets from arena walls without leaving the arena", () => {
+    const game = startFight(["white"]);
+    const weapon = advanceUntilWeapon(game, "white");
+    assert.ok(weapon);
+    const initialVx = weapon.vx;
+    const initialVy = weapon.vy;
+    assert.notEqual(initialVx, 0);
+    player.x = 850;
+    player.y = 50;
+
+    let bounced = false;
+    for (let i = 0; i < 400 && !bounced; i++) {
+        boss.update(0.05, arena, player, game.health, game.collision);
+        const current = boss.getState().weapon;
+        if (!current || current.type !== "white") break;
+        const inside = current.x >= current.radius && current.x <= arena.width - current.radius &&
+            current.y >= current.radius && current.y <= arena.height - current.radius;
+        assert.equal(inside, true);
+        bounced = Math.sign(current.vx) !== Math.sign(initialVx) ||
+            Math.sign(current.vy) !== Math.sign(initialVy);
+    }
+    assert.equal(bounced, true);
 });
 
 test("missed white pong applies the 25 damage gate once", () => {
