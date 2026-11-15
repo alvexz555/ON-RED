@@ -582,23 +582,32 @@ function resizeCanvas() {
 
     const world = getWorld();
 
-    const canvasSize = (
-        window.ONREDWorld &&
-        typeof window.ONREDWorld.getCanvasSize === "function"
-    )
-        ? window.ONREDWorld.getCanvasSize()
-        : { width: world.width, height: world.height, dpr: 1 };
+    const worldApi = window.ONREDWorld;
 
-    canvas.style.width = `${world.width}px`;
-    canvas.style.height = `${world.height}px`;
+    const cssSize = (
+        worldApi && typeof worldApi.getCssSize === "function"
+    )
+        ? worldApi.getCssSize()
+        : { width: world.width, height: world.height };
+
+    const canvasSize = (
+        worldApi && typeof worldApi.getCanvasSize === "function"
+    )
+        ? worldApi.getCanvasSize()
+        : { width: world.width, height: world.height, dpr: 1, pixelRatio: 1 };
+
+    canvas.style.width = `${cssSize.width}px`;
+    canvas.style.height = `${cssSize.height}px`;
 
     canvas.width = canvasSize.width;
     canvas.height = canvasSize.height;
 
-    // DPR: o canvas passa a ter resolucao fisica (mundo logico x DPR) e o contexto
-    // escala da resolucao logica (CSS px) para a fisica, sem distorcação acumulada.
+    // DPR + escala central em um ÚNICO transform: o contexto desenha em
+    // unidades lógicas e o canvas recebe pixels físicos (dpr * escala).
+    // Nunca aplicar DPR ou escala novamente em outro ponto.
     if (ctx) {
-        ctx.setTransform(canvasSize.dpr, 0, 0, canvasSize.dpr, 0, 0);
+        const ratio = Number(canvasSize.pixelRatio) || 1;
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     }
 
     joystick.baseY = getWorld().height - 115;
@@ -648,6 +657,16 @@ function resetJoystick() {
 function getPosition(event) {
 
     const rect = canvas.getBoundingClientRect();
+
+    if (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.screenToWorld === "function"
+    ) {
+        return window.ONREDWorld.screenToWorld(
+            { x: event.clientX, y: event.clientY },
+            rect
+        );
+    }
 
     return {
         x: event.clientX - rect.left,
