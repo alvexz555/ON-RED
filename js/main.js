@@ -576,13 +576,30 @@ function resizeCanvas() {
     canvas.style.margin = "0";
     canvas.style.padding = "0";
 
+    if (window.ONREDWorld && typeof window.ONREDWorld.resize === "function") {
+        window.ONREDWorld.resize();
+    }
+
     const world = getWorld();
+
+    const canvasSize = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getCanvasSize === "function"
+    )
+        ? window.ONREDWorld.getCanvasSize()
+        : { width: world.width, height: world.height, dpr: 1 };
 
     canvas.style.width = `${world.width}px`;
     canvas.style.height = `${world.height}px`;
 
-    canvas.width = world.width;
-    canvas.height = world.height;
+    canvas.width = canvasSize.width;
+    canvas.height = canvasSize.height;
+
+    // DPR: o canvas passa a ter resolucao fisica (mundo logico x DPR) e o contexto
+    // escala da resolucao logica (CSS px) para a fisica, sem distorcação acumulada.
+    if (ctx) {
+        ctx.setTransform(canvasSize.dpr, 0, 0, canvasSize.dpr, 0, 0);
+    }
 
     joystick.baseY = getWorld().height - 115;
 

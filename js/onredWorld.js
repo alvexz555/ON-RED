@@ -1,10 +1,11 @@
 /*
  * ON RED
- * ONREDWorld — CAMADA CENTRAL DO MUNDO RESPONSIVO (ETAPA 1)
- * Wrapper do mundo: centraliza mundo logico, escala, conversões e leitura de viewport.
+ * ONREDWorld — CAMADA CENTRAL DO MUNDO RESPONSIVO (ETAPAS 1 E 2)
+ * Wrapper do mundo: centraliza mundo logico, escala, conversões, DPR e leitura de viewport.
  *
  * Etapa 1: mundo = janela; comportamento atual preservado (mundo == tela, escala 1).
- * Etapas seguintes: DPR (2), escala global central (3), densidade por area (4),
+ * Etapa 2: DPR suportado — mundo logico, dims visuais da viewport e resolucao fisica do canvas separadas.
+ * Etapas seguintes: escala global central (3), densidade por area (4),
  * expansao desktop (5), perfis DISPLAY_PROFILES (6), audio (7), platform adapter (8).
  */
 
@@ -25,7 +26,9 @@
     }
 
     function resize() {
-        return readWindow();
+        readWindow();
+        state.view.dpr = getDpr();
+        return state.world;
     }
 
     function getWorld() {
@@ -33,6 +36,23 @@
             return readWindow();
         }
         return { width: state.world.width, height: state.world.height };
+    }
+
+    function getDpr() {
+        const scope = typeof window !== "undefined" ? window : globalThis;
+        const dpr = Number(scope.devicePixelRatio) || 1;
+        state.view.dpr = dpr;
+        return dpr;
+    }
+
+    function getCanvasSize() {
+        const world = getWorld();
+        const dpr = getDpr();
+        return {
+            width: Math.round(world.width * dpr),
+            height: Math.round(world.height * dpr),
+            dpr: dpr
+        };
     }
 
     function worldToScreen(point) {
@@ -58,6 +78,8 @@
         state,
         resize,
         getWorld,
+        getDpr,
+        getCanvasSize,
         worldToScreen,
         screenToWorld,
         fit
