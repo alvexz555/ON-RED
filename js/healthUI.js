@@ -264,16 +264,15 @@
 
         ctx.save();
 
-        // HP e vidas na mesma linha, aproveitando o espaço horizontal.
+        // Vidas em uma linha própria, acima do HP, alinhadas à barra.
+        drawLives(ctx, state, x, y);
+
         ctx.font = "bold 10px Arial";
         ctx.textAlign = "left";
         ctx.textBaseline = "middle";
 
         ctx.fillStyle = CONFIG.colors.text;
         ctx.fillText("HP", x, y + 25);
-
-        // Ícones compactos entre o rótulo HP e o percentual.
-        drawLives(ctx, state, x + 27, y + 25, 16, 5);
 
         ctx.textAlign = "right";
         ctx.fillText(
