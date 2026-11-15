@@ -582,23 +582,30 @@ function resizeCanvas() {
 
     const world = getWorld();
 
+    const scale = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getScale === "function"
+    )
+        ? window.ONREDWorld.getScale()
+        : 1;
+
     const canvasSize = (
         window.ONREDWorld &&
         typeof window.ONREDWorld.getCanvasSize === "function"
     )
         ? window.ONREDWorld.getCanvasSize()
-        : { width: world.width, height: world.height, dpr: 1 };
+        : { width: Math.round(world.width * scale), height: Math.round(world.height * scale), dpr: 1 };
 
-    canvas.style.width = `${world.width}px`;
-    canvas.style.height = `${world.height}px`;
+    canvas.style.width = `${world.width * scale}px`;
+    canvas.style.height = `${world.height * scale}px`;
 
     canvas.width = canvasSize.width;
     canvas.height = canvasSize.height;
 
-    // DPR: o canvas passa a ter resolucao fisica (mundo logico x DPR) e o contexto
-    // escala da resolucao logica (CSS px) para a fisica, sem distorcação acumulada.
+    // DPR + escala central: um único transform — a resolução física é
+    // (mundo lógico x escala x DPR); o contexto desenha em unidades lógicas.
     if (ctx) {
-        ctx.setTransform(canvasSize.dpr, 0, 0, canvasSize.dpr, 0, 0);
+        ctx.setTransform(canvasSize.dpr * scale, 0, 0, canvasSize.dpr * scale, 0, 0);
     }
 
     joystick.baseY = getWorld().height - 115;
@@ -649,9 +656,18 @@ function getPosition(event) {
 
     const rect = canvas.getBoundingClientRect();
 
+    // A entrada chega em pixels de tela (CSS); a lógica do jogo opera em
+    // coordenadas de mundo — a escala central converte uma única vez.
+    const scale = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getScale === "function"
+    )
+        ? window.ONREDWorld.getScale()
+        : 1;
+
     return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
+        x: (event.clientX - rect.left) / scale,
+        y: (event.clientY - rect.top) / scale
     };
 }
 
