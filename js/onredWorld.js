@@ -20,6 +20,52 @@
     // Referencia obrigatoria: experiencia mobile aprovada (escala 1).
     const REFERENCE = { width: 390, height: 844 };
 
+    // Densidade centralizada de obstaculos por area logica da arena (ETAPA 4).
+    // A dificuldade acompanha a area logica, nao a resolucao fisica nem o DPR.
+    const OBSTACLE_DENSITY_REFERENCE = {
+        width: 390,
+        height: 844,
+        maxObstacles: 5,
+        spawnInterval: 1.8
+    };
+
+    // Limites coerentes: impedem crescimento descontrolado em telas largas
+    // e arenas vazias em telas pequenas, sem alterar a referencia mobile.
+    const OBSTACLE_DENSITY_MIN = 3;
+    const OBSTACLE_DENSITY_MAX = 10;
+
+    function clampDensity(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    // Calcula a quantidade maxima de obstaculos simultaneos proporcional a
+    // area logica da arena, referenciada ao mobile 390x844 (escala 1).
+    function getObstacleDensity(worldWidth, worldHeight) {
+        const width = Number(worldWidth) || 0;
+        const height = Number(worldHeight) || 0;
+        const area = width * height;
+        const referenceArea =
+            OBSTACLE_DENSITY_REFERENCE.width * OBSTACLE_DENSITY_REFERENCE.height;
+        const ratio = referenceArea > 0 ? area / referenceArea : 1;
+        const target = Math.round(
+            OBSTACLE_DENSITY_REFERENCE.maxObstacles * ratio
+        );
+        const maxObstacles = clampDensity(
+            target,
+            OBSTACLE_DENSITY_MIN,
+            OBSTACLE_DENSITY_MAX
+        );
+        return {
+            area,
+            referenceArea,
+            ratio: Number(ratio.toFixed(6)),
+            maxObstacles,
+            spawnInterval: OBSTACLE_DENSITY_REFERENCE.spawnInterval,
+            min: OBSTACLE_DENSITY_MIN,
+            max: OBSTACLE_DENSITY_MAX
+        };
+    }
+
     const state = {
         world: { width: 0, height: 0 },
         view: { scale: 1, offsetX: 0, offsetY: 0, dpr: 1 },
@@ -126,6 +172,8 @@
         getWorld,
         getScale,
         getScaleReference,
+        getObstacleDensity,
+        getObstacleDensityReference: () => ({ ...OBSTACLE_DENSITY_REFERENCE }),
         getDpr,
         getCanvasSize,
         worldToScreen,

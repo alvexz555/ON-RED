@@ -582,6 +582,9 @@ function resizeCanvas() {
 
     const world = getWorld();
 
+    // A densidade de obstaculos acompanha a area logica da arena (ETAPA 4).
+    updateObstacleDensity();
+
     const scale = (
         window.ONREDWorld &&
         typeof window.ONREDWorld.getScale === "function"
@@ -734,6 +737,25 @@ const obstacleBaseConfig = {
 };
 
 let spawnTimer = 0;
+
+// Recalcula o limite de obstaculos simultaneos com base na area logica
+// da arena (ETAPA 4). O intervalo de spawn fica na referencia (1.8s); so a
+// quantidade simultaneia acompanha a densidade da area, dentro de min/max.
+function updateObstacleDensity() {
+
+    const world = getWorld();
+
+    const density = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getObstacleDensity === "function"
+    )
+        ? window.ONREDWorld.getObstacleDensity(world.width, world.height)
+        : { maxObstacles: obstacleConfig.maxObstacles, spawnInterval: 1.8 };
+
+    obstacleConfig.maxObstacles = density.maxObstacles;
+
+    return density;
+}
 
 // ==========================================
 // CRIAÇÃO DOS OBSTÁCULOS

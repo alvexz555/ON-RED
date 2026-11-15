@@ -218,3 +218,95 @@ test("escala central: viewport invalida nao quebra (escala 1)", () => {
     assert.equal(onredWorld.getScale(), 1);
     assert.equal(onredWorld.getWorld().width, 0);
 });
+
+// --- ETAPA 4: densidade de obstaculos por area logica ---
+
+test("etapa4: densidade na referencia mobile 390x844 reproduz o comportamento anterior", () => {
+    globalThis.innerWidth = 390;
+    globalThis.innerHeight = 844;
+    onredWorld.resize();
+
+    const world = onredWorld.getWorld();
+    const density = onredWorld.getObstacleDensity(world.width, world.height);
+
+    assert.equal(world.width, 390);
+    assert.equal(world.height, 844);
+    assert.equal(density.area, 390 * 844);
+    assert.equal(density.ratio, 1);
+    assert.equal(density.maxObstacles, 5);
+    assert.equal(density.spawnInterval, 1.8);
+    assert.equal(density.min, 3);
+    assert.equal(density.max, 10);
+});
+
+test("etapa4: densidade cresce proporcional a area e e limitada pelo maximo", () => {
+    // Escala 1 (altura limita), largura duplicada => mundo 780x844, area 2x.
+    globalThis.innerWidth = 780;
+    globalThis.innerHeight = 844;
+
+    onredWorld.resize();
+
+    const world = onredWorld.getWorld();
+    const density = onredWorld.getObstacleDensity(world.width, world.height);
+
+    assert.equal(world.width, 780);
+    assert.equal(world.height, 844);
+    assert.equal(density.ratio, 2);
+    // 5 obstaculos x 2 = 10, atinge exatamente o maximo.
+    assert.equal(density.maxObstacles, 10);
+    assert.equal(density.max, 10);
+});
+
+test("etapa4: area muito larga e limitada pelo maximo sem crescer indefinido", () => {
+    // Escala 1 (altura limita), mundo 1560x844 => area 4x a referencia.
+    globalThis.innerWidth = 1560;
+    globalThis.innerHeight = 844;
+
+    onredWorld.resize();
+
+    const density = onredWorld.getObstacleDensity(
+        onredWorld.getWorld().width,
+        onredWorld.getWorld().height
+    );
+
+    assert.equal(density.ratio, 4);
+    // 5 obstaculos x 4 = 20, limitado pelo maximo (10), sem crescimento descontrolado.
+    assert.equal(density.maxObstacles, 10);
+});
+
+test("etapa4: arena menor que a referencia nao fica abaixo do minimo", () => {
+    const density = onredWorld.getObstacleDensity(100, 100);
+
+    assert.equal(density.area, 10000);
+    assert.ok(density.ratio < 1);
+    assert.equal(density.maxObstacles, 3);
+    assert.equal(density.min, 3);
+});
+
+test("etapa4: densidade nao depende do DPR nem da resolucao fisica", () => {
+    globalThis.devicePixelRatio = 2;
+    globalThis.innerWidth = 390;
+    globalThis.innerHeight = 844;
+    onredWorld.resize();
+
+    const base = onredWorld.getObstacleDensity(
+        onredWorld.getWorld().width,
+        onredWorld.getWorld().height
+    );
+
+    globalThis.devicePixelRatio = 3;
+    onredWorld.resize();
+
+    const dpr3 = onredWorld.getObstacleDensity(
+        onredWorld.getWorld().width,
+        onredWorld.getWorld().height
+    );
+
+    assert.deepEqual(base, dpr3);
+    assert.equal(base.maxObstacles, 5);
+});
+
+test("etapa4: getObstacleDensityReference expõe a referencia de configuracao", () => {
+    const ref = onredWorld.getObstacleDensityReference();
+    assert.deepEqual(ref, { width: 390, height: 844, maxObstacles: 5, spawnInterval: 1.8 });
+});
