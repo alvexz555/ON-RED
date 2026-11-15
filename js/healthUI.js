@@ -265,7 +265,7 @@
         ctx.save();
 
         // Vidas em uma linha própria, acima do HP, alinhadas à barra.
-        drawLives(ctx, state, x, y);
+        drawLives(ctx, state, x + CONFIG.lifeRadius, y);
 
         ctx.font = "bold 10px Arial";
         ctx.textAlign = "left";
