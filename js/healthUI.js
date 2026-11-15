@@ -83,9 +83,9 @@
                 ctx.beginPath();
 
                 ctx.arc(
-                    lifeX - radius * 0.3,
-                    y - radius * 0.3,
-                    radius * 0.3,
+                    lifeX,
+                    y - radius * 0.35,
+                    radius * 0.24,
                     0,
                     Math.PI * 2
                 );
