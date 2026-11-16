@@ -3,14 +3,14 @@
 Coloque os arquivos de áudio nas pastas abaixo. Os nomes são provisórios: você pode renomear os arquivos e atualizar este documento.
 
 ## music/
-Música de fundo do jogo.
+Música de fundo do jogo. ok
 
 ## sfx/
 Efeitos sonoros. Sugestões de categorias:
-- dano/colisão do jogador
+- dano/colisão do jogador ok
 - Perfect Timing
 - coleta/bonus
-- Ping Pong e efeitos da bola
+- Ping Pong e efeitos da bola ok
 - Boss
 - vitória
 - Game Over
