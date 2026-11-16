@@ -240,8 +240,11 @@ if (window.ONREDHealthSystem &&
 
 function updatePerfectButtonPosition() {
 
-    perfectButton.x =
-        getWorld().width - perfectButton.margin - perfectButton.size;
+    // Mantém o botão Perfect Timing no lado oposto ao joystick,
+    // evitando sobreposição quando o controle é configurado à direita.
+    perfectButton.x = joystick.side === "right"
+        ? perfectButton.margin
+        : getWorld().width - perfectButton.margin - perfectButton.size;
 
     perfectButton.y =
         getWorld().height - perfectButton.margin - perfectButton.size;
