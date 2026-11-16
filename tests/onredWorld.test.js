@@ -310,3 +310,40 @@ test("etapa4: getObstacleDensityReference expõe a referencia de configuracao", 
     const ref = onredWorld.getObstacleDensityReference();
     assert.deepEqual(ref, { width: 390, height: 844, maxObstacles: 5, spawnInterval: 1.8 });
 });
+
+test("correcao4.1: intervalo de spawn adaptativo preserva a referencia mobile (5 obstaculos / 1.8s)", () => {
+    globalThis.innerWidth = 390;
+    globalThis.innerHeight = 844;
+    onredWorld.resize();
+
+    const world = onredWorld.getWorld();
+    const density = onredWorld.getObstacleDensity(world.width, world.height);
+
+    // Comportamento mobile de referencia inalterado pela correcao.
+    assert.equal(density.maxObstacles, 5);
+    assert.equal(density.spawnInterval, 1.8);
+});
+
+test("correcao4.1: intervalo de spawn diminui quando a area logica aumenta (mundo 780x844 -> max 10 -> intervalo 0.9)", () => {
+    // Escala 1 (altura limita), largura duplicada => mundo 780x844, area 2x.
+    globalThis.innerWidth = 780;
+    globalThis.innerHeight = 844;
+    onredWorld.resize();
+
+    const world = onredWorld.getWorld();
+    const density = onredWorld.getObstacleDensity(world.width, world.height);
+
+    assert.equal(world.width, 780);
+    assert.equal(world.height, 844);
+    assert.equal(density.ratio, 2);
+    assert.equal(density.maxObstacles, 10);
+    // Intervalo adaptativo: 1.8s * (5 / 10) = 0.9s no dobro de area.
+    assert.equal(density.spawnInterval, 0.9);
+});
+
+test("correcao4.1: intervalo de spawn cresce para arenas abaixo do minimo (max 3 -> intervalo 3)", () => {
+    const density = onredWorld.getObstacleDensity(100, 100);
+
+    assert.equal(density.maxObstacles, 3);
+    assert.equal(density.spawnInterval, 3);
+});

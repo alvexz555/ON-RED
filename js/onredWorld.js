@@ -55,12 +55,19 @@
             OBSTACLE_DENSITY_MIN,
             OBSTACLE_DENSITY_MAX
         );
+        // Intervalo de spawn adaptativo conforme a area logica da arena:
+        // ajusta o intervalo proporcional ao limite de obstaculos simultaneos
+        // suportado, mantendo a mesma taxa de chegada por unidade de area da
+        // referencia mobile (390x844 = escala 1, 5 obstaculos / 1.8s).
+        const spawnInterval = Number(
+            (OBSTACLE_DENSITY_REFERENCE.spawnInterval * OBSTACLE_DENSITY_REFERENCE.maxObstacles) / maxObstacles
+        );
         return {
             area,
             referenceArea,
             ratio: Number(ratio.toFixed(6)),
             maxObstacles,
-            spawnInterval: OBSTACLE_DENSITY_REFERENCE.spawnInterval,
+            spawnInterval,
             min: OBSTACLE_DENSITY_MIN,
             max: OBSTACLE_DENSITY_MAX
         };

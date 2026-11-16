@@ -738,9 +738,10 @@ const obstacleBaseConfig = {
 
 let spawnTimer = 0;
 
-// Recalcula o limite de obstaculos simultaneos com base na area logica
-// da arena (ETAPA 4). O intervalo de spawn fica na referencia (1.8s); so a
-// quantidade simultaneia acompanha a densidade da area, dentro de min/max.
+// Recalcula limite de obstaculos simultaneos e intervalo de spawn com base
+// na area logica da arena (ETAPA 4 / CORRECAO 4.1). O limite acompanha a densidade
+// da area (min/max); o intervalo e adaptativo, preservando a referencia mobile
+// (390x844 = 5 obstaculos / 1.8s).
 function updateObstacleDensity() {
 
     const world = getWorld();
@@ -753,6 +754,7 @@ function updateObstacleDensity() {
         : { maxObstacles: obstacleConfig.maxObstacles, spawnInterval: 1.8 };
 
     obstacleConfig.maxObstacles = density.maxObstacles;
+    obstacleConfig.spawnInterval = density.spawnInterval;
 
     return density;
 }
