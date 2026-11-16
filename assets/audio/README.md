@@ -8,8 +8,8 @@ Música de fundo do jogo. ok
 ## sfx/
 Efeitos sonoros. Sugestões de categorias:
 - dano/colisão do jogador ok
-- Perfect Timing
-- coleta/bonus
+- Perfect Timing 
+- coleta/bonus ok
 - Ping Pong e efeitos da bola ok
 - Boss
 - vitória
