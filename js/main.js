@@ -611,7 +611,7 @@ function resizeCanvas() {
         ctx.setTransform(canvasSize.dpr * scale, 0, 0, canvasSize.dpr * scale, 0, 0);
     }
 
-    joystick.baseY = getWorld().height - 115;
+    updateJoystickPosition();
 
     updatePerfectButtonPosition();
 
@@ -625,6 +625,26 @@ function resizeCanvas() {
 // ==========================================
 // FUNÇÕES DO JOYSTICK
 // ==========================================
+
+function updateJoystickPosition() {
+    const world = getWorld();
+    let side = "left";
+    try {
+        side = localStorage.getItem("onRedJoystickSide") === "right" ? "right" : "left";
+    } catch (error) {}
+    joystick.side = side;
+    joystick.baseX = side === "right" ? world.width - 115 : 115;
+    joystick.baseY = world.height - 115;
+    if (!joystick.active) {
+        joystick.knobX = joystick.baseX;
+        joystick.knobY = joystick.baseY;
+    }
+}
+
+window.addEventListener("onred:joystick-side-change", () => {
+    if (joystick.active) resetJoystick();
+    updateJoystickPosition();
+});
 
 function resetJoystick() {
 
