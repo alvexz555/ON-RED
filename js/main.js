@@ -23,6 +23,26 @@ const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
 // ==========================================
+// ONRED WORLD — CAMADA CENTRAL DO MUNDO RESPONSIVO (ETAPA 1)
+// ==========================================
+
+function getWorld() {
+
+    if (window.ONREDWorld && typeof window.ONREDWorld.getWorld === "function") {
+        return window.ONREDWorld.getWorld();
+    }
+
+    return { width: canvas.width, height: canvas.height };
+}
+
+function getArena() {
+
+    const world = getWorld();
+
+    return { width: world.width, height: world.height };
+}
+
+// ==========================================
 // ELEMENTOS DA INTERFACE
 // ==========================================
 
@@ -221,10 +241,10 @@ if (window.ONREDHealthSystem &&
 function updatePerfectButtonPosition() {
 
     perfectButton.x =
-        canvas.width - perfectButton.margin - perfectButton.size;
+        getWorld().width - perfectButton.margin - perfectButton.size;
 
     perfectButton.y =
-        canvas.height - perfectButton.margin - perfectButton.size;
+        getWorld().height - perfectButton.margin - perfectButton.size;
 }
 
 function activatePerfectTiming() {
@@ -366,8 +386,8 @@ function findCollidingPerfectObstacle() {
 
 function spawnPlayer() {
 
-    player.x = canvas.width / 2;
-    player.y = canvas.height / 2;
+    player.x = getWorld().width / 2;
+    player.y = getWorld().height / 2;
 }
 
 // ==========================================
@@ -380,11 +400,13 @@ function clamp(value, min, max) {
 
 function constrainPlayerToArena() {
 
+    const world = getWorld();
+
     const minX = player.radius;
-    const maxX = canvas.width - player.radius;
+    const maxX = world.width - player.radius;
 
     const minY = player.radius;
-    const maxY = canvas.height - player.radius;
+    const maxY = world.height - player.radius;
 
     player.x = clamp(player.x, minX, maxX);
     player.y = clamp(player.y, minY, maxY);
@@ -392,13 +414,15 @@ function constrainPlayerToArena() {
 
 function constrainObstaclesToArena() {
 
+    const world = getWorld();
+
     const half = obstacleConfig.size / 2;
 
-    const minX = Math.min(half, canvas.width / 2);
-    const maxX = Math.max(canvas.width - half, canvas.width / 2);
+    const minX = Math.min(half, world.width / 2);
+    const maxX = Math.max(world.width - half, world.width / 2);
 
-    const minY = Math.min(half, canvas.height / 2);
-    const maxY = Math.max(canvas.height - half, canvas.height / 2);
+    const minY = Math.min(half, world.height / 2);
+    const maxY = Math.max(world.height - half, world.height / 2);
 
     perfectObstacles.forEach(obstacle => {
 
@@ -552,16 +576,42 @@ function resizeCanvas() {
     canvas.style.margin = "0";
     canvas.style.padding = "0";
 
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
+    if (window.ONREDWorld && typeof window.ONREDWorld.resize === "function") {
+        window.ONREDWorld.resize();
+    }
 
-    canvas.style.width = `${screenWidth}px`;
-    canvas.style.height = `${screenHeight}px`;
+    const world = getWorld();
 
-    canvas.width = screenWidth;
-    canvas.height = screenHeight;
+    // A densidade de obstaculos acompanha a area logica da arena (ETAPA 4).
+    updateObstacleDensity();
 
-    joystick.baseY = canvas.height - 115;
+    const scale = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getScale === "function"
+    )
+        ? window.ONREDWorld.getScale()
+        : 1;
+
+    const canvasSize = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getCanvasSize === "function"
+    )
+        ? window.ONREDWorld.getCanvasSize()
+        : { width: Math.round(world.width * scale), height: Math.round(world.height * scale), dpr: 1 };
+
+    canvas.style.width = `${world.width * scale}px`;
+    canvas.style.height = `${world.height * scale}px`;
+
+    canvas.width = canvasSize.width;
+    canvas.height = canvasSize.height;
+
+    // DPR + escala central: um único transform — a resolução física é
+    // (mundo lógico x escala x DPR); o contexto desenha em unidades lógicas.
+    if (ctx) {
+        ctx.setTransform(canvasSize.dpr * scale, 0, 0, canvasSize.dpr * scale, 0, 0);
+    }
+
+    joystick.baseY = getWorld().height - 115;
 
     updatePerfectButtonPosition();
 
@@ -569,7 +619,7 @@ function resizeCanvas() {
 
     constrainPlayerToArena();
     constrainObstaclesToArena();
-    if (window.ONREDHexagonSystem) ONREDHexagonSystem.constrainToArena(canvas);
+    if (window.ONREDHexagonSystem) ONREDHexagonSystem.constrainToArena(getArena());
 }
 
 // ==========================================
@@ -609,9 +659,18 @@ function getPosition(event) {
 
     const rect = canvas.getBoundingClientRect();
 
+    // A entrada chega em pixels de tela (CSS); a lógica do jogo opera em
+    // coordenadas de mundo — a escala central converte uma única vez.
+    const scale = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getScale === "function"
+    )
+        ? window.ONREDWorld.getScale()
+        : 1;
+
     return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
+        x: (event.clientX - rect.left) / scale,
+        y: (event.clientY - rect.top) / scale
     };
 }
 
@@ -679,6 +738,27 @@ const obstacleBaseConfig = {
 
 let spawnTimer = 0;
 
+// Recalcula limite de obstaculos simultaneos e intervalo de spawn com base
+// na area logica da arena (ETAPA 4 / CORRECAO 4.1). O limite acompanha a densidade
+// da area (min/max); o intervalo e adaptativo, preservando a referencia mobile
+// (390x844 = 5 obstaculos / 1.8s).
+function updateObstacleDensity() {
+
+    const world = getWorld();
+
+    const density = (
+        window.ONREDWorld &&
+        typeof window.ONREDWorld.getObstacleDensity === "function"
+    )
+        ? window.ONREDWorld.getObstacleDensity(world.width, world.height)
+        : { maxObstacles: obstacleConfig.maxObstacles, spawnInterval: 1.8 };
+
+    obstacleConfig.maxObstacles = density.maxObstacles;
+    obstacleConfig.spawnInterval = density.spawnInterval;
+
+    return density;
+}
+
 // ==========================================
 // CRIAÇÃO DOS OBSTÁCULOS
 // ==========================================
@@ -700,23 +780,23 @@ function spawnPerfectObstacle() {
     switch (side) {
 
         case 0:
-            x = Math.random() * canvas.width;
+            x = Math.random() * getWorld().width;
             y = -40;
             break;
 
         case 1:
-            x = canvas.width + 40;
-            y = Math.random() * canvas.height;
+            x = getWorld().width + 40;
+            y = Math.random() * getWorld().height;
             break;
 
         case 2:
-            x = Math.random() * canvas.width;
-            y = canvas.height + 40;
+            x = Math.random() * getWorld().width;
+            y = getWorld().height + 40;
             break;
 
         case 3:
             x = -40;
-            y = Math.random() * canvas.height;
+            y = Math.random() * getWorld().height;
             break;
     }
 
@@ -748,7 +828,7 @@ function updatePerfectObstacles(deltaTime, timerDeltaTime = deltaTime) {
     }
 
     if (window.ONREDPerfectTimingSystem) {
-        ONREDPerfectTimingSystem.update(timerDeltaTime, canvas, player, obstacleConfig.size, perfectObstacles);
+        ONREDPerfectTimingSystem.update(timerDeltaTime, getArena(), player, obstacleConfig.size, perfectObstacles);
         ObstacleAI.updateRoles(perfectObstacles);
         if (!ObstacleAI.attacker && perfectObstacles.length) ObstacleAI.selectAttacker(perfectObstacles);
     }
@@ -995,7 +1075,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
         bossPhase = window.ONREDBossSystem.update(
             deltaTime,
-            canvas,
+            getArena(),
             player,
             window.ONREDHealthSystem,
             window.ONREDCollisionSystem
@@ -1020,7 +1100,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
 
     if (window.ONREDHexagonSystem) {
         ONREDHexagonSystem.update(
-            deltaTime, canvas, player, perfectObstacles, obstacleConfig.size,
+            deltaTime, getArena(), player, perfectObstacles, obstacleConfig.size,
             window.ONREDPingPong ? ONREDPingPong.getState() : null
         );
         ONREDHexagonSystem.resolveObstacles(perfectObstacles, obstacleConfig.size);
@@ -1055,7 +1135,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         scoreState.value >= endlessProgression.nextBossScore &&
         window.ONREDBossSystem.shouldStart(scoreState.value)
     ) {
-        window.ONREDBossSystem.start(canvas, player);
+        window.ONREDBossSystem.start(getArena(), player);
         scoreFreezeTimer = window.ONREDBossSystem.getConfig().warningDuration;
     }
 
@@ -1076,7 +1156,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
             ONREDPingPong.update(
                 deltaTime,
                 player,
-                canvas,
+                getArena(),
                 window.ONREDHealthSystem,
                 window.ONREDCollisionSystem,
                 perfectObstacles,
@@ -1092,7 +1172,7 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
         const mergeResults = ONREDMergeSystem.update(
             deltaTime,
             player,
-            canvas,
+            getArena(),
             window.ONREDHealthSystem,
             { spawnIntervalMultiplier: mergeSpawnIntervalMultiplier }
         );
@@ -1116,8 +1196,8 @@ function drawArena() {
     ctx.fillRect(
         0,
         0,
-        canvas.width,
-        canvas.height
+        getWorld().width,
+        getWorld().height
     );
 
     const hexSize = 28;
@@ -1126,13 +1206,13 @@ function drawArena() {
 
     for (
         let row = -1;
-        row < canvas.height / hexHeight + 2;
+        row < getWorld().height / hexHeight + 2;
         row++
     ) {
 
         for (
             let col = -1;
-            col < canvas.width / hexWidth + 2;
+            col < getWorld().width / hexWidth + 2;
             col++
         ) {
 
@@ -1351,8 +1431,8 @@ function draw() {
     ctx.clearRect(
         0,
         0,
-        canvas.width,
-        canvas.height
+        getWorld().width,
+        getWorld().height
     );
 
     drawArena();
@@ -1380,7 +1460,7 @@ function draw() {
     }
 
     if (window.ONREDBossSystem && currentBossPhase !== "IDLE") {
-        window.ONREDBossSystem.draw(ctx, canvas, player);
+        window.ONREDBossSystem.draw(ctx, getArena(), player);
     }
 
     drawPlayer();
@@ -1399,11 +1479,11 @@ function draw() {
     drawScore();
 
     if (window.ONREDBossSystem && bossPhase === "FIGHT") {
-        window.ONREDBossSystem.drawHUD(ctx, canvas);
+        window.ONREDBossSystem.drawHUD(ctx, getArena());
     }
 
     if (window.ONREDHealthUI) {
-        ONREDHealthUI.draw(ctx, canvas);
+        ONREDHealthUI.draw(ctx, getArena());
     }
 }
 
@@ -1422,7 +1502,7 @@ function drawScore() {
 
         ctx.fillText(
             formatScore(scoreState.value),
-            canvas.width / 2,
+            getWorld().width / 2,
             18
         );
 
@@ -1436,7 +1516,7 @@ function drawScore() {
                     ? (Math.sin(Date.now() / 250) > 0 ? 0.95 : 0.15)
                     : 0.95;
                 ctx.fillStyle = "#168BFF";
-                ctx.fillRect(0, 6, canvas.width * ratio, 2);
+                ctx.fillRect(0, 6, getWorld().width * ratio, 2);
                 ctx.globalAlpha = 1;
             }
         }
@@ -1450,7 +1530,7 @@ function drawScore() {
         ctx.font = "bold 12px Arial";
         ctx.shadowColor = "#168BFF";
         ctx.shadowBlur = 12;
-        ctx.fillText(perfectTimingRuntime.feedback, canvas.width / 2, 44);
+        ctx.fillText(perfectTimingRuntime.feedback, getWorld().width / 2, 44);
         ctx.restore();
     }
 
@@ -1462,7 +1542,7 @@ function drawScore() {
             ctx.textAlign = "center";
             ctx.textBaseline = "top";
             ctx.font = "bold 13px Arial";
-            ctx.fillText("5/5 RETURN IN " + Math.ceil(state.collectiveRemaining) + "s", canvas.width / 2, 62);
+            ctx.fillText("5/5 RETURN IN " + Math.ceil(state.collectiveRemaining) + "s", getWorld().width / 2, 62);
             ctx.restore();
         }
     }
@@ -1558,7 +1638,7 @@ function prepareNextEndlessCycle() {
     if (window.ONREDPerfectTimingSystem) ONREDPerfectTimingSystem.reset();
     if (window.ONREDHexagonSystem) ONREDHexagonSystem.reset();
     if (window.ONREDPingPong) ONREDPingPong.reset(canvas, player);
-    if (window.ONREDMergeSystem) ONREDMergeSystem.reset(canvas, player);
+    if (window.ONREDMergeSystem) ONREDMergeSystem.reset(getArena(), player);
     if (window.ONREDCollisionSystem) ONREDCollisionSystem.reset();
     bossPhase = "IDLE";
     scoreFreezeTimer = 0;
@@ -1606,7 +1686,7 @@ function resetGame() {
     }
 
     if (window.ONREDMergeSystem) {
-        ONREDMergeSystem.reset(canvas, player);
+        ONREDMergeSystem.reset(getArena(), player);
     }
 
     if (window.ONREDPingPong) {
