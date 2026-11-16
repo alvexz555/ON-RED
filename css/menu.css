@@ -432,3 +432,8 @@ kbd, .control-icon { min-width: 27px; min-height: 27px; padding: 5px 7px; displa
 .menu-button:focus-visible, .volume-slider:focus-visible { outline: 2px solid #58BFFF; outline-offset: 3px; }
 @media (min-width: 700px) { .main-menu { padding: 30px; } .menu-content { max-width: 420px; gap: 28px; } .game-logo { font-size: 72px; } .menu-actions .menu-button { min-height: 52px; } .menu-panel { padding: 28px; } }
 @media (max-height: 700px) { .main-menu { align-items: flex-start; } .menu-content { gap: 16px; } .game-logo { font-size: 48px; } .menu-panel { padding: 16px; gap: 11px; } .phase-card, .record-card, .control-group { padding: 12px; gap: 7px; } }
+
+/* CONFIGURAÇÃO DA POSIÇÃO DO ANALÓGICO */
+.joystick-setting-row { align-items: center; }
+.setting-select { min-width: 112px; min-height: 40px; padding: 0 10px; border: 1px solid #34465C; border-radius: 6px; background: #172333; color: #FFFFFF; font-size: 10px; font-weight: 800; letter-spacing: 1px; }
+.setting-select:focus-visible { outline: 2px solid #58BFFF; outline-offset: 3px; }
