@@ -46,6 +46,8 @@
         "Use o botão no canto superior para pausar.": "Use the button in the top corner to pause.",
         "Dica: sobreviva, evite os obstáculos e use o Perfect Timing no momento certo.": "Tip: survive, avoid obstacles, and use Perfect Timing at the right moment.",
         "PREFERÊNCIAS": "PREFERENCES",
+        "IDIOMA": "LANGUAGE",
+        "Escolha o idioma do jogo.": "Choose the game language.",
         "VOLUME GERAL": "MASTER VOLUME",
         "Preferência salva neste dispositivo.": "Preference saved on this device.",
         "MUDO": "MUTE",
