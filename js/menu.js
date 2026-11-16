@@ -12,7 +12,9 @@
     const recordsBestScore = $("recordsBestScore");
     const volumeSlider = $("volumeSlider");
     const volumeValue = $("volumeValue");
+    const joystickSideSelect = $("joystickSide");
     const VOLUME_KEY = "onRedVolume";
+    const JOYSTICK_SIDE_KEY = "onRedJoystickSide";
 
     function readBestScore() {
         try {
@@ -98,6 +100,18 @@
         $("settingsButton")?.addEventListener("click", () => openPanel("settingsPanel"));
         document.querySelectorAll("[data-menu-back]").forEach(button => button.addEventListener("click", closePanels));
         if (volumeSlider) volumeSlider.addEventListener("input", event => window.ONREDVolume.set(Number(event.target.value) / 100));
+        if (joystickSideSelect) {
+            let savedSide = "left";
+            try {
+                savedSide = localStorage.getItem(JOYSTICK_SIDE_KEY) === "right" ? "right" : "left";
+            } catch (error) {}
+            joystickSideSelect.value = savedSide;
+            joystickSideSelect.addEventListener("change", event => {
+                const side = event.target.value === "right" ? "right" : "left";
+                try { localStorage.setItem(JOYSTICK_SIDE_KEY, side); } catch (error) {}
+                window.dispatchEvent(new CustomEvent("onred:joystick-side-change", { detail: { side } }));
+            });
+        }
         showMenu();
     }
     window.ONREDMenu = { initialize, showMenu, hideMenu, refreshRecords };
