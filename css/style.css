@@ -452,50 +452,124 @@ button {
 
 
 /* ==========================================
-   REVIVE SCREEN · ONE CONTINUATION PER RUN
+   REVIVE OFFER · REWARDED-AD READY PRESENTATION
+   Visual only: the current revive remains free until an ad SDK is connected.
 ========================================== */
+.game-over-content {
+    gap: 25px;
+}
+
 .revive-offer {
+    position: relative;
+    isolation: isolate;
     width: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 9px;
-    padding: 13px;
-    border: 1px solid rgba(22, 139, 255, .4);
-    border-radius: 7px;
-    background: rgba(18, 61, 96, .22);
+    gap: 12px;
+    padding: 19px 16px 16px;
+    overflow: hidden;
+    border: 1px solid rgba(49, 157, 255, .58);
+    border-radius: 12px;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(31, 133, 220, .22), transparent 72%),
+        linear-gradient(155deg, rgba(15, 39, 62, .96), rgba(7, 17, 29, .98));
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, .28),
+        inset 0 1px 0 rgba(255, 255, 255, .07),
+        0 0 22px rgba(22, 139, 255, .09);
 }
+
+.revive-offer::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: -48px;
+    left: 50%;
+    width: 150px;
+    height: 90px;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    background: rgba(22, 139, 255, .13);
+    filter: blur(25px);
+}
+
 .revive-offer-label {
-    color: #58BFFF;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid rgba(88, 191, 255, .24);
+    border-radius: 999px;
+    color: #78CAFF;
+    background: rgba(22, 139, 255, .09);
     font-size: 9px;
     font-weight: 900;
-    letter-spacing: 2px;
+    letter-spacing: 1.7px;
 }
+
+.revive-offer-label::before {
+    content: "+";
+    display: inline-grid;
+    place-items: center;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    color: #071522;
+    background: #58BFFF;
+    font-size: 13px;
+    line-height: 1;
+}
+
 .revive-offer p {
     max-width: 290px;
-    color: #AAB4C3;
-    font-size: 10px;
-    line-height: 1.5;
+    color: #C0CDDB;
+    font-size: 11px;
+    line-height: 1.55;
 }
+
 .revive-button {
-    min-height: 48px;
+    min-height: 52px;
+    border: 1px solid #36A7FF;
+    border-radius: 8px;
     color: #FFFFFF;
-    background: #123D60;
-    border-color: #168BFF;
-    box-shadow: 0 0 16px rgba(22, 139, 255, .18);
+    background: linear-gradient(180deg, #197CC4, #10558D);
+    box-shadow:
+        0 5px 16px rgba(0, 103, 190, .24),
+        inset 0 1px 0 rgba(255, 255, 255, .18);
+    letter-spacing: 1.5px;
 }
-.revive-button:hover { background: #18527D; }
+
+.revive-button:hover {
+    background: linear-gradient(180deg, #238FDC, #1467A8);
+}
+
+.revive-button:focus-visible {
+    outline: 2px solid #A7DEFF;
+    outline-offset: 3px;
+}
+
+.revive-button span {
+    font-size: 19px;
+    line-height: 1;
+}
+
 .revive-unavailable {
-    color: #8796A9;
+    color: #9AAABD;
     font-size: 9px;
     font-weight: 800;
-    letter-spacing: 1.5px;
+    line-height: 1.5;
+    letter-spacing: 1.2px;
     text-align: center;
 }
+
 .revive-unavailable[hidden], .revive-button[hidden] { display: none !important; }
+
 @media (max-height: 650px) {
-    .revive-offer { padding: 9px; gap: 6px; }
-    .revive-button { min-height: 42px; }
+    .game-over-content { gap: 17px; }
+    .revive-offer { padding: 11px; gap: 8px; }
+    .revive-button { min-height: 44px; }
 }
 
 @media (max-height: 700px) {
