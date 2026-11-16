@@ -2,59 +2,76 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const onredWorld = require("../js/onredWorld.js");
 
-test("ONREDWorld exposes the viewport and canvas api", () => {
+test("ONREDWorld exposes viewport, scale profiles and conversion api", () => {
     assert.equal(typeof onredWorld.getWorld, "function");
     assert.equal(typeof onredWorld.resize, "function");
     assert.equal(typeof onredWorld.getScale, "function");
-    assert.equal(typeof onredWorld.getDpr, "function");
+    assert.equal(typeof onredWorld.getPlatform, "function");
+    assert.equal(typeof onredWorld.setPlatform, "function");
+    assert.equal(typeof onredWorld.setProfileScale, "function");
     assert.equal(typeof onredWorld.getCanvasSize, "function");
 });
 
-test("logical world follows the viewport without scaling gameplay", () => {
+test("mobile profile preserves the existing 390x844 gameplay baseline", () => {
+    onredWorld.setPlatform("mobile");
     globalThis.innerWidth = 390;
     globalThis.innerHeight = 844;
     onredWorld.resize();
 
+    assert.equal(onredWorld.getScale(), 1);
     assert.deepEqual(onredWorld.getWorld(), { width: 390, height: 844 });
-    assert.equal(onredWorld.getScale(), 1);
-
-    globalThis.innerWidth = 780;
-    globalThis.innerHeight = 1688;
-    onredWorld.resize();
-
-    assert.deepEqual(onredWorld.getWorld(), { width: 780, height: 1688 });
-    assert.equal(onredWorld.getScale(), 1);
+    assert.deepEqual(onredWorld.getCanvasSize(), {
+        width: 390,
+        height: 844,
+        dpr: 1,
+        scale: 1
+    });
 });
 
-test("landscape and narrow viewports keep scale 1 and use their real dimensions", () => {
-    globalThis.innerWidth = 844;
-    globalThis.innerHeight = 390;
-    onredWorld.resize();
-
-    assert.deepEqual(onredWorld.getWorld(), { width: 844, height: 390 });
-    assert.equal(onredWorld.getScale(), 1);
-
-    globalThis.innerWidth = 320;
-    globalThis.innerHeight = 568;
-    onredWorld.resize();
-
-    assert.deepEqual(onredWorld.getWorld(), { width: 320, height: 568 });
-    assert.equal(onredWorld.getScale(), 1);
-});
-
-test("world and screen coordinates remain identical", () => {
+test("desktop profile scales the complete world while filling the viewport", () => {
+    onredWorld.setPlatform("desktop");
     globalThis.innerWidth = 1366;
     globalThis.innerHeight = 768;
     onredWorld.resize();
 
-    const point = { x: 683, y: 384 };
-    assert.deepEqual(onredWorld.worldToScreen(point), point);
-    assert.deepEqual(onredWorld.screenToWorld(point), point);
-    assert.equal(onredWorld.sizeToScreen(15), 15);
-    assert.equal(onredWorld.sizeToWorld(15), 15);
+    assert.equal(onredWorld.getScale(), 1.5);
+    assert.deepEqual(onredWorld.getWorld(), {
+        width: 1366 / 1.5,
+        height: 768 / 1.5
+    });
+    assert.deepEqual(onredWorld.getCanvasSize(), {
+        width: 1366,
+        height: 768,
+        dpr: 1,
+        scale: 1.5
+    });
 });
 
-test("DPR changes canvas backing resolution without changing logical world", () => {
+test("world and screen coordinates and object sizes use inverse conversions", () => {
+    onredWorld.setPlatform("desktop");
+    globalThis.innerWidth = 1366;
+    globalThis.innerHeight = 768;
+    onredWorld.resize();
+
+    const point = { x: 100, y: 80 };
+    assert.deepEqual(onredWorld.worldToScreen(point), { x: 150, y: 120 });
+    assert.deepEqual(onredWorld.screenToWorld({ x: 150, y: 120 }), point);
+    assert.equal(onredWorld.sizeToScreen(15), 22.5);
+    assert.equal(onredWorld.sizeToWorld(22.5), 15);
+});
+
+test("landscape mobile remains at scale 1", () => {
+    onredWorld.setPlatform("mobile");
+    globalThis.innerWidth = 844;
+    globalThis.innerHeight = 390;
+    onredWorld.resize();
+
+    assert.equal(onredWorld.getScale(), 1);
+    assert.deepEqual(onredWorld.getWorld(), { width: 844, height: 390 });
+});
+
+test("DPR changes backing resolution without changing logical scale", () => {
+    onredWorld.setPlatform("mobile");
     globalThis.devicePixelRatio = 2;
     globalThis.innerWidth = 390;
     globalThis.innerHeight = 844;
@@ -69,53 +86,65 @@ test("DPR changes canvas backing resolution without changing logical world", () 
     });
 });
 
-test("fractional DPR rounds the physical canvas dimensions", () => {
+test("fractional DPR and desktop scale compose without changing CSS viewport", () => {
+    onredWorld.setPlatform("desktop");
     globalThis.devicePixelRatio = 1.5;
-    globalThis.innerWidth = 390;
-    globalThis.innerHeight = 844;
+    globalThis.innerWidth = 1366;
+    globalThis.innerHeight = 768;
     onredWorld.resize();
 
     const size = onredWorld.getCanvasSize();
-    assert.equal(size.width, 585);
-    assert.equal(size.height, 1266);
-    assert.equal(size.scale, 1);
+    assert.equal(size.width, 2049);
+    assert.equal(size.height, 1152);
+    assert.equal(size.scale, 1.5);
 });
 
-test("obstacle count and spawn interval stay fixed across viewport areas", () => {
+test("scale profiles can be adjusted independently for future platform tuning", () => {
+    onredWorld.setProfileScale("poki", 1.25);
+    onredWorld.setPlatform("poki");
+    globalThis.innerWidth = 1366;
+    globalThis.innerHeight = 768;
+    onredWorld.resize();
+
+    assert.equal(onredWorld.getScale(), 1.25);
+    assert.deepEqual(onredWorld.getWorld(), {
+        width: 1366 / 1.25,
+        height: 768 / 1.25
+    });
+
+    onredWorld.setProfileScale("poki", 1.5);
+    onredWorld.setPlatform("mobile");
+});
+
+test("obstacle count and spawn interval stay fixed across platform profiles", () => {
     const viewports = [
-        [320, 568],
-        [390, 844],
-        [780, 844],
-        [1366, 768],
-        [1920, 1080]
+        ["mobile", 320, 568],
+        ["mobile", 390, 844],
+        ["desktop", 1366, 768],
+        ["desktop", 1920, 1080],
+        ["poki", 1366, 768]
     ];
 
-    for (const [width, height] of viewports) {
+    for (const [platform, width, height] of viewports) {
+        onredWorld.setPlatform(platform);
         globalThis.innerWidth = width;
         globalThis.innerHeight = height;
         onredWorld.resize();
 
         const world = onredWorld.getWorld();
         const density = onredWorld.getObstacleDensity(world.width, world.height);
-        assert.equal(density.maxObstacles, 5, `max obstacles at ${width}x${height}`);
-        assert.equal(density.spawnInterval, 1.8, `spawn interval at ${width}x${height}`);
+        assert.equal(density.maxObstacles, 5);
+        assert.equal(density.spawnInterval, 1.8);
     }
 });
 
-test("obstacle configuration reference remains the original mobile baseline", () => {
-    assert.deepEqual(onredWorld.getObstacleDensityReference(), {
-        width: 390,
-        height: 844,
-        maxObstacles: 5,
-        spawnInterval: 1.8
-    });
-});
-
-test("invalid viewport dimensions do not introduce a non-unit scale", () => {
+test("invalid viewport dimensions keep the selected platform profile", () => {
+    onredWorld.setPlatform("desktop");
     globalThis.innerWidth = 0;
     globalThis.innerHeight = 0;
     onredWorld.resize();
 
-    assert.equal(onredWorld.getScale(), 1);
+    assert.equal(onredWorld.getScale(), 1.5);
     assert.deepEqual(onredWorld.getWorld(), { width: 0, height: 0 });
+    onredWorld.setPlatform("mobile");
 });
