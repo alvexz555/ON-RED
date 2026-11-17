@@ -211,6 +211,7 @@
             ball.vy -= 2 * velocityAlongNormal * ny;
         }
 
+        if (window.ONREDAudio) window.ONREDAudio.play("pong", { cooldown: 90 });
         knockbackX = nx * CONFIG.knockbackSpeed;
         knockbackY = ny * CONFIG.knockbackSpeed;
         controlSlowTimer = CONFIG.controlRecoveryDuration;
