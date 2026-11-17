@@ -11,10 +11,10 @@ Efeitos sonoros. Sugestões de categorias:
 - Perfect Timing ok
 - coleta/bonus ok
 - Ping Pong e efeitos da bola ok
-- Boss
+- Boss fight ok
 - vitória
 - Game Over
-- interface/botões
+- interface/botões ok
 
 ## Convenções
 - Prefira nomes curtos, em minúsculas e separados por hífen.
