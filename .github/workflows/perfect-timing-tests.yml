@@ -1,18 +1,12 @@
-name: Perfect Timing tests
+name: ON RED tests
 
 on:
   push:
     branches:
       - main
-      - feature/perfect-timing-system
-      - feature/electric-ping-pong
-      - fix/hexagon-pingpong-balance-2026-11-13
-      - feature/boss-battle-complete
-      - fix/boss-area-and-pong-inheritance
   pull_request:
     branches:
       - main
-      - feature/ping-pong
 
 jobs:
   test:
@@ -33,5 +27,8 @@ jobs:
           node --check js/pingPong.js
           node --check js/bossSystem.js
           node --check js/mergeSystem.js
-      - name: Run Perfect Timing unit tests
+          node --check js/audio.js
+          node --check js/menu.js
+          node --check js/i18n.js
+      - name: Run automated tests
         run: node --test tests/*.test.js
