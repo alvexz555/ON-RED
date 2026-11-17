@@ -25,6 +25,7 @@
     let currentTrack = null;
     let unlocked = false;
     const lastPlayed = new Map();
+    const activeEffects = new Set();
 
     function volume() {
         return window.ONREDVolume && typeof window.ONREDVolume.get === "function"
@@ -89,8 +90,12 @@
         const media = new Audio(source);
         media.preload = "auto";
         media.volume = volume();
+        activeEffects.add(media);
+        media.addEventListener("ended", () => {
+            activeEffects.delete(media);
+            media.src = "";
+        }, { once: true });
         safePlay(media);
-        media.addEventListener("ended", () => { media.src = ""; }, { once: true });
         return true;
     }
 
@@ -99,6 +104,10 @@
         if (music && music.paused) safePlay(music);
     }
 
+    document.addEventListener("onred:volume-change", () => {
+        if (music) music.volume = volume();
+        activeEffects.forEach(media => { media.volume = volume(); });
+    });
     document.addEventListener("pointerdown", unlock, { once: true, capture: true });
     document.addEventListener("keydown", unlock, { once: true, capture: true });
 
