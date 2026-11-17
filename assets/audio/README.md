@@ -12,8 +12,8 @@ Efeitos sonoros. Sugestões de categorias:
 - coleta/bonus ok
 - Ping Pong e efeitos da bola ok
 - Boss fight ok
-- vitória
-- Game Over
+- vitória ok
+- Game Over ok
 - interface/botões ok
 
 ## Convenções
