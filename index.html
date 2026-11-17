@@ -123,7 +123,7 @@
             <div class="setting-scale"><span>MUDO</span><span>MÁXIMO</span></div>
             <div class="setting-row joystick-setting-row"><div><label for="joystickSide">POSIÇÃO DO ANALÓGICO</label><p>Escolha o lado do controle na tela.</p></div><select id="joystickSide" class="setting-select" aria-label="Posição do analógico"><option value="left">ESQUERDO</option><option value="right">DIREITO</option></select></div>
             <div class="setting-row language-setting-row"><div><label for="languageSelect">IDIOMA</label><p>Escolha o idioma do jogo.</p></div><select id="languageSelect" class="setting-select" aria-label="Idioma"><option value="pt-BR">PORTUGUÊS</option><option value="en">ENGLISH</option></select></div>
-            <p class="menu-panel-note">O controle já salva seu nível de volume. Os efeitos sonoros do jogo ainda serão integrados.</p>
+            <p class="menu-panel-note">O volume geral controla a música e todos os efeitos sonoros.</p>
             <button type="button" class="menu-button menu-back" data-menu-back>VOLTAR</button>
         </section>
     </main>
@@ -347,6 +347,9 @@
 
     <!-- RESPONSIVE WORLD (ETAPA 1 — CAMADA CENTRAL DO MUNDO) -->
     <script src="./js/onredWorld.js"></script>
+
+    <!-- AUDIO MANAGER -->
+    <script src="./js/audio.js"></script>
 
     <!-- MAIN GAME ENGINE -->
     <script src="./js/main.js"></script>

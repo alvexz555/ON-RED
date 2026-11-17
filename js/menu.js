@@ -43,6 +43,7 @@
     function applyVolume() {
         document.querySelectorAll("audio, video").forEach(media => { media.volume = masterVolume; });
         if (masterGainNode && masterGainNode.gain) masterGainNode.gain.value = masterVolume;
+        document.dispatchEvent(new Event("onred:volume-change"));
         if (volumeSlider) volumeSlider.value = String(Math.round(masterVolume * 100));
         if (volumeValue) volumeValue.textContent = Math.round(masterVolume * 100) + "%";
     }
