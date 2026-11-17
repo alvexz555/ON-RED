@@ -1,24 +1,22 @@
 # Áudio do ON RED
 
-Coloque os arquivos de áudio nas pastas abaixo. Os nomes são provisórios: você pode renomear os arquivos e atualizar este documento.
+Os arquivos desta pasta são utilizados pelo gerenciador em `js/audio.js`.
 
 ## music/
-Música de fundo do jogo. ok
+
+- `8-bit_loop_loop_.mp3`: trilha da gameplay.
+- `An_Adventure_Awaits.mp3`: trilha da batalha contra o Boss.
 
 ## sfx/
-Efeitos sonoros. Sugestões de categorias:
-- dano/colisão do jogador ok
-- Perfect Timing ok
-- coleta/bonus ok
-- Ping Pong e efeitos da bola ok
-- Boss fight ok
-- vitória ok
-- Game Over ok
-- interface/botões ok
 
-## Convenções
-- Prefira nomes curtos, em minúsculas e separados por hífen.
-- Formatos recomendados: .mp3 ou .ogg.
-- Não é necessário manter todos os exemplos acima. Use apenas os sons que já existem.
+- `laserLarge_000.ogg`: dano.
+- `laserSmall_004.ogg`: Ping Pong.
+- `forceField_001.ogg`: coleta do MERGE.
+- `doorOpen_001.ogg`: Perfect Timing.
+- `back_003.ogg`: navegação de voltar.
+- `click_001.ogg`: interação com botões.
+- `confirmation_001.ogg`: reviver.
+- `Success3.mp3`: vitória.
+- `GameOver.mp3`: fim de partida.
 
-A integração será feita depois em um módulo próprio, separado da lógica principal do jogo.
+Para alterar ou substituir um áudio, atualize também o caminho correspondente em `js/audio.js` e teste gameplay, menus e transições.
