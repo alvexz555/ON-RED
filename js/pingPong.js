@@ -272,7 +272,10 @@
         ball.x += ball.vx * deltaTime;
         ball.y += ball.vy * deltaTime;
 
-        if (bounceFromWalls(arena)) registerValidImpact();
+        if (bounceFromWalls(arena)) {
+            registerValidImpact();
+            if (window.ONREDAudio) window.ONREDAudio.play("pong", { cooldown: 90 });
+        }
 
         if (hexSystem && typeof hexSystem.resolvePingPongCollision === "function") {
             const wasElectric = Boolean(ball.electric);
