@@ -231,6 +231,7 @@ const perfectTimingRuntime = {
 if (window.ONREDHealthSystem &&
     typeof window.ONREDHealthSystem.setDamageListener === "function") {
     window.ONREDHealthSystem.setDamageListener(() => {
+        if (window.ONREDAudio) window.ONREDAudio.play("damage", { cooldown: 180 });
         if (perfectTimingRuntime.effect === "speed_up") {
             perfectTimingRuntime.effect = null;
             perfectTimingRuntime.effectTimer = 0;
@@ -260,6 +261,7 @@ function activatePerfectTiming() {
         if (parry.applied) {
             perfectButton.charge = 0;
             perfectButton.activationFlash = 0.25;
+            if (window.ONREDAudio) window.ONREDAudio.play("perfect");
             perfectTimingRuntime.feedback =
                 "PERFECT! " + boss.getConfig().damagePerParry + " HITS INBOUND";
             perfectTimingRuntime.feedbackTimer = 1.2;
@@ -346,6 +348,7 @@ function completePerfectTiming(obstacle) {
 
     perfectButton.charge = 0;
     perfectButton.activationFlash = 0.25;
+    if (window.ONREDAudio) window.ONREDAudio.play("perfect");
     scoreState.value += perfectTimingConfig.scorePerElimination;
     ObstacleAI.updateRoles(perfectObstacles);
     ObstacleAI.selectAttacker(perfectObstacles);
@@ -917,6 +920,10 @@ function triggerGameOver() {
     if (gameState === GAME_STATE.GAME_OVER) return;
 
     gameState = GAME_STATE.GAME_OVER;
+    if (window.ONREDAudio) {
+        window.ONREDAudio.stopMusic();
+        window.ONREDAudio.play("gameOver");
+    }
     updateReviveOffer();
     if (pauseButton) pauseButton.style.display = "none";
 
@@ -941,6 +948,10 @@ function triggerGameOver() {
 
 function triggerVictory() {
 
+    if (window.ONREDAudio) {
+        window.ONREDAudio.stopMusic();
+        window.ONREDAudio.play("victory");
+    }
     const isFirstBossVictory = !bossVictoryReachedThisRun;
     const bonus = window.ONREDBossSystem
         ? window.ONREDBossSystem.getConfig().victoryBonusScore
@@ -1112,6 +1123,9 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
             triggerVictory();
         }
 
+        if (previousBossPhase !== "FIGHT" && bossPhase === "FIGHT" && window.ONREDAudio) {
+            window.ONREDAudio.playMusic("boss");
+        }
         bossPhaseNow = bossPhase;
     }
 
@@ -1200,6 +1214,9 @@ player.y += moveY * player.speed * controlMultiplier * effectSpeedMultiplier * d
             { spawnIntervalMultiplier: mergeSpawnIntervalMultiplier }
         );
 
+        if (mergeResults.length && window.ONREDAudio) {
+            window.ONREDAudio.play("merge", { cooldown: 180 });
+        }
         mergeResults.forEach(result => {
             if (result.type === "bonus_score" && result.applied) {
                 scoreState.value += result.points;
@@ -1737,6 +1754,7 @@ window.startONREDGame = function () {
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
+    if (window.ONREDAudio) window.ONREDAudio.playMusic("gameplay");
     if (pauseButton) pauseButton.style.display = "flex";
 
     resetGame();
@@ -1775,6 +1793,10 @@ function reviveONREDGame() {
     const result = health.revive();
     if (!result.applied) return false;
 
+    if (window.ONREDAudio) {
+        window.ONREDAudio.play("revive");
+        window.ONREDAudio.playMusic(bossPhase === "FIGHT" ? "boss" : "gameplay");
+    }
     revivesUsedThisRun += 1;
     updateReviveOffer();
     gameState = GAME_STATE.PLAYING;
@@ -1801,6 +1823,7 @@ function restartONREDGame() {
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
+    if (window.ONREDAudio) window.ONREDAudio.playMusic("gameplay");
     if (pauseButton) pauseButton.style.display = "flex";
 
     if (pauseScreen) {
@@ -1840,6 +1863,7 @@ function returnToMainMenu() {
 
     gameState = GAME_STATE.MENU;
     gameStarted = false;
+    if (window.ONREDAudio) window.ONREDAudio.stopMusic();
     if (pauseButton) pauseButton.style.display = "none";
 
     if (gameOverScreen) {
@@ -1898,6 +1922,7 @@ function pauseONREDGame() {
     // Trava o estado primeiro: nenhuma atualização de movimento pode
     // acontecer depois que a pausa for solicitada.
     gameState = GAME_STATE.PAUSED;
+    if (window.ONREDAudio) window.ONREDAudio.pauseMusic();
 
     // Zera e solta todas as entradas que poderiam manter o personagem andando.
     resetJoystick();
@@ -1930,6 +1955,7 @@ function resumeONREDGame() {
     }
 
     gameState = GAME_STATE.PLAYING;
+    if (window.ONREDAudio) window.ONREDAudio.resumeMusic();
     if (pauseButton) pauseButton.style.display = "flex";
     lastFrameTime = 0;
     return true;
@@ -2029,6 +2055,7 @@ function continueEndlessRun() {
     }
     if (mainMenu) mainMenu.classList.add("hidden");
     prepareNextEndlessCycle();
+    if (window.ONREDAudio) window.ONREDAudio.playMusic("gameplay");
     gameState = GAME_STATE.PLAYING;
     gameStarted = true;
     if (pauseButton) pauseButton.style.display = "flex";
