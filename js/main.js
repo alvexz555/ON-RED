@@ -970,6 +970,7 @@ function triggerVictory() {
     // Nos ciclos seguintes, a partida continua automaticamente.
     if (!isFirstBossVictory) {
         prepareNextEndlessCycle();
+        if (window.ONREDAudio) window.ONREDAudio.playMusic("gameplay");
         gameState = GAME_STATE.PLAYING;
         gameStarted = true;
         if (pauseButton) pauseButton.style.display = "flex";
