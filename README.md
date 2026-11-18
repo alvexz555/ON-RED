@@ -16,19 +16,11 @@ O projeto é estático. Sirva a raiz do repositório por HTTP/HTTPS ou publique 
 - `tests/`: testes automatizados dos sistemas.
 - `.github/workflows/`: publicação no GitHub Pages e validações automatizadas.
 
-## Testes
-
-Os testes usam Node.js (versão 20) e o runner nativo:
-
 ```bash
 node --test tests/*.test.js
 ```
 
 A checagem de sintaxe dos módulos principais também é executada pelo GitHub Actions.
-
-## Publicação
-
-O workflow `Deploy ON RED to GitHub Pages` publica o conteúdo da raiz do repositório quando há push nas branches configuradas ou execução manual.
 
 ## Estado do projeto
 
