@@ -1,9 +1,13 @@
 /*
  * ON RED · Playgama Bridge integration
  *
- * Initializes the Bridge without blocking gameplay, manages the menu banner,
- * and exposes a rewarded-video promise. The game grants the revive only after
- * the Bridge reports the "rewarded" state.
+ * Initializes the Bridge without blocking the game.
+ * Shows the configured sticky banner only while the main menu is visible.
+ *
+ * The "revive" rewarded placement is declared in the Bridge config, but is
+ * intentionally not invoked here: Playgama's advertising requirements do not
+ * allow rewarded ads to grant a life/continue that affects gameplay continuity.
+ * Connect it only to a compliant, optional bonus after its design is approved.
  */
 (function initONREDPlaygamaBridge() {
     "use strict";
@@ -12,7 +16,7 @@
     const MENU_BANNER_PLACEMENT = "menu_banner";
     let sdk = null;
     let initialized = false;
-    let pendingReward = null;
+    let menuObserver = null;
 
     function isMainMenuVisible() {
         return Boolean(menu && !menu.classList.contains("hidden"));
@@ -20,53 +24,17 @@
 
     function syncMenuBanner() {
         if (!initialized || !sdk || !sdk.advertisement) return;
+
         const ads = sdk.advertisement;
 
         if (isMainMenuVisible()) {
-            if (ads.isBannerSupported && typeof ads.showBanner === "function") {
+            if (ads.isBannerSupported) {
                 ads.showBanner("bottom", MENU_BANNER_PLACEMENT);
             }
-        } else if (typeof ads.hideBanner === "function") {
-            ads.hideBanner();
-        }
-    }
-
-    function finishRewardRequest(rewarded) {
-        if (!pendingReward) return;
-        const resolve = pendingReward.resolve;
-        clearTimeout(pendingReward.timeout);
-        pendingReward = null;
-        resolve(Boolean(rewarded));
-    }
-
-    function handleRewardedState(state) {
-        if (!pendingReward) return;
-
-        if (state === "rewarded") {
-            finishRewardRequest(true);
-        } else if (state === "closed" || state === "failed") {
-            finishRewardRequest(false);
-        }
-    }
-
-    function showRewarded(placement) {
-        const ads = sdk && sdk.advertisement;
-        if (!initialized || !ads || !ads.isRewardedSupported ||
-            typeof ads.showRewarded !== "function" || pendingReward) {
-            return Promise.resolve(false);
+            return;
         }
 
-        return new Promise(resolve => {
-            const timeout = setTimeout(() => finishRewardRequest(false), 45000);
-            pendingReward = { resolve, timeout };
-
-            try {
-                ads.showRewarded(placement || "revive");
-            } catch (error) {
-                console.warn("[ON RED] Erro ao solicitar vídeo recompensado.", error);
-                finishRewardRequest(false);
-            }
-        });
+        ads.hideBanner();
     }
 
     async function initialize() {
@@ -82,50 +50,42 @@
             initialized = true;
 
             if (menu && typeof MutationObserver !== "undefined") {
-                const observer = new MutationObserver(syncMenuBanner);
-                observer.observe(menu, {
+                menuObserver = new MutationObserver(syncMenuBanner);
+                menuObserver.observe(menu, {
                     attributes: true,
                     attributeFilter: ["class"]
                 });
             }
 
-            const ads = sdk.advertisement;
             if (sdk.EVENT_NAME && sdk.EVENT_NAME.BANNER_STATE_CHANGED &&
-                ads && typeof ads.on === "function") {
-                ads.on(sdk.EVENT_NAME.BANNER_STATE_CHANGED, state => {
-                    if (!isMainMenuVisible() && state === "shown" &&
-                        typeof ads.hideBanner === "function") {
-                        ads.hideBanner();
+                sdk.advertisement && typeof sdk.advertisement.on === "function") {
+                sdk.advertisement.on(
+                    sdk.EVENT_NAME.BANNER_STATE_CHANGED,
+                    function onBannerStateChanged(state) {
+                        // hideBanner() ignores the LOADING state. If the player
+                        // leaves the menu while loading, hide as soon as it appears.
+                        if (!isMainMenuVisible() && state === "shown") {
+                            sdk.advertisement.hideBanner();
+                        }
                     }
-                });
+                );
             }
 
-            if (sdk.EVENT_NAME && sdk.EVENT_NAME.REWARDED_STATE_CHANGED &&
-                ads && typeof ads.on === "function") {
-                ads.on(sdk.EVENT_NAME.REWARDED_STATE_CHANGED, handleRewardedState);
-            }
-
+            syncMenuBanner();
             window.ONREDPlaygama = {
                 ready: true,
                 get platformId() {
                     return sdk.platform ? sdk.platform.id : null;
-                },
-                get rewardedSupported() {
-                    return Boolean(sdk.advertisement && sdk.advertisement.isRewardedSupported);
-                },
-                showRewarded
+                }
             };
-
-            syncMenuBanner();
         } catch (error) {
             console.warn("[ON RED] Falha ao inicializar Playgama Bridge. O jogo continuará normalmente.", error);
-            window.ONREDPlaygama = { ready: false, rewardedSupported: false };
+            window.ONREDPlaygama = { ready: false };
         }
     }
 
     window.ONREDPlaygama = {
         ready: false,
-        rewardedSupported: false,
         initialize
     };
 
