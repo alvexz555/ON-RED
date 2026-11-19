@@ -21,20 +21,23 @@ const ObstacleAI = {
     // ESCOLHER O ATACANTE
 
     selectAttacker(obstacles) {
+        const candidates = obstacles.filter(obstacle =>
+            obstacle && obstacle.state !== "ELIMINATED" &&
+            obstacle.state !== "RESPAWNING"
+        );
 
-        if (!obstacles.length) {
+        if (!candidates.length) {
             this.attacker = null;
+            obstacles.forEach(obstacle => { obstacle.role = "pressure"; });
             return;
         }
 
-        let closest = obstacles[0];
+        let closest = candidates[0];
         let shortestDistance = Infinity;
 
-        obstacles.forEach(obstacle => {
-
+        candidates.forEach(obstacle => {
             const dx = player.x - obstacle.x;
             const dy = player.y - obstacle.y;
-
             const distance = Math.hypot(dx, dy);
 
             if (distance < shortestDistance) {
@@ -44,18 +47,25 @@ const ObstacleAI = {
         });
 
         this.attacker = closest;
-        closest.role = "attacker";
+        obstacles.forEach(obstacle => {
+            obstacle.role = obstacle === closest ? "attacker" : "pressure";
+        });
     },
 
-    // IDENTIFICAR OS PRESSURIZADORES
+    // IDENTIFICAR O ATACANTE E OS PRESSURIZADORES
 
     updateRoles(obstacles) {
+        // O atacante pode ter sido eliminado ou removido entre atualizações.
+        // Nunca deixe a partida inteira sem um perseguidor ativo.
+        if (!this.attacker || !obstacles.includes(this.attacker) ||
+            this.attacker.state === "ELIMINATED" ||
+            this.attacker.state === "RESPAWNING") {
+            this.selectAttacker(obstacles);
+            return;
+        }
 
         obstacles.forEach(obstacle => {
-            obstacle.role =
-                obstacle === this.attacker
-                    ? "attacker"
-                    : "pressure";
+            obstacle.role = obstacle === this.attacker ? "attacker" : "pressure";
         });
     },
     

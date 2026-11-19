@@ -21,6 +21,8 @@ jobs:
       - name: Check JavaScript syntax
         run: |
           node --check js/main.js
+          node --check js/obstacleAI.js
+          node --check js/playgamaBridge.js
           node --check js/collisionSystem.js
           node --check js/perfectTimingSystem.js
           node --check js/hexagonSystem.js

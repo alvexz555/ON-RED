@@ -944,6 +944,12 @@ function triggerGameOver() {
         gameOverScreen.classList.add("active");
         gameOverScreen.setAttribute("aria-hidden", "false");
     }
+
+    // Intersticial somente após o fim da partida, nunca durante gameplay.
+    if (window.ONREDPlaygama &&
+        typeof window.ONREDPlaygama.showInterstitialAtNaturalBreak === "function") {
+        window.ONREDPlaygama.showInterstitialAtNaturalBreak();
+    }
 }
 
 function triggerVictory() {
@@ -1694,6 +1700,7 @@ function prepareNextEndlessCycle() {
 function resetGame() {
 
     perfectObstacles.length = 0;
+    ObstacleAI.initialize(perfectObstacles);
     if (window.ONREDHexagonSystem) ONREDHexagonSystem.reset();
 
     spawnTimer = 0;
