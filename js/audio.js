@@ -26,6 +26,7 @@
     let unlocked = false;
     const lastPlayed = new Map();
     const activeEffects = new Set();
+    const pausedEffects = new Set();
 
     function volume() {
         return window.ONREDVolume && typeof window.ONREDVolume.get === "function"
@@ -93,10 +94,27 @@
         activeEffects.add(media);
         media.addEventListener("ended", () => {
             activeEffects.delete(media);
+            pausedEffects.delete(media);
             media.src = "";
         }, { once: true });
         safePlay(media);
         return true;
+    }
+
+    function pauseEffects() {
+        activeEffects.forEach(media => {
+            if (!media.paused) {
+                media.pause();
+                pausedEffects.add(media);
+            }
+        });
+    }
+
+    function resumeEffects() {
+        pausedEffects.forEach(media => {
+            if (activeEffects.has(media) && media.paused) safePlay(media);
+        });
+        pausedEffects.clear();
     }
 
     function unlock() {
@@ -125,6 +143,8 @@
         pauseMusic,
         resumeMusic,
         stopMusic,
+        pauseEffects,
+        resumeEffects,
         unlock,
         getCurrentTrack: () => currentTrack
     };
