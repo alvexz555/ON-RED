@@ -40,8 +40,9 @@
         if (!ads.isInterstitialSupported || interstitialPending) return false;
 
         interstitialPending = true;
-        if (window.ONREDAudio && typeof window.ONREDAudio.pauseEffects === "function") {
-            window.ONREDAudio.pauseEffects();
+        if (window.ONREDAudio) {
+            if (typeof window.ONREDAudio.pauseMusic === "function") window.ONREDAudio.pauseMusic();
+            if (typeof window.ONREDAudio.pauseEffects === "function") window.ONREDAudio.pauseEffects();
         }
 
         try {
@@ -49,8 +50,9 @@
             return true;
         } catch (error) {
             interstitialPending = false;
-            if (window.ONREDAudio && typeof window.ONREDAudio.resumeEffects === "function") {
-                window.ONREDAudio.resumeEffects();
+            if (window.ONREDAudio) {
+                if (typeof window.ONREDAudio.resumeEffects === "function") window.ONREDAudio.resumeEffects();
+                if (typeof window.ONREDAudio.resumeMusic === "function") window.ONREDAudio.resumeMusic();
             }
             console.warn("[ON RED] Não foi possível exibir o intersticial. A partida continuará normalmente.", error);
             return false;
@@ -95,8 +97,9 @@
                     ads.on(sdk.EVENT_NAME.INTERSTITIAL_STATE_CHANGED, function onInterstitialStateChanged(state) {
                         if (state === "closed" || state === "failed") {
                             interstitialPending = false;
-                            if (window.ONREDAudio && typeof window.ONREDAudio.resumeEffects === "function") {
-                                window.ONREDAudio.resumeEffects();
+                            if (window.ONREDAudio) {
+                                if (typeof window.ONREDAudio.resumeEffects === "function") window.ONREDAudio.resumeEffects();
+                                if (typeof window.ONREDAudio.resumeMusic === "function") window.ONREDAudio.resumeMusic();
                             }
                         }
                     });
