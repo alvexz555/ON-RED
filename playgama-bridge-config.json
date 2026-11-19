@@ -5,12 +5,8 @@
   },
   "advertisement": {
     "useBuiltInErrorPopup": true,
-    "rewarded": {
-      "placements": [
-        {
-          "id": "revive"
-        }
-      ]
+    "interstitial": {
+      "preloadOnStart": true
     },
     "banner": {
       "placements": [
