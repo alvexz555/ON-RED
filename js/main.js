@@ -53,9 +53,7 @@ const gameOverScreen = document.getElementById("gameOverScreen");
 const retryButton = document.getElementById("retryButton");
 const reviveButton = document.getElementById("reviveButton");
 const reviveUnavailable = document.getElementById("reviveUnavailable");
-const reviveStatus = document.getElementById("reviveStatus");
 let revivesUsedThisRun = 0;
-let reviveRequestPending = false;
 let bossVictoryReachedThisRun = false;
 const endlessProgression = {
     cycle: 1,
@@ -835,7 +833,9 @@ function spawnPerfectObstacle() {
 
     ObstacleAI.updateRoles(perfectObstacles);
 
-    ObstacleAI.updateRoles(perfectObstacles);
+    if (!ObstacleAI.attacker) {
+        ObstacleAI.selectAttacker(perfectObstacles);
+    }
 }
 
 // ==========================================
@@ -1642,23 +1642,16 @@ function resetEndlessProgression() {
 }
 
 function updateReviveOffer() {
-    const videoReviveAvailable = revivesUsedThisRun === 0;
-    const bossReviveAvailable = bossVictoryReachedThisRun && revivesUsedThisRun === 1;
-    const available = videoReviveAvailable || bossReviveAvailable;
-
+    const available = revivesUsedThisRun < 1 || (bossVictoryReachedThisRun && revivesUsedThisRun < 2);
     if (reviveButton) {
         reviveButton.hidden = !available;
-        reviveButton.disabled = reviveRequestPending;
-        reviveButton.textContent = videoReviveAvailable
-            ? "ASSISTIR VÍDEO PARA REVIVER"
-            : "REVIVER GRATUITAMENTE · RECOMPENSA DO BOSS";
+        reviveButton.textContent = revivesUsedThisRun === 0 ? "REVIVER GRATUITAMENTE" : "REVIVER · 2ª CHANCE";
     }
-
     if (reviveUnavailable) {
         reviveUnavailable.hidden = available;
         reviveUnavailable.textContent = bossVictoryReachedThisRun
             ? "AS DUAS CONTINUAÇÕES FORAM UTILIZADAS · FIM DE JOGO"
-            : "VÍDEO UTILIZADO · VENÇA O BOSS PARA DESBLOQUEAR A CONTINUAÇÃO GRATUITA";
+            : "CONTINUAÇÃO UTILIZADA · VENÇA O BOSS PARA DESBLOQUEAR A SEGUNDA";
     }
 }
 
@@ -1792,8 +1785,9 @@ document.addEventListener("onred:start", function () {
 // REVIVER · UMA CONTINUAÇÃO POR PARTIDA
 // ==========================================
 
-function completeReviveAfterAuthorization() {
-    if (gameState !== GAME_STATE.GAME_OVER) return false;
+function reviveONREDGame() {
+    const available = revivesUsedThisRun < 1 || (bossVictoryReachedThisRun && revivesUsedThisRun < 2);
+    if (gameState !== GAME_STATE.GAME_OVER || !available) return false;
 
     const health = window.ONREDHealthSystem;
     if (!health || typeof health.revive !== "function") return false;
@@ -1805,9 +1799,7 @@ function completeReviveAfterAuthorization() {
         window.ONREDAudio.play("revive");
         window.ONREDAudio.playMusic(bossPhase === "FIGHT" ? "boss" : "gameplay");
     }
-
     revivesUsedThisRun += 1;
-    if (reviveStatus) reviveStatus.textContent = "";
     updateReviveOffer();
     gameState = GAME_STATE.PLAYING;
     if (pauseButton) pauseButton.style.display = "flex";
@@ -1816,56 +1808,11 @@ function completeReviveAfterAuthorization() {
         gameOverScreen.setAttribute("aria-hidden", "true");
     }
 
-    // Reposiciona o jogador, mas preserva obstáculos, Boss, fase e pontuação.
+    // Reposiciona o jogador, mas não reinicia obstáculos, Boss, fase ou pontuação.
     resetJoystick();
     spawnPlayer();
     lastFrameTime = 0;
     return true;
-}
-
-async function requestRevive() {
-    if (gameState !== GAME_STATE.GAME_OVER || reviveRequestPending) return false;
-
-    // A segunda continuação é gratuita, mas só existe após vencer o Boss.
-    if (revivesUsedThisRun === 1 && bossVictoryReachedThisRun) {
-        return completeReviveAfterAuthorization();
-    }
-
-    // A primeira continuação exige vídeo recompensado concluído.
-    if (revivesUsedThisRun !== 0) return false;
-
-    const ads = window.ONREDPlaygama;
-    if (!ads || !ads.ready || typeof ads.showRewarded !== "function") {
-        if (reviveStatus) {
-            reviveStatus.textContent = "ANÚNCIO INDISPONÍVEL NESTA PLATAFORMA. TENTE NOVAMENTE PELO PORTAL PLAYGAMA.";
-        }
-        return false;
-    }
-
-    reviveRequestPending = true;
-    if (reviveStatus) reviveStatus.textContent = "CARREGANDO VÍDEO...";
-    updateReviveOffer();
-
-    try {
-        const rewarded = await ads.showRewarded("revive");
-        if (rewarded) {
-            return completeReviveAfterAuthorization();
-        }
-
-        if (reviveStatus) {
-            reviveStatus.textContent = "VÍDEO NÃO CONCLUÍDO OU INDISPONÍVEL. SUA CONTINUAÇÃO NÃO FOI CONSUMIDA.";
-        }
-        return false;
-    } catch (error) {
-        console.warn("[ON RED] Não foi possível exibir o vídeo recompensado.", error);
-        if (reviveStatus) {
-            reviveStatus.textContent = "NÃO FOI POSSÍVEL CARREGAR O VÍDEO. TENTE NOVAMENTE.";
-        }
-        return false;
-    } finally {
-        reviveRequestPending = false;
-        updateReviveOffer();
-    }
 }
 
 // ==========================================
@@ -2091,7 +2038,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 if (reviveButton) {
-    reviveButton.addEventListener("click", requestRevive);
+    reviveButton.addEventListener("click", reviveONREDGame);
 }
 
 if (retryButton) {
