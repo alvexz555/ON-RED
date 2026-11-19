@@ -75,11 +75,15 @@
     }
     function showMenu() {
         if (container) container.classList.remove("hidden");
+        document.dispatchEvent(new Event("onred:menu-show"));
         closePanels();
         refreshRecords();
         applyVolume();
     }
-    function hideMenu() { if (container) container.classList.add("hidden"); }
+    function hideMenu() {
+        if (container) container.classList.add("hidden");
+        document.dispatchEvent(new Event("onred:menu-hide"));
+    }
     function startGame() {
         if (typeof window.startONREDGame !== "function") {
             console.error("[ON RED] Função de início do jogo não encontrada.");
