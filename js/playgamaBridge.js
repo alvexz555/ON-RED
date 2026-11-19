@@ -30,10 +30,17 @@
         }
     }
 
+    function isRewardedSupported() {
+        return Boolean(
+            initialized &&
+            bridge?.advertisement &&
+            bridge.advertisement.isRewardedSupported &&
+            typeof bridge.advertisement.showRewarded === "function"
+        );
+    }
+
     function showRewarded(placement = "revive") {
-        if (!initialized || !bridge?.advertisement ||
-            !bridge.advertisement.isRewardedSupported ||
-            typeof bridge.advertisement.showRewarded !== "function") {
+        if (!isRewardedSupported()) {
             return Promise.resolve(false);
         }
 
@@ -97,6 +104,7 @@
             const menu = document.getElementById("mainMenu");
             if (menu && !menu.classList.contains("hidden")) showMenuBanner();
 
+            document.dispatchEvent(new Event("onred:bridge-ready"));
             console.info("[ON RED] Playgama Bridge inicializada.");
             return true;
         } catch (error) {
@@ -114,6 +122,7 @@
         showMenuBanner,
         hideMenuBanner,
         showRewarded,
+        isRewardedSupported,
         isReady: () => initialized
     };
 
