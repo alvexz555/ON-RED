@@ -1,0 +1,25 @@
+{
+  "showLoadingText": true,
+  "game": {
+    "adaptToSafeArea": true
+  },
+  "advertisement": {
+    "useBuiltInErrorPopup": true,
+    "rewarded": {
+      "placements": [
+        {
+          "id": "revive"
+        }
+      ]
+    },
+    "banner": {
+      "placements": [
+        {
+          "id": "menu_banner"
+        }
+      ],
+      "placementFallback": "menu_banner"
+    },
+    "useAdvertisementErrorPopup": true
+  }
+}
