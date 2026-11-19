@@ -1642,7 +1642,11 @@ function resetEndlessProgression() {
 }
 
 function updateReviveOffer() {
-    const firstAdReviveAvailable = revivesUsedThisRun === 0;
+    const rewardedSupported = Boolean(
+        window.ONREDPlaygama &&
+        window.ONREDPlaygama.isRewardedSupported()
+    );
+    const firstAdReviveAvailable = revivesUsedThisRun === 0 && rewardedSupported;
     const freeSecondReviveAvailable = revivesUsedThisRun === 1 && bossVictoryReachedThisRun;
     const available = firstAdReviveAvailable || freeSecondReviveAvailable;
 
@@ -1656,11 +1660,17 @@ function updateReviveOffer() {
 
     if (reviveUnavailable) {
         reviveUnavailable.hidden = available;
-        reviveUnavailable.textContent = revivesUsedThisRun >= 2
-            ? "AS DUAS CONTINUAÇÕES FORAM UTILIZADAS · FIM DE JOGO"
-            : "PRIMEIRA CONTINUAÇÃO UTILIZADA · VENÇA O BOSS PARA DESBLOQUEAR A SEGUNDA";
+        if (revivesUsedThisRun >= 2) {
+            reviveUnavailable.textContent = "AS DUAS CONTINUAÇÕES FORAM UTILIZADAS · FIM DE JOGO";
+        } else if (revivesUsedThisRun === 0 && !rewardedSupported) {
+            reviveUnavailable.textContent = "ANÚNCIO RECOMPENSADO INDISPONÍVEL NESTA PLATAFORMA";
+        } else {
+            reviveUnavailable.textContent = "PRIMEIRA CONTINUAÇÃO UTILIZADA · VENÇA O BOSS PARA DESBLOQUEAR A SEGUNDA";
+        }
     }
 }
+
+document.addEventListener("onred:bridge-ready", updateReviveOffer);
 
 function prepareNextEndlessCycle() {
     endlessProgression.cycle += 1;
