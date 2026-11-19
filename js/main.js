@@ -1642,16 +1642,23 @@ function resetEndlessProgression() {
 }
 
 function updateReviveOffer() {
-    const available = revivesUsedThisRun < 1 || (bossVictoryReachedThisRun && revivesUsedThisRun < 2);
+    const firstAdReviveAvailable = revivesUsedThisRun === 0;
+    const freeSecondReviveAvailable = revivesUsedThisRun === 1 && bossVictoryReachedThisRun;
+    const available = firstAdReviveAvailable || freeSecondReviveAvailable;
+
     if (reviveButton) {
         reviveButton.hidden = !available;
-        reviveButton.textContent = revivesUsedThisRun === 0 ? "REVIVER GRATUITAMENTE" : "REVIVER · 2ª CHANCE";
+        reviveButton.disabled = false;
+        reviveButton.textContent = firstAdReviveAvailable
+            ? "ASSISTIR ANÚNCIO PARA REVIVER"
+            : "REVIVER GRATUITAMENTE · 2ª CHANCE";
     }
+
     if (reviveUnavailable) {
         reviveUnavailable.hidden = available;
-        reviveUnavailable.textContent = bossVictoryReachedThisRun
+        reviveUnavailable.textContent = revivesUsedThisRun >= 2
             ? "AS DUAS CONTINUAÇÕES FORAM UTILIZADAS · FIM DE JOGO"
-            : "CONTINUAÇÃO UTILIZADA · VENÇA O BOSS PARA DESBLOQUEAR A SEGUNDA";
+            : "PRIMEIRA CONTINUAÇÃO UTILIZADA · VENÇA O BOSS PARA DESBLOQUEAR A SEGUNDA";
     }
 }
 
@@ -1755,6 +1762,7 @@ window.startONREDGame = function () {
 
     gameStarted = true;
     gameState = GAME_STATE.PLAYING;
+    document.dispatchEvent(new Event("onred:menu-hide"));
     if (window.ONREDAudio) window.ONREDAudio.playMusic("gameplay");
     if (pauseButton) pauseButton.style.display = "flex";
 
@@ -1784,9 +1792,30 @@ document.addEventListener("onred:start", function () {
 // REVIVER · UMA CONTINUAÇÃO POR PARTIDA
 // ==========================================
 
-function reviveONREDGame() {
-    const available = revivesUsedThisRun < 1 || (bossVictoryReachedThisRun && revivesUsedThisRun < 2);
-    if (gameState !== GAME_STATE.GAME_OVER || !available) return false;
+async function reviveONREDGame() {
+    const firstAdRevive = revivesUsedThisRun === 0;
+    const freeSecondRevive = revivesUsedThisRun === 1 && bossVictoryReachedThisRun;
+
+    if (gameState !== GAME_STATE.GAME_OVER || (!firstAdRevive && !freeSecondRevive)) {
+        return false;
+    }
+
+    // A primeira continuação exige anúncio recompensado. A recompensa só é
+    // concedida pelo evento "rewarded", nunca apenas por fechar o anúncio.
+    if (firstAdRevive) {
+        if (!window.ONREDPlaygama || typeof window.ONREDPlaygama.showRewarded !== "function") {
+            console.warn("[ON RED] Playgama Bridge ainda não está disponível.");
+            return false;
+        }
+
+        if (reviveButton) reviveButton.disabled = true;
+        const rewarded = await window.ONREDPlaygama.showRewarded("revive");
+        if (reviveButton) reviveButton.disabled = false;
+
+        if (!rewarded || gameState !== GAME_STATE.GAME_OVER || revivesUsedThisRun !== 0) {
+            return false;
+        }
+    }
 
     const health = window.ONREDHealthSystem;
     if (!health || typeof health.revive !== "function") return false;
@@ -1798,6 +1827,7 @@ function reviveONREDGame() {
         window.ONREDAudio.play("revive");
         window.ONREDAudio.playMusic(bossPhase === "FIGHT" ? "boss" : "gameplay");
     }
+
     revivesUsedThisRun += 1;
     updateReviveOffer();
     gameState = GAME_STATE.PLAYING;
@@ -1911,6 +1941,7 @@ function returnToMainMenu() {
     if (mainMenu) {
         mainMenu.classList.remove("hidden");
     }
+    document.dispatchEvent(new Event("onred:menu-show"));
 }
 
 // ==========================================
