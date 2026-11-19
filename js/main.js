@@ -944,6 +944,12 @@ function triggerGameOver() {
         gameOverScreen.classList.add("active");
         gameOverScreen.setAttribute("aria-hidden", "false");
     }
+
+    // Intersticial somente após o fim da partida, nunca durante gameplay.
+    if (window.ONREDPlaygama &&
+        typeof window.ONREDPlaygama.showInterstitialAtNaturalBreak === "function") {
+        window.ONREDPlaygama.showInterstitialAtNaturalBreak();
+    }
 }
 
 function triggerVictory() {
