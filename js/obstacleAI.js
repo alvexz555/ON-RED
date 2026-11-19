@@ -121,3 +121,12 @@ const ObstacleAI = {
 }
 };
 
+
+
+/*
+ * Exposição explícita para testes isolados e ferramentas de diagnóstico.
+ * Mantém o binding lexical usado pelos demais scripts do jogo.
+ */
+if (typeof globalThis !== "undefined") {
+    globalThis.ObstacleAI = ObstacleAI;
+}
